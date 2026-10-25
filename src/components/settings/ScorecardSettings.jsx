@@ -40,7 +40,7 @@ export default function ScorecardSettings({ readOnly }) {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {scorecards.map((sc) => (
-          <article key={sc.id} className="rounded-xl border border-line bg-surface p-4">
+          <article key={sc.id} className="rounded-2xl border border-line/80 bg-surface shadow-card p-4">
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="font-medium">{sc.name}</h3>
               <Button size="sm" variant="ghost" icon={Pencil} onClick={() => open(sc)} disabled={readOnly}>

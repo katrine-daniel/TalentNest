@@ -73,7 +73,7 @@ export default function PipelinePage() {
         }
       />
 
-      <div className="mb-4 space-y-3 rounded-xl border border-line bg-surface p-4">
+      <div className="mb-4 space-y-3 rounded-2xl border border-line/80 bg-surface shadow-card p-4">
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
           <Select aria-label="Vacancy" value={jobId} onChange={(e) => setFilter('job', e.target.value)} options={jobOptions} />
           <SearchInput value={filters.q} onChange={(v) => setFilter('q', v)} placeholder="Search name, skill or ID" label="Search pipeline" />

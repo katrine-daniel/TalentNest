@@ -17,7 +17,7 @@ export default function NotificationSettings({ readOnly }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-line bg-surface">
+      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
         <div className="flex items-center justify-end gap-6 border-b border-line px-5 py-2.5 text-xxs font-medium tracking-wide text-muted uppercase">
           <span className="w-11 text-center">Email</span>
           <span className="w-11 text-center">In-app</span>

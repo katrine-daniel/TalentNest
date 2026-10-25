@@ -10,7 +10,7 @@ export default function OnboardingChecklist({ offer, candidateName, jobTitle, on
   const done = offer.onboarding.filter((t) => t.done).length
   const pct = Math.round((done / offer.onboarding.length) * 100)
   return (
-    <article className="flex flex-col rounded-xl border border-line bg-surface">
+    <article className="flex flex-col rounded-2xl border border-line/80 bg-surface shadow-card">
       <header className="flex items-start gap-3 p-4">
         <Avatar name={candidateName} size="md" />
         <div className="min-w-0 flex-1">

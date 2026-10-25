@@ -151,7 +151,7 @@ export default function OffersPage() {
       />
 
       {tab === 'offers' ? (
-        <div className="rounded-xl border border-line bg-surface">
+        <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
           <div className="no-scrollbar flex gap-1.5 overflow-x-auto border-b border-line p-3" role="group" aria-label="Filter offers by status">
             {[
               ['active', 'Open'],

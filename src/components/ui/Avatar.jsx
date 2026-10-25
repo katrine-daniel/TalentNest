@@ -32,10 +32,12 @@ export function initials(name = '') {
     .join('')
 }
 
-export default function Avatar({ name = '', size = 'sm', className, title }) {
+/** `variant="brand"` is reserved for the signed-in user so they stand out from candidates. */
+export default function Avatar({ name = '', size = 'sm', className, title, variant }) {
+  const tone = variant === 'brand' ? 'bg-linear-to-br from-brand-500 to-brand-800 text-white' : PALETTE[hash(name) % PALETTE.length]
   return (
     <span
-      className={cn('inline-flex shrink-0 items-center justify-center rounded-full font-semibold select-none', PALETTE[hash(name) % PALETTE.length], SIZES[size], className)}
+      className={cn('inline-flex shrink-0 items-center justify-center rounded-full font-semibold select-none', tone, SIZES[size], className)}
       title={title ?? name}
       aria-hidden={!title}
     >

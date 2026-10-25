@@ -54,10 +54,10 @@ export default function LoadingState({ variant = 'page' }) {
         ))}
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-xl border border-line bg-surface p-5 lg:col-span-2">
+        <div className="rounded-2xl border border-line/80 bg-surface shadow-card p-5 lg:col-span-2">
           <ChartSkeleton />
         </div>
-        <div className="space-y-3 rounded-xl border border-line bg-surface p-5">
+        <div className="space-y-3 rounded-2xl border border-line/80 bg-surface shadow-card p-5">
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-6 w-full" />
           ))}

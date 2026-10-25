@@ -152,7 +152,7 @@ export default function AIMessage({ message, onRetry, onSaveEdit }) {
       <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
         <Sparkles size={14} aria-hidden />
       </span>
-      <div className="min-w-0 flex-1 rounded-xl border border-line bg-surface">
+      <div className="min-w-0 flex-1 rounded-2xl border border-line/80 bg-surface shadow-card">
         {status === 'loading' && (
           <div className="space-y-2.5 p-4" role="status">
             <p className="text-xs text-muted">Preparing simulated response…</p>

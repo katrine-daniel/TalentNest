@@ -18,10 +18,10 @@ export function SessionProvider({ children }) {
 
   const user = users.find((u) => u.id === DEMO_USER_ID) ?? {
     id: DEMO_USER_ID,
-    name: 'Meera Iyer',
+    name: 'Katrine Daniel',
     title: 'Head of Talent Acquisition',
     role: 'Admin',
-    email: 'meera.iyer@skylinevoyages.example',
+    email: 'katrine.daniel@skylinevoyages.example',
   }
   const role = viewAsRole ?? user.role
   const matrix = settings?.rolePermissions ?? DEFAULT_ROLE_PERMISSIONS

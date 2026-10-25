@@ -15,7 +15,7 @@ export const mockDepartments = [
 ]
 
 export const mockUsers = [
-  { id: 'usr-01', name: 'Meera Iyer', email: 'meera.iyer@skylinevoyages.example', title: 'Head of Talent Acquisition', role: 'Admin', departmentId: null, status: 'active' },
+  { id: 'usr-01', name: 'Katrine Daniel', email: 'katrine.daniel@skylinevoyages.example', title: 'Head of Talent Acquisition', role: 'Admin', departmentId: null, status: 'active' },
   { id: 'usr-02', name: 'Rohan Mehta', email: 'rohan.mehta@skylinevoyages.example', title: 'Senior Recruiter', role: 'Recruiter', departmentId: 'dep-cc', status: 'active' },
   { id: 'usr-03', name: 'Sara Fernandes', email: 'sara.fernandes@skylinevoyages.example', title: 'Recruiter — Travel & Hospitality', role: 'Recruiter', departmentId: 'dep-travel', status: 'active' },
   { id: 'usr-04', name: 'Daniel Okafor', email: 'daniel.okafor@skylinevoyages.example', title: 'Technical Recruiter', role: 'Recruiter', departmentId: 'dep-eng', status: 'active' },

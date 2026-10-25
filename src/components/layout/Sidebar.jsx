@@ -3,6 +3,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import BrandMark from './BrandMark'
 import NavList from './NavList'
+import SidebarProfile from './SidebarProfile'
 
 /** Desktop/tablet sidebar. Tablet shows a collapsed icon rail; desktop can toggle. */
 export default function Sidebar({ collapsed, canToggle, onToggle }) {
@@ -17,6 +18,9 @@ export default function Sidebar({ collapsed, canToggle, onToggle }) {
         <BrandMark collapsed={collapsed} />
       </div>
       <NavList collapsed={collapsed} layoutGroup="sidebar" />
+      <div className={cn('px-3 pb-2', collapsed && 'flex justify-center')}>
+        <SidebarProfile collapsed={collapsed} />
+      </div>
       {canToggle && (
         <div className={cn('border-t border-line p-3', collapsed && 'flex justify-center')}>
           <button

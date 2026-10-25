@@ -83,7 +83,7 @@ export default function WorkflowSettings({ readOnly }) {
       </div>
 
       {draft ? (
-        <div className="space-y-5 rounded-xl border border-line bg-surface p-5">
+        <div className="space-y-5 rounded-2xl border border-line/80 bg-surface shadow-card p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Template name" required>
               {(a) => <Input {...a} value={draft.name} disabled={readOnly} onChange={(e) => setDraft({ ...draft, name: e.target.value })} invalid={!draft.name.trim()} />}

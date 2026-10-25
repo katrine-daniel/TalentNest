@@ -95,7 +95,7 @@ export default function UserManagement({ readOnly }) {
           Invite user
         </Button>
       </div>
-      <div className="rounded-xl border border-line bg-surface">
+      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
         <DataTable
           rows={rows}
           empty={<EmptyState icon={Search} title="No users match" />}

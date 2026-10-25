@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BellRing, CalendarPlus2, CircleSlash, ClipboardCheck, ClipboardList, Gauge, Hourglass, MoreHorizontal, PenLine, SearchX, Timer } from 'lucide-react'
 import PageHeader from '@/components/layout/PageHeader'
@@ -172,7 +172,7 @@ export default function AssessmentsPage() {
         <MetricCard label="Pass rate" icon={Gauge} value={passRate} detail={`% across ${evaluated.length} evaluated`} />
       </MetricStrip>
 
-      <div className="rounded-xl border border-line bg-surface">
+      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
         <div className="px-4 pt-2">
           <Tabs
             value={filters.status}

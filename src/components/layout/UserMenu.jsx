@@ -38,7 +38,7 @@ export default function UserMenu() {
         className="w-64"
         renderTrigger={(props) => (
           <button {...props} type="button" className="flex items-center gap-2 rounded-lg p-1 hover:bg-subtle sm:pr-2" aria-label={`Account menu for ${user.name}`}>
-            <Avatar name={user.name} size="sm" />
+            <Avatar name={user.name} size="sm" variant="brand" />
             <span className="hidden text-left leading-tight lg:block">
               <span className="block text-xs font-medium text-ink">{user.name}</span>
               <span className={viewAsRole ? 'block text-[11px] font-medium text-brand-600' : 'block text-[11px] text-muted'}>

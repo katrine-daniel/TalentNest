@@ -34,7 +34,7 @@ export default function AssessmentTemplates({ readOnly }) {
           New template
         </Button>
       </div>
-      <div className="rounded-xl border border-line bg-surface">
+      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
         <DataTable
           rows={templates}
           columns={[

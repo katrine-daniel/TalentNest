@@ -60,7 +60,7 @@ export default function ApplicationCard({ entry, candidateName, onRequestMove, d
   }))
 
   return (
-    <article className="rounded-xl border border-line bg-surface">
+    <article className="rounded-2xl border border-line/80 bg-surface shadow-card">
       <div className="space-y-3 p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">

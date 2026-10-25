@@ -19,7 +19,7 @@
   --color-brand-800: #3d1e6f;
   --color-brand-900: #2f1756;
 
-  --color-canvas: #f7f7f9;
+  --color-canvas: #f6f5fa;
   --color-surface: #ffffff;
   --color-subtle: #f3f3f6;
   --color-ink: #1d1f24;
@@ -32,6 +32,7 @@
   --text-xxs: 0.6875rem;
   --text-xxs--line-height: 1rem;
 
+  --shadow-card: 0 1px 2px rgb(31 18 64 / 0.04), 0 2px 8px -2px rgb(31 18 64 / 0.05);
   --shadow-pop: 0 1px 2px rgb(16 17 20 / 0.04), 0 8px 24px -6px rgb(16 17 20 / 0.12);
   --shadow-lift: 0 1px 2px rgb(16 17 20 / 0.06), 0 12px 32px -8px rgb(16 17 20 / 0.18);
 }

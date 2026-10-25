@@ -83,7 +83,7 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
-      <aside className="space-y-5 rounded-xl border border-line bg-surface p-4 lg:self-start">
+      <aside className="space-y-5 rounded-2xl border border-line/80 bg-surface shadow-card p-4 lg:self-start">
         <div>
           <h2 className="text-sm font-semibold">Context</h2>
           <p className="text-xs text-muted">Responses use only the records you select.</p>
@@ -126,7 +126,7 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
         </p>
       </aside>
 
-      <section className="flex min-h-[70dvh] flex-col rounded-xl border border-line bg-surface" aria-label="Assistant conversation">
+      <section className="flex min-h-[70dvh] flex-col rounded-2xl border border-line/80 bg-surface shadow-card" aria-label="Assistant conversation">
         <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-brand-600" aria-hidden />

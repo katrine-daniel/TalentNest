@@ -14,7 +14,7 @@ import {
   mockSettingsMeta,
 } from './mockSettings'
 
-export const SEED_VERSION = 5
+export const SEED_VERSION = 6
 
 const JOB_WEIGHTS = {
   'job-101': 4, 'job-102': 3, 'job-103': 9, 'job-104': 6, 'job-105': 2, 'job-106': 6,

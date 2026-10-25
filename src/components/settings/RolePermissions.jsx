@@ -26,7 +26,7 @@ export default function RolePermissions({ readOnly }) {
   return (
     <div className="space-y-4">
       <MockNotice>These permissions control which actions the interface offers. Real authorization must also be enforced by the backend for every request.</MockNotice>
-      <div className="overflow-x-auto rounded-xl border border-line bg-surface scrollbar-thin">
+      <div className="overflow-x-auto rounded-2xl border border-line/80 bg-surface shadow-card scrollbar-thin">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="border-b border-line">

@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LayoutGrid, Rows3, SearchX, UserPlus, Users } from 'lucide-react'
 import PageHeader from '@/components/layout/PageHeader'
@@ -75,7 +75,7 @@ export default function CandidatesPage() {
         }
       />
 
-      <div className="rounded-xl border border-line bg-surface">
+      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
         <div className="space-y-3 border-b border-line p-4">
           <CandidateFilters filters={filters} setFilter={setFilter} reset={reset} activeCount={activeCount} />
           <div className="flex flex-wrap items-center justify-between gap-2">

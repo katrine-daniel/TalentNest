@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BriefcaseBusiness, Plus, SearchX } from 'lucide-react'
 import PageHeader from '@/components/layout/PageHeader'
@@ -53,7 +53,7 @@ export default function JobsPage() {
           </Button>
         }
       />
-      <div className="rounded-xl border border-line bg-surface">
+      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
         <div className="px-4 pt-2">
           <Tabs tabs={tabs} value={filters.status} onChange={(v) => setFilter('status', v)} label="Vacancy status" />
         </div>

@@ -42,7 +42,7 @@ export default function DepartmentSettings({ readOnly }) {
           Add department
         </Button>
       </div>
-      <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
+      <ul className="divide-y divide-line rounded-2xl border border-line/80 bg-surface shadow-card">
         {departments.map((d) => (
           <li key={d.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
             <span className="h-3 w-3 rounded-sm" style={{ background: d.color }} aria-hidden />

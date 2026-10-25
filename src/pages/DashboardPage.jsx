@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { BellRing, BriefcaseBusiness, CalendarClock, CalendarPlus, ClipboardList, FileSignature, UserPlus, Users } from 'lucide-react'
-import PageHeader from '@/components/layout/PageHeader'
+import WelcomeBanner from '@/components/dashboard/WelcomeBanner'
 import Panel from '@/components/ui/Panel'
 import Button from '@/components/ui/Button'
 import SegmentedControl from '@/components/ui/SegmentedControl'
@@ -17,7 +17,6 @@ import { useOrgOptions } from '@/hooks/useJobs'
 import { useSession } from '@/context/SessionContext'
 import { useGlobalActions } from '@/context/GlobalActionsContext'
 import { getAttentionItems, getDashboardMetrics, getDepartmentBreakdown, getFunnel, getUpcomingSchedule } from '@/services/analyticsService'
-import { formatDate, greeting } from '@/utils/formatDate'
 
 const FUNNEL_RANGES = [
   { value: '30', label: '30d' },
@@ -46,26 +45,23 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={`${greeting()}, ${user.name.split(' ')[0]}`}
-        description={`${formatDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' })} · Here’s where hiring stands today.`}
-        actions={
-          <>
-            <FilterSelect label="Department" value={department} onChange={setDepartment} options={options.departments} allLabel="All" className="w-full sm:w-56" />
-            <div className="flex w-full gap-2 sm:w-auto">
-              <Button icon={UserPlus} onClick={() => actions.openCandidateForm()} disabled={!can('candidates.manage')} className="flex-1 sm:flex-none">
-                Add candidate
-              </Button>
-              <Button icon={BriefcaseBusiness} onClick={() => actions.openJobForm()} disabled={!can('jobs.manage')} className="max-lg:hidden">
-                New vacancy
-              </Button>
-              <Button variant="primary" icon={CalendarPlus} onClick={() => actions.openSchedule()} disabled={!can('interviews.schedule')} className="flex-1 sm:flex-none">
-                Schedule
-              </Button>
-            </div>
-          </>
-        }
-      />
+      <WelcomeBanner
+        user={user}
+        summary={`${metrics.interviewsToday} interview${metrics.interviewsToday === 1 ? '' : 's'} today, ${metrics.pendingFeedback} feedback request${metrics.pendingFeedback === 1 ? '' : 's'} waiting and ${metrics.newThisWeek} new applications this week.`}
+      >
+        <FilterSelect label="Department" value={department} onChange={setDepartment} options={options.departments} allLabel="All" className="w-full sm:w-56" />
+        <div className="flex w-full gap-2 sm:w-auto">
+          <Button icon={UserPlus} onClick={() => actions.openCandidateForm()} disabled={!can('candidates.manage')} className="flex-1 border-white/20! bg-white/10! text-white! hover:bg-white/20! sm:flex-none">
+            Add candidate
+          </Button>
+          <Button icon={BriefcaseBusiness} onClick={() => actions.openJobForm()} disabled={!can('jobs.manage')} className="border-white/20! bg-white/10! text-white! hover:bg-white/20! max-lg:hidden">
+            New vacancy
+          </Button>
+          <Button icon={CalendarPlus} onClick={() => actions.openSchedule()} disabled={!can('interviews.schedule')} className="flex-1 border-transparent! bg-white! text-brand-700! hover:bg-brand-50! sm:flex-none">
+            Schedule
+          </Button>
+        </div>
+      </WelcomeBanner>
 
       <MetricStrip>
         <MetricCard label="Active candidates" icon={Users} value={metrics.activeCandidates} detail={`${metrics.newThisWeek} new this week`} to="/candidates" />

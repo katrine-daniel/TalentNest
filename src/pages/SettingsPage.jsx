@@ -22,7 +22,7 @@ function DemoDataSettings() {
   const [open, setOpen] = useState(false)
   const reset = useAsyncAction(settingsService.resetDemoData, { success: 'Demo data restored' })
   return (
-    <div className="space-y-4 rounded-xl border border-line bg-surface p-5">
+    <div className="space-y-4 rounded-2xl border border-line/80 bg-surface shadow-card p-5">
       <p className="text-sm text-ink-soft">
         This frontend runs on a mock data layer. Changes you make are saved in this browser’s local storage (key <code className="rounded bg-subtle px-1 text-xs">{DEMO_STORAGE_KEY}</code>) so the demo survives a refresh. Nothing is sent to a server.
       </p>

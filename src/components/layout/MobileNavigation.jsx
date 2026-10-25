@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import BrandMark from './BrandMark'
 import NavList from './NavList'
+import SidebarProfile from './SidebarProfile'
 
 /** Slide-in navigation drawer for phones. */
 export default function MobileNavigation({ open, onClose }) {
@@ -37,6 +38,9 @@ function MobileNavPanel({ onClose }) {
           </button>
         </div>
         <NavList onNavigate={onClose} layoutGroup="mobile" />
+        <div className="border-t border-line p-3">
+          <SidebarProfile onNavigate={onClose} />
+        </div>
       </motion.div>
     </div>
   )
