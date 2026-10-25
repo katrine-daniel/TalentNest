@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  // GitHub Pages serves the site from /<repo>/; the deploy workflow sets VITE_BASE_PATH.
+  // Locally the app runs from the root.
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     // Root-relative alias: avoids duplicate module instances on Windows when the
