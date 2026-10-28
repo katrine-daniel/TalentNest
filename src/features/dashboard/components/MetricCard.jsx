@@ -7,7 +7,7 @@ import { cn } from '@/utils/cn'
  * One KPI cell. Designed to sit inside MetricStrip (a single bordered strip with
  * hairline dividers) rather than as a floating card.
  */
-export default function MetricCard({ label, value, detail, icon: Icon, to, emphasis = false, detailTone = 'muted' }) {
+export default function MetricCard({ label, value, suffix = '', detail, icon: Icon, to, emphasis = false, detailTone = 'muted' }) {
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
@@ -20,7 +20,16 @@ export default function MetricCard({ label, value, detail, icon: Icon, to, empha
       </div>
       <p className="text-muted mt-3 truncate text-xs">{label}</p>
       <div className={cn('mt-0.5 text-2xl font-semibold tracking-tight', emphasis ? 'text-brand-700' : 'text-ink')}>
-        <AnimatedNumber value={value} />
+        {value === null || value === undefined ? (
+          <span className="text-faint" title="Not enough data">
+            —
+          </span>
+        ) : (
+          <>
+            <AnimatedNumber value={value} />
+            {suffix && <span className="text-muted ml-0.5 text-base font-medium">{suffix}</span>}
+          </>
+        )}
       </div>
       {detail && (
         <p className={cn('mt-1 truncate text-xs', detailTone === 'warn' ? 'text-amber-700' : detailTone === 'danger' ? 'text-red-600' : 'text-muted')}>

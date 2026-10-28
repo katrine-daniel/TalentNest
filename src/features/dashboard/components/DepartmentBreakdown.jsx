@@ -26,8 +26,8 @@ export default function DepartmentBreakdown({ rows }) {
           <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 4 }} barSize={14}>
             <CartesianGrid stroke={CHART_COLORS.grid} horizontal={false} />
             <XAxis type="number" {...AXIS_PROPS} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" {...AXIS_PROPS} width={132} tick={{ ...AXIS_PROPS.tick, fill: '#3a3d46' }} />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3f3f6' }} />
+            <YAxis type="category" dataKey="name" {...AXIS_PROPS} width={132} tick={{ ...AXIS_PROPS.tick, fill: 'var(--color-ink-soft)' }} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-subtle)' }} />
             {BREAKDOWN_GROUPS.map((g, i) => (
               <Bar
                 key={g.key}

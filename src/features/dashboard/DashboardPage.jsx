@@ -16,7 +16,15 @@ import { useDbData } from '@/hooks/useStore'
 import { useOrgOptions } from '@/features/jobs/hooks/useJobs'
 import { useSession } from '@/app/providers/SessionContext'
 import { useGlobalActions } from '@/app/providers/GlobalActionsContext'
-import { getAttentionItems, getDashboardMetrics, getDepartmentBreakdown, getFunnel, getUpcomingSchedule } from '@/features/analytics/analyticsService'
+import {
+  getActivitySeries,
+  getAttentionItems,
+  getDashboardMetrics,
+  getDepartmentBreakdown,
+  getFunnel,
+  getUpcomingSchedule,
+} from '@/features/analytics/analyticsService'
+import MyTasksPanel from '@/features/tasks/components/MyTasksPanel'
 
 const FUNNEL_RANGES = [
   { value: '30', label: '30d' },
@@ -38,6 +46,13 @@ export default function DashboardPage() {
   const breakdown = useMemo(() => getDepartmentBreakdown(data), [data])
   const upcoming = useMemo(() => getUpcomingSchedule(data, { departmentId: department, days: 7 }), [data, department])
   const attention = useMemo(() => getAttentionItems(data, filters), [data, filters])
+  const series = useMemo(
+    () => ({
+      weekly: getActivitySeries(data, { granularity: 'week', periods: 12, departmentId: department }),
+      monthly: getActivitySeries(data, { granularity: 'month', periods: 6, departmentId: department }),
+    }),
+    [data, department],
+  )
   const activity = useMemo(
     () =>
       department === 'all' ? data.activities : data.activities.filter((a) => !a.jobId || data.jobs.find((j) => j.id === a.jobId)?.departmentId === department),
@@ -123,8 +138,13 @@ export default function DashboardPage() {
       </MetricStrip>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Panel title="Hiring activity" description="Applications, interviews and hires across all vacancies" className="xl:col-span-2" bodyClassName="pb-4">
-          <HiringActivityChart weekly={data.reporting.weekly} monthly={data.reporting.monthly} />
+        <Panel
+          title="Hiring activity"
+          description="Applications received, interviews held and hires, from recorded dates"
+          className="xl:col-span-2"
+          bodyClassName="pb-4"
+        >
+          <HiringActivityChart weekly={series.weekly} monthly={series.monthly} />
         </Panel>
         <Panel
           title="Recruitment funnel"
@@ -161,6 +181,8 @@ export default function DashboardPage() {
           <RecentActivity items={activity} limit={7} />
         </Panel>
       </div>
+
+      <MyTasksPanel />
     </div>
   )
 }

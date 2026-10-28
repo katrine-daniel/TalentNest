@@ -8,12 +8,16 @@
  *
  * The assistant is advisory: it never rejects candidates or changes stages.
  */
-import { mockDb } from '@/services/storage/mockDb'
+import { dataStore } from '@/services/storage/dataStore'
 import { delay, ServiceError } from '@/services/api/apiClient'
-import { getFunnel, getAttentionItems, getAssessmentPassRates, getTimeToHire } from '@/features/analytics/analyticsService'
+import { getFunnel, getAttentionItems, getAssessmentPassRates, getTimeToHire, getSourceEffectiveness } from '@/features/analytics/analyticsService'
 import { formatDateTime, formatDate } from '@/utils/formatDate'
+import { getAIProvider, buildPayload } from './aiProvider'
 
-export const AI_MODE = { live: false, label: 'Simulated responses' }
+const aiProvider = getAIProvider()
+
+export const AI_MODE =
+  aiProvider.mode === 'proxy' ? { live: true, label: 'AI responses via your configured proxy' } : { live: false, label: 'Simulated responses' }
 
 const latency = () => delay(700 + Math.random() * 600)
 
@@ -31,13 +35,13 @@ const RELATED_SKILLS = [
 ]
 
 function getCandidate(candidateId) {
-  const c = mockDb.read('candidates').find((x) => x.id === candidateId)
+  const c = dataStore.read('candidates').find((x) => x.id === candidateId)
   if (!c) throw new ServiceError('Select a candidate in the context panel first.', 'missing-context')
   return c
 }
 
 function getJob(jobId) {
-  const j = mockDb.read('jobs').find((x) => x.id === jobId)
+  const j = dataStore.read('jobs').find((x) => x.id === jobId)
   if (!j) throw new ServiceError('Select a vacancy in the context panel first.', 'missing-context')
   return j
 }
@@ -80,15 +84,21 @@ export async function matchSkills({ candidateId, jobId }) {
   const c = getCandidate(candidateId)
   const j = getJob(jobId)
   const have = new Set(c.skills.map(lower))
+  // provenance: 'verified' = stated in the candidate's resume/profile; 'inferred' = deduced from a related skill.
   const rows = j.skills.map((skill) => {
     if (have.has(lower(skill))) {
       const exp = c.experience.find((e) => lower(e.summary + e.title).includes(lower(skill).split(' ')[0]))
-      return { skill, level: 'match', evidence: exp ? `Skills list; also referenced in role at ${exp.company}` : 'Listed in candidate skills' }
+      return {
+        skill,
+        level: 'match',
+        provenance: 'verified',
+        evidence: exp ? `Listed in skills; also referenced in role at ${exp.company}` : 'Listed in candidate skills',
+      }
     }
     const group = RELATED_SKILLS.find((g) => g.some((s) => lower(s) === lower(skill)))
     const related = group?.find((s) => have.has(lower(s)))
-    if (related) return { skill, level: 'partial', evidence: `Related skill: ${related}` }
-    return { skill, level: 'missing', evidence: 'Not found in resume or profile' }
+    if (related) return { skill, level: 'partial', provenance: 'inferred', evidence: `Inferred from related skill “${related}” — confirm in interview` }
+    return { skill, level: 'missing', provenance: 'verified', evidence: 'Not found in resume or profile' }
   })
   const matched = rows.filter((r) => r.level === 'match').length
   const partial = rows.filter((r) => r.level === 'partial').length
@@ -107,7 +117,132 @@ export async function matchSkills({ candidateId, jobId }) {
       { label: `Vacancy requirements — ${j.title}`, detail: `${j.skills.length} required skills, ${j.experienceMin}–${j.experienceMax} yrs` },
       { label: c.resume?.fileName ?? 'Candidate profile', detail: `${c.skills.length} skills, ${c.experience.length} roles` },
     ],
-    caveat: 'Keyword-based indicator to guide review. It does not account for skills described in different words, and it is not a hiring decision.',
+    caveat:
+      'Keyword-based indicator to guide review, computed only from job-related fields (skills, roles, years of experience). Name, gender, age, photo, nationality and similar characteristics are never used. It is not a hiring decision.',
+  }
+}
+
+// --- Candidate summary ---------------------------------------------------------
+export async function summarizeCandidate({ candidateId, jobId }) {
+  await latency()
+  const c = getCandidate(candidateId)
+  const j = jobId ? dataStore.read('jobs').find((x) => x.id === jobId) : null
+  const apps = dataStore.read('applications').filter((a) => a.candidateId === candidateId)
+  const jobs = dataStore.read('jobs')
+  const verified = [
+    `${c.experienceYears} years of experience; currently ${c.currentTitle}${c.currentCompany !== '—' ? ` at ${c.currentCompany}` : ''}.`,
+    c.skills.length ? `Lists ${c.skills.length} skills: ${c.skills.slice(0, 6).join(', ')}${c.skills.length > 6 ? '…' : ''}.` : 'No skills recorded.',
+    c.education[0] ? `Education: ${[c.education[0].degree, c.education[0].institution].filter(Boolean).join(', ')}.` : 'No education recorded.',
+    `Notice period: ${c.noticePeriod}.`,
+    `${apps.length} application(s): ${
+      apps
+        .map((a) => jobs.find((x) => x.id === a.jobId)?.title)
+        .filter(Boolean)
+        .join('; ') || 'none'
+    }.`,
+  ]
+  const inferred = []
+  const roles = new Set(c.experience.map((e) => e.company))
+  if (roles.size >= 3) inferred.push(`Has worked at ${roles.size} organisations — may bring broad process exposure (confirm motivations for moves).`)
+  if (c.experience.some((e) => /\d/.test(e.summary))) inferred.push('Resume includes quantified achievements, which suggests results-oriented experience.')
+  if (j) {
+    const overlap = j.skills.filter((s) => c.skills.some((cs) => lower(cs) === lower(s)))
+    inferred.push(`${overlap.length} of ${j.skills.length} required skills for ${j.title} appear on the profile.`)
+  }
+  return {
+    kind: 'summary',
+    title: `Candidate summary — ${fullName(c)}`,
+    data: { verified, inferred },
+    sources: [{ label: c.resume?.fileName ?? 'Candidate profile', detail: 'Profile fields and application records' }],
+    caveat: 'Verified points restate recorded data. Inferred points are interpretations to check with the candidate.',
+    editable: false,
+  }
+}
+
+// --- Resume improvement suggestions ----------------------------------------------
+export async function resumeSuggestions({ candidateId, jobId }) {
+  await latency()
+  const c = getCandidate(candidateId)
+  const j = getJob(jobId)
+  const missing = j.skills.filter((s) => !c.skills.some((cs) => lower(cs) === lower(s)))
+  const suggestions = []
+  if (missing.length)
+    suggestions.push({
+      title: 'Address required skills',
+      detail: `If the candidate has experience with ${missing.join(', ')}, it is not stated. Ask them to add concrete examples.`,
+      basis: 'Vacancy requirements vs. listed skills',
+    })
+  const vague = c.experience.filter((e) => e.summary && !/\d/.test(e.summary))
+  if (vague.length)
+    suggestions.push({
+      title: 'Quantify achievements',
+      detail: `${vague.length} role description(s) have no measurable outcomes (volumes, percentages, targets).`,
+      basis: 'Experience summaries',
+    })
+  const empty = c.experience.filter((e) => !e.summary)
+  if (empty.length)
+    suggestions.push({ title: 'Describe responsibilities', detail: `${empty.length} role(s) have no description at all.`, basis: 'Experience entries' })
+  if (!c.resume)
+    suggestions.push({ title: 'Upload a resume', detail: 'No resume file is attached; the profile was entered manually.', basis: 'Candidate record' })
+  if (c.skills.length < 4)
+    suggestions.push({ title: 'List more skills', detail: 'Fewer than four skills are listed, which makes matching unreliable.', basis: 'Skills list' })
+  return {
+    kind: 'suggestions',
+    title: `Resume suggestions — ${fullName(c)} for ${j.title}`,
+    data: {
+      items: suggestions.length
+        ? suggestions
+        : [{ title: 'No gaps detected', detail: 'The profile covers the vacancy requirements we can check automatically.', basis: 'Vacancy requirements' }],
+    },
+    sources: [
+      { label: `Vacancy: ${j.title}`, detail: `${j.skills.length} required skills` },
+      { label: c.resume?.fileName ?? 'Candidate profile', detail: `${c.experience.length} roles` },
+    ],
+    caveat: 'Suggestions are for coaching the candidate or clarifying in interview — not for screening them out.',
+  }
+}
+
+// --- Job description review --------------------------------------------------------
+const EXCLUSIONARY = [
+  { term: /\b(rock ?star|ninja|guru)\b/i, suggestion: 'Use the actual role title; jargon can discourage qualified applicants.' },
+  { term: /\b(young|energetic|digital native)\b/i, suggestion: 'Avoid age-coded language; describe the work instead.' },
+  { term: /\bnative (english )?speaker\b/i, suggestion: 'Specify the language proficiency needed (e.g. "fluent English") rather than native status.' },
+  { term: /\b(he|his|him)\b/i, suggestion: 'Use gender-neutral language ("they", "you").' },
+  { term: /\bmust have \d+\+? years\b/i, suggestion: 'Consider describing competencies instead of strict year counts.' },
+]
+
+export async function reviewJobDescription({ jobId }) {
+  await latency()
+  const j = getJob(jobId)
+  const findings = []
+  const words = j.description.trim().split(/\s+/).length
+  if (words < 60)
+    findings.push({
+      title: 'Add more detail',
+      detail: `The description has ${words} words. Include day-to-day responsibilities, team context and how success is measured.`,
+      basis: 'Description length',
+    })
+  const unmentioned = j.skills.filter((s) => !lower(j.description).includes(lower(s).split(' ')[0]))
+  if (unmentioned.length)
+    findings.push({
+      title: 'Explain required skills',
+      detail: `These required skills are not discussed in the description: ${unmentioned.join(', ')}.`,
+      basis: 'Skills vs. description',
+    })
+  if (!j.salaryMin || !j.salaryMax)
+    findings.push({ title: 'State the salary range', detail: 'Published ranges improve applicant quality and pay transparency.', basis: 'Salary fields' })
+  EXCLUSIONARY.forEach(({ term, suggestion }) => {
+    const m = j.description.match(term)
+    if (m) findings.push({ title: `Reconsider “${m[0]}”`, detail: suggestion, basis: 'Inclusive-language check' })
+  })
+  if (!/\b(hybrid|remote|on-site|office)\b/i.test(j.description))
+    findings.push({ title: 'Mention the work arrangement', detail: `The posting is ${j.workMode}; say so in the description.`, basis: 'Work mode field' })
+  return {
+    kind: 'suggestions',
+    title: `Job description review — ${j.title}`,
+    data: { items: findings.length ? findings : [{ title: 'Looks good', detail: 'No issues found by the automated checks.', basis: 'All checks' }] },
+    sources: [{ label: `Vacancy: ${j.title}`, detail: `${words} words, ${j.skills.length} required skills` }],
+    caveat: 'Rule-based checks. A person should review tone and accuracy before publishing.',
   }
 }
 
@@ -268,25 +403,34 @@ export async function generateAssessmentQuestions({ jobId }) {
 export async function summarizeFeedback({ candidateId }) {
   await latency()
   const c = getCandidate(candidateId)
-  const users = mockDb.read('users')
-  const scorecards = mockDb.read('scorecards')
-  const interviews = mockDb.read('interviews').filter((i) => i.candidateId === candidateId && i.feedback)
-  if (!interviews.length) {
+  const users = dataStore.read('users')
+  const scorecards = dataStore.read('scorecards')
+  const interviews = new Map(
+    dataStore
+      .read('interviews')
+      .filter((i) => i.candidateId === candidateId)
+      .map((i) => [i.id, i]),
+  )
+  // Only submitted scorecards are summarised; drafts stay private to their author.
+  const submitted = dataStore.read('interviewFeedback').filter((f) => f.status === 'submitted' && interviews.has(f.interviewId))
+  if (!submitted.length) {
     throw new ServiceError(`${fullName(c)} has no submitted interview feedback yet.`, 'no-data')
   }
-  const entries = interviews.map((i) => {
+  const entries = submitted.map((f) => {
+    const i = interviews.get(f.interviewId)
     const sc = scorecards.find((s) => s.id === i.scorecardId)
-    const avg = Object.values(i.feedback.ratings).reduce((a, b) => a + b, 0) / Object.values(i.feedback.ratings).length
+    const values = Object.values(f.ratings).filter((v) => v > 0)
+    const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0
     return {
-      id: i.id,
+      id: f.id,
       stage: i.stageName,
-      interviewer: users.find((u) => u.id === i.feedback.submittedById)?.name ?? 'Interviewer',
-      date: i.feedback.submittedAt,
-      recommendation: i.feedback.recommendation,
+      interviewer: users.find((u) => u.id === f.interviewerId)?.name ?? 'Interviewer',
+      date: f.submittedAt,
+      recommendation: f.recommendation,
       average: Math.round(avg * 10) / 10,
-      strengths: i.feedback.strengths,
-      concerns: i.feedback.concerns,
-      criteria: sc?.criteria.map((cr) => ({ name: cr.name, rating: i.feedback.ratings[cr.id] })) ?? [],
+      strengths: f.strengths,
+      concerns: f.concerns,
+      criteria: sc?.criteria.map((cr) => ({ name: cr.name, rating: f.ratings[cr.id], evidence: f.evidence?.[cr.id] ?? '' })) ?? [],
     }
   })
   const positive = entries.filter((e) => ['yes', 'strong-yes'].includes(e.recommendation)).length
@@ -320,7 +464,7 @@ export async function draftEmail({ candidateId, jobId, purpose = 'interview-invi
   await latency()
   const c = getCandidate(candidateId)
   const j = getJob(jobId)
-  const next = mockDb
+  const next = dataStore
     .read('interviews')
     .filter((i) => i.candidateId === candidateId && i.jobId === jobId && i.status === 'scheduled')
     .sort((a, b) => new Date(a.start) - new Date(b.start))[0]
@@ -365,33 +509,26 @@ export async function draftEmail({ candidateId, jobId, purpose = 'interview-invi
 // --- Funnel insights ------------------------------------------------------------
 export async function funnelInsights() {
   await latency()
-  const data = {
-    jobs: mockDb.read('jobs'),
-    applications: mockDb.read('applications'),
-    candidates: mockDb.read('candidates'),
-    users: mockDb.read('users'),
-    departments: mockDb.read('departments'),
-    assessmentTemplates: mockDb.read('assessmentTemplates'),
-    interviews: mockDb.read('interviews'),
-    assessments: mockDb.read('assessments'),
-    offers: mockDb.read('offers'),
-    reporting: mockDb.read('reporting'),
-  }
+  const data = dataStore.getSnapshot().data
   const funnel = getFunnel(data)
-  const weakest = [...funnel.slice(1)].sort((a, b) => a.conversion - b.conversion)[0]
+  const weakest = [...funnel.slice(1)].filter((f) => f.count > 0 || f.conversion > 0).sort((a, b) => a.conversion - b.conversion)[0]
   const attention = getAttentionItems(data)
   const pass = getAssessmentPassRates(data).sort((a, b) => a.rate - b.rate)[0]
-  const tth = getTimeToHire(data).sort((a, b) => b.days - a.days)[0]
+  const tth = getTimeToHire(data)
+    .filter((d) => d.days !== null)
+    .sort((a, b) => b.days - a.days)[0]
+  const sources = getSourceEffectiveness(data).filter((s) => s.applications >= 3 && s.interviewRate !== null)
+  const bestSource = [...sources].sort((a, b) => b.interviewRate - a.interviewRate)[0]
   const insights = [
-    {
-      headline: `Largest drop-off is at "${weakest.label}" (${weakest.conversion}% conversion).`,
+    weakest && {
+      headline: `Largest drop-off is at "${weakest.label}" (${weakest.conversion}% conversion from the previous step).`,
       evidence: funnel.map((f) => `${f.label}: ${f.count}`).join(' → '),
       suggestion: 'Review stage criteria and recruiter notes for candidates who stopped here.',
     },
     {
-      headline: `${attention.filter((a) => a.kind === 'feedback').length} interviews are waiting on feedback.`,
-      evidence: 'Completed interviews without a submitted scorecard.',
-      suggestion: 'Nudge interviewers — pending feedback is the most common cause of pipeline stalls.',
+      headline: `${attention.filter((a) => a.kind === 'feedback').length} completed interviews are missing at least one scorecard.`,
+      evidence: 'Completed interviews where not every panelist has submitted feedback.',
+      suggestion: 'Nudge interviewers — pending feedback is a common cause of pipeline stalls.',
     },
     pass && {
       headline: `${pass.name} has the lowest pass rate (${pass.rate}%).`,
@@ -399,9 +536,14 @@ export async function funnelInsights() {
       suggestion: 'Check whether the pass mark or screening criteria need calibrating.',
     },
     tth && {
-      headline: `${tth.name} has the longest time-to-hire (${tth.days} days).`,
-      evidence: tth.source === 'live' ? `${tth.hires} hires in current data` : 'Based on historical reporting data',
+      headline: `${tth.name} has the longest recorded time-to-hire (${tth.days} days).`,
+      evidence: `Average over ${tth.hires} hire(s) with both application and hire dates recorded.`,
       suggestion: 'Consider parallel scheduling of interview rounds for this department.',
+    },
+    bestSource && {
+      headline: `${bestSource.source} has the highest interview rate (${bestSource.interviewRate}%).`,
+      evidence: `${bestSource.interviewed} of ${bestSource.applications} applications from this source reached an interview.`,
+      suggestion: 'Small samples can mislead — treat this as a prompt to investigate, not a conclusion.',
     },
   ].filter(Boolean)
   return {
@@ -416,17 +558,33 @@ export async function funnelInsights() {
 }
 
 // --- Free-text routing ------------------------------------------------------------
-export const AI_TOOLS = [
+const LOCAL_TOOLS = [
+  { id: 'summary', label: 'Candidate summary', needs: ['candidate'], run: (ctx) => summarizeCandidate(ctx) },
   { id: 'resume', label: 'Extract resume', needs: ['candidate'], run: (ctx) => extractResume(ctx) },
-  { id: 'match', label: 'Match skills to job', needs: ['candidate', 'job'], run: (ctx) => matchSkills(ctx) },
+  { id: 'match', label: 'Match resume to job', needs: ['candidate', 'job'], run: (ctx) => matchSkills(ctx) },
+  { id: 'resume-tips', label: 'Resume improvement tips', needs: ['candidate', 'job'], run: (ctx) => resumeSuggestions(ctx) },
   { id: 'interview-q', label: 'Interview questions', needs: ['job'], run: (ctx) => generateInterviewQuestions(ctx) },
   { id: 'assessment-q', label: 'Assessment questions', needs: ['job'], run: (ctx) => generateAssessmentQuestions(ctx) },
   { id: 'feedback', label: 'Summarise feedback', needs: ['candidate'], run: (ctx) => summarizeFeedback(ctx) },
+  { id: 'jd-review', label: 'Improve job description', needs: ['job'], run: (ctx) => reviewJobDescription(ctx) },
   { id: 'email', label: 'Draft email', needs: ['candidate', 'job'], run: (ctx) => draftEmail(ctx) },
   { id: 'funnel', label: 'Funnel insights', needs: [], run: () => funnelInsights() },
 ]
 
+/**
+ * When an AI proxy is configured, tools run through it (the proxy holds the provider
+ * key and returns the same response shapes). Otherwise the local rule-based
+ * implementations run and every response is labelled "Simulated".
+ */
+export const AI_TOOLS = LOCAL_TOOLS.map((tool) => ({
+  ...tool,
+  run: (ctx) => (aiProvider.mode === 'proxy' ? aiProvider.run(tool.id, buildPayload(tool.id, ctx)) : tool.run(ctx)),
+}))
+
 const ROUTES = [
+  { test: /summary|overview|tell me about/i, tool: 'summary' },
+  { test: /improve (the )?(job|jd|description)|job description/i, tool: 'jd-review' },
+  { test: /resume (tips|improve|suggest)|improve (the )?resume/i, tool: 'resume-tips' },
   { test: /resume|cv|extract|parse/i, tool: 'resume' },
   { test: /match|fit|skill gap|skills/i, tool: 'match' },
   { test: /assessment|test question|quiz/i, tool: 'assessment-q' },
@@ -444,7 +602,7 @@ export async function ask(message, context) {
       kind: 'text',
       title: 'How I can help',
       data: {
-        text: 'In simulated mode I can extract resume details, match skills to a vacancy, suggest interview or assessment questions, summarise interview feedback, draft candidate emails and highlight funnel bottlenecks. Choose a candidate and vacancy on the left, then pick a task or describe it in your own words.',
+        text: 'I can summarise a candidate, extract resume details, match a resume to a vacancy, suggest resume improvements, generate interview or assessment questions, summarise interview feedback, review a job description, draft candidate emails and highlight funnel bottlenecks. Choose a candidate and vacancy on the left, then pick a task or describe it in your own words.',
       },
     }
   }

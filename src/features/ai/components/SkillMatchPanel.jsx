@@ -47,6 +47,16 @@ export default function SkillMatchPanel({ data }) {
                 <span className="font-medium">{r.skill}</span>
                 <span className="text-muted block text-xs">{r.evidence}</span>
               </span>
+              {r.provenance && (
+                <span
+                  className={cn(
+                    'text-xxs shrink-0 rounded px-1.5 py-0.5 font-medium',
+                    r.provenance === 'verified' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800',
+                  )}
+                >
+                  {r.provenance}
+                </span>
+              )}
             </li>
           )
         })}

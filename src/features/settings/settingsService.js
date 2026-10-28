@@ -1,11 +1,11 @@
-import { mockDb } from '@/services/storage/mockDb'
+import { dataStore } from '@/services/storage/dataStore'
 import { mockRequest, ServiceError } from '@/services/api/apiClient'
 import { createId } from '@/utils/ids'
 
 function upsert(collection, item, prefix) {
-  const exists = item.id && mockDb.read(collection).some((x) => x.id === item.id)
+  const exists = item.id && dataStore.read(collection).some((x) => x.id === item.id)
   const record = exists ? item : { ...item, id: createId(prefix) }
-  mockDb.write(collection, (list) => (exists ? list.map((x) => (x.id === record.id ? record : x)) : [...list, record]))
+  dataStore.write(collection, (list) => (exists ? list.map((x) => (x.id === record.id ? record : x)) : [...list, record]))
   return record
 }
 
@@ -14,7 +14,7 @@ export const settingsService = {
   /** Demo: creates an "invited" user record. No invitation email is sent. */
   async inviteUser(values) {
     return mockRequest(() => {
-      if (mockDb.read('users').some((u) => u.email.toLowerCase() === values.email.toLowerCase())) {
+      if (dataStore.read('users').some((u) => u.email.toLowerCase() === values.email.toLowerCase())) {
         throw new ServiceError('A user with this email already exists')
       }
       return upsert('users', { ...values, departmentId: values.departmentId || null, status: 'invited' }, 'usr')
@@ -25,7 +25,7 @@ export const settingsService = {
     return mockRequest(
       () => {
         let updated
-        mockDb.write('users', (list) => list.map((u) => (u.id === id ? (updated = { ...u, ...patch }) : u)))
+        dataStore.write('users', (list) => list.map((u) => (u.id === id ? (updated = { ...u, ...patch }) : u)))
         return updated
       },
       { latency: 200 },
@@ -34,13 +34,13 @@ export const settingsService = {
 
   // Roles -------------------------------------------------------------------
   async setRolePermissions(rolePermissions) {
-    return mockRequest(() => mockDb.write('settings', (s) => ({ ...s, rolePermissions })))
+    return mockRequest(() => dataStore.write('settings', (s) => ({ ...s, rolePermissions })))
   },
 
   // Departments ---------------------------------------------------------------
   async saveDepartment(values) {
     return mockRequest(() => {
-      const dup = mockDb.read('departments').some((d) => d.id !== values.id && d.name.toLowerCase() === values.name.trim().toLowerCase())
+      const dup = dataStore.read('departments').some((d) => d.id !== values.id && d.name.toLowerCase() === values.name.trim().toLowerCase())
       if (dup) throw new ServiceError('A department with this name already exists')
       return upsert('departments', { ...values, name: values.name.trim() }, 'dep')
     })
@@ -48,9 +48,9 @@ export const settingsService = {
 
   async deleteDepartment(id) {
     return mockRequest(() => {
-      const used = mockDb.read('jobs').filter((j) => j.departmentId === id).length
+      const used = dataStore.read('jobs').filter((j) => j.departmentId === id).length
       if (used) throw new ServiceError(`${used} vacancies belong to this department. Reassign them first.`)
-      mockDb.write('departments', (list) => list.filter((d) => d.id !== id))
+      dataStore.write('departments', (list) => list.filter((d) => d.id !== id))
     })
   },
 
@@ -71,15 +71,15 @@ export const settingsService = {
 
   async deleteWorkflowTemplate(id) {
     return mockRequest(() => {
-      const used = mockDb.read('jobs').filter((j) => j.workflowTemplateId === id).length
+      const used = dataStore.read('jobs').filter((j) => j.workflowTemplateId === id).length
       if (used) throw new ServiceError(`${used} vacancies were created from this template. It can't be deleted.`)
-      mockDb.write('workflowTemplates', (list) => list.filter((t) => t.id !== id))
+      dataStore.write('workflowTemplates', (list) => list.filter((t) => t.id !== id))
     })
   },
 
   // Notification preferences --------------------------------------------------
   async saveNotificationPrefs(prefs) {
-    return mockRequest(() => mockDb.write('settings', (s) => ({ ...s, notificationPrefs: prefs })))
+    return mockRequest(() => dataStore.write('settings', (s) => ({ ...s, notificationPrefs: prefs })))
   },
 
   // Assessment templates & scorecards -----------------------------------------
@@ -103,6 +103,6 @@ export const settingsService = {
 
   // Demo data -----------------------------------------------------------------
   async resetDemoData() {
-    return mockRequest(() => mockDb.reset(), { latency: 400 })
+    return mockRequest(() => dataStore.reset(), { latency: 400 })
   },
 }

@@ -13,7 +13,6 @@ const SERIES = [
 export default function HiringActivityChart({ weekly, monthly, height = 260 }) {
   const [range, setRange] = useState('weekly')
   const data = range === 'weekly' ? weekly : monthly
-  const xKey = range === 'weekly' ? 'week' : 'month'
   const totals = SERIES.map((s) => ({ ...s, total: data.reduce((sum, d) => sum + d[s.key], 0) }))
 
   return (
@@ -35,7 +34,7 @@ export default function HiringActivityChart({ weekly, monthly, height = 260 }) {
           onChange={setRange}
           options={[
             { value: 'weekly', label: '12 weeks' },
-            { value: 'monthly', label: '12 months' },
+            { value: 'monthly', label: '6 months' },
           ]}
         />
       </div>
@@ -49,7 +48,7 @@ export default function HiringActivityChart({ weekly, monthly, height = 260 }) {
               </linearGradient>
             </defs>
             <CartesianGrid stroke={CHART_COLORS.grid} vertical={false} />
-            <XAxis dataKey={xKey} {...AXIS_PROPS} interval="preserveStartEnd" minTickGap={12} />
+            <XAxis dataKey="label" {...AXIS_PROPS} interval="preserveStartEnd" minTickGap={12} />
             <YAxis {...AXIS_PROPS} width={44} allowDecimals={false} />
             <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.brandSoft, strokeDasharray: '3 3' }} />
             <Area
@@ -66,7 +65,6 @@ export default function HiringActivityChart({ weekly, monthly, height = 260 }) {
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-      <p className="text-xxs text-faint px-5 pt-1">Historical series from reporting data (demo).</p>
     </div>
   )
 }

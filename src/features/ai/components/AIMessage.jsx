@@ -10,6 +10,7 @@ import ResumeInsights from './ResumeInsights'
 import SkillMatchPanel from './SkillMatchPanel'
 import { RECOMMENDATIONS } from '@/features/interviews/components/FeedbackSummary'
 import { formatDate } from '@/utils/formatDate'
+import { AI_MODE } from '@/features/ai/aiService'
 
 function QuestionsView({ data, editing, draft, setDraft }) {
   if (editing) {
@@ -131,8 +132,45 @@ function FunnelView({ data }) {
   )
 }
 
+function SummaryView({ data }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <div>
+        <p className="text-xxs mb-1.5 font-semibold tracking-wide text-emerald-700 uppercase">Verified from records</p>
+        <ul className="text-ink-soft list-disc space-y-1 pl-4 text-sm">
+          {data.verified.map((v) => (
+            <li key={v}>{v}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <p className="text-xxs mb-1.5 font-semibold tracking-wide text-amber-700 uppercase">Inferred — verify</p>
+        <ul className="text-ink-soft list-disc space-y-1 pl-4 text-sm">
+          {data.inferred.length ? data.inferred.map((v) => <li key={v}>{v}</li>) : <li>No inferences made.</li>}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+function SuggestionsView({ data }) {
+  return (
+    <ul className="space-y-3">
+      {data.items.map((s) => (
+        <li key={s.title} className="text-sm">
+          <p className="text-ink font-medium">{s.title}</p>
+          <p className="text-ink-soft">{s.detail}</p>
+          <p className="text-faint text-xs">Based on: {s.basis}</p>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function toPlainText(response) {
   const { kind, data } = response
+  if (kind === 'summary') return [...data.verified.map((v) => `Verified: ${v}`), ...data.inferred.map((v) => `Inferred: ${v}`)].join('\n')
+  if (kind === 'suggestions') return data.items.map((s) => `• ${s.title}: ${s.detail}`).join('\n')
   if (kind === 'email') return `Subject: ${data.subject}\n\n${data.body}`
   if (kind === 'questions') return data.items.map((q, i) => `${i + 1}. ${q.question}`).join('\n')
   if (kind === 'funnel') return data.insights.map((i) => `• ${i.headline}\n  ${i.suggestion}`).join('\n')
@@ -189,8 +227,8 @@ export default function AIMessage({ message, onRetry, onSaveEdit }) {
           <>
             <header className="border-line flex flex-wrap items-center gap-2 border-b px-4 py-2.5">
               <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{response.title}</h3>
-              <StatusBadge tone="neutral" dot={false}>
-                Simulated
+              <StatusBadge tone={AI_MODE.live ? 'brand' : 'neutral'} dot={false}>
+                {AI_MODE.live ? 'AI-generated' : 'Simulated'}
               </StatusBadge>
               {response.edited && (
                 <StatusBadge tone="brand" dot={false}>
@@ -206,6 +244,8 @@ export default function AIMessage({ message, onRetry, onSaveEdit }) {
               {response.kind === 'feedbackSummary' && <FeedbackView data={response.data} />}
               {response.kind === 'funnel' && <FunnelView data={response.data} />}
               {response.kind === 'text' && <p className="text-ink-soft text-sm leading-relaxed">{response.data.text}</p>}
+              {response.kind === 'summary' && <SummaryView data={response.data} />}
+              {response.kind === 'suggestions' && <SuggestionsView data={response.data} />}
               {response.caveat && <p className="bg-subtle text-muted mt-3 rounded-md px-3 py-2 text-xs">{response.caveat}</p>}
             </div>
             <footer className="border-line flex flex-wrap items-center gap-1 border-t px-2 py-1.5">

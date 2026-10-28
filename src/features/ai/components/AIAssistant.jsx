@@ -1,5 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BarChart3, ClipboardList, FileSearch, ListChecks, Mail, MessageSquareQuote, SendHorizonal, Sparkles, Target, Trash2 } from 'lucide-react'
+import {
+  BarChart3,
+  ClipboardList,
+  FilePen,
+  FileSearch,
+  ListChecks,
+  Mail,
+  MessageSquareQuote,
+  NotebookPen,
+  SendHorizonal,
+  Sparkles,
+  Target,
+  Trash2,
+  UserRoundSearch,
+} from 'lucide-react'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import { Field, Select, Textarea } from '@/components/ui/FormControls'
@@ -7,10 +21,13 @@ import AIMessage from './AIMessage'
 import { useAI } from '@/features/ai/hooks/useAI'
 import { useCollection, fullName } from '@/hooks/useStore'
 import { useSession } from '@/app/providers/SessionContext'
-import { AI_TOOLS, EMAIL_PURPOSES } from '@/features/ai/aiService'
+import { AI_MODE, AI_TOOLS, EMAIL_PURPOSES } from '@/features/ai/aiService'
 import { cn } from '@/utils/cn'
 
 const TOOL_ICONS = {
+  summary: UserRoundSearch,
+  'resume-tips': NotebookPen,
+  'jd-review': FilePen,
   resume: FileSearch,
   match: Target,
   'interview-q': ListChecks,
@@ -211,7 +228,11 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
             />
             <Button type="submit" variant="primary" iconOnly icon={SendHorizonal} aria-label="Send" disabled={!text.trim() || ai.busy} loading={ai.busy} />
           </div>
-          <p className="text-faint mt-1.5 px-1 text-[11px]">Simulated mode: responses are generated locally from demo data — no AI model is connected.</p>
+          <p className="text-faint mt-1.5 px-1 text-[11px]">
+            {AI_MODE.live
+              ? 'Responses come from the AI service configured by your administrator. Always review before acting.'
+              : 'Simulated mode: responses are generated locally by rules — no AI model is connected.'}
+          </p>
         </form>
       </section>
     </div>
