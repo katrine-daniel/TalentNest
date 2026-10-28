@@ -101,6 +101,40 @@ export const settingsService = {
     })
   },
 
+  // Onboarding checklist templates -------------------------------------------
+  async saveOnboardingTemplate(values) {
+    return mockRequest(() => {
+      if (!values.name?.trim()) throw new ServiceError('Template name is required')
+      const tasks = values.tasks.filter((t) => t.label.trim())
+      if (!tasks.length) throw new ServiceError('Add at least one checklist item')
+      if (tasks.some((t) => !(Number(t.dueOffsetDays) >= -30 && Number(t.dueOffsetDays) <= 90)))
+        throw new ServiceError('Due offsets must be between -30 and 90 days')
+      return upsert(
+        'onboardingTemplates',
+        {
+          ...values,
+          name: values.name.trim(),
+          tasks: tasks.map((t) => ({
+            ...t,
+            id: t.id || createId('ot'),
+            label: t.label.trim(),
+            dueOffsetDays: Number(t.dueOffsetDays),
+            ownerRole: t.ownerRole || null,
+          })),
+        },
+        'obt',
+      )
+    })
+  },
+
+  async deleteOnboardingTemplate(id) {
+    return mockRequest(() => {
+      const used = dataStore.read('automationRules').filter((r) => r.actions.some((a) => a.type === 'create_onboarding_plan' && a.templateId === id)).length
+      if (used) throw new ServiceError(` automation rule(s) use this template. Update them first.`)
+      dataStore.write('onboardingTemplates', (list) => list.filter((t) => t.id !== id))
+    })
+  },
+
   // Demo data -----------------------------------------------------------------
   async resetDemoData() {
     return mockRequest(() => dataStore.reset(), { latency: 400 })

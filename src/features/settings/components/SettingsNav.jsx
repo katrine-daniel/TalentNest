@@ -1,5 +1,5 @@
-﻿import { NavLink } from 'react-router-dom'
-import { Bell, Building2, ClipboardCheck, Database, GitBranch, ListChecks, ShieldCheck, Users } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { Bell, Building2, ClipboardCheck, Database, GitBranch, ListChecks, Rocket, ShieldCheck, Users } from 'lucide-react'
 import { cn } from '@/utils/cn'
 
 export const SETTINGS_SECTIONS = [
@@ -10,15 +10,16 @@ export const SETTINGS_SECTIONS = [
   { id: 'notifications', label: 'Notifications', icon: Bell, description: 'Email and in-app alerts' },
   { id: 'assessments', label: 'Assessment templates', icon: ClipboardCheck, description: 'Tests, durations and pass marks' },
   { id: 'scorecards', label: 'Interview scorecards', icon: ListChecks, description: 'Evaluation criteria and weights' },
-  { id: 'data', label: 'Demo data', icon: Database, description: 'Reset the sample data set' },
+  { id: 'onboarding', label: 'Onboarding checklists', icon: Rocket, description: 'Reusable new-hire checklists and owners' },
+  { id: 'data', label: 'Demo data', icon: Database, description: 'Reset the sample data set', demoOnly: true },
 ]
 
 /** Vertical settings navigation on desktop; horizontal scrolling tabs on smaller screens. */
-export default function SettingsNav() {
+export default function SettingsNav({ sections = SETTINGS_SECTIONS }) {
   return (
     <nav aria-label="Settings sections" className="no-scrollbar -mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
       <ul className="border-line flex gap-1 border-b lg:flex-col lg:border-b-0">
-        {SETTINGS_SECTIONS.map(({ id, label, icon: Icon }) => (
+        {sections.map(({ id, label, icon: Icon }) => (
           <li key={id} className="shrink-0">
             <NavLink
               to={`/settings/${id}`}
