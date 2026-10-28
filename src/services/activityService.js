@@ -1,4 +1,4 @@
-import { mockDb } from './mockDb'
+import { mockDb } from '@/services/storage/mockDb'
 import { createId } from '@/utils/ids'
 
 /** Records an activity entry. Called by other services after a successful mutation. */

@@ -1,8 +1,8 @@
 import { BriefcaseBusiness, CalendarPlus, ClipboardCheck, FileSignature, Plus, UserPlus } from 'lucide-react'
 import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
-import { useGlobalActions } from '@/context/GlobalActionsContext'
-import { useSession } from '@/context/SessionContext'
+import { useGlobalActions } from '@/app/providers/GlobalActionsContext'
+import { useSession } from '@/app/providers/SessionContext'
 
 export default function QuickCreateMenu() {
   const actions = useGlobalActions()

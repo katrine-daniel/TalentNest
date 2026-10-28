@@ -4,9 +4,9 @@ import { ChevronDown, Eye, RotateCcw, Settings, ShieldCheck } from 'lucide-react
 import Dropdown from '@/components/ui/Dropdown'
 import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import { useSession } from '@/context/SessionContext'
+import { useSession } from '@/app/providers/SessionContext'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
-import { settingsService } from '@/services/settingsService'
+import { settingsService } from '@/features/settings/settingsService'
 import { ROLES } from '@/utils/permissions'
 
 export default function UserMenu() {

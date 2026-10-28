@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { ROUTE_LABELS } from '@/config/navigation'
 import { useLookups, fullName } from '@/hooks/useStore'
-import { SETTINGS_SECTIONS } from '@/components/settings/SettingsNav'
+import { SETTINGS_SECTIONS } from '@/features/settings/components/SettingsNav'
 
 /** Derives a breadcrumb trail from the current URL and the data store. */
 export default function Breadcrumbs() {

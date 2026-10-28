@@ -4,7 +4,7 @@ import GlobalSearch, { MobileSearch } from './GlobalSearch'
 import QuickCreateMenu from './QuickCreateMenu'
 import NotificationsPanel from './NotificationsPanel'
 import UserMenu from './UserMenu'
-import { useSession } from '@/context/SessionContext'
+import { useSession } from '@/app/providers/SessionContext'
 
 export default function Topbar({ onOpenNav }) {
   const { viewAsRole, role, setViewAsRole } = useSession()

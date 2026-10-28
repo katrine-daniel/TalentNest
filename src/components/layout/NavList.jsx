@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { cn } from '@/utils/cn'
 import { NAV_SECTIONS, SETTINGS_NAV } from '@/config/navigation'
 import { useCollection } from '@/hooks/useStore'
-import { useSession } from '@/context/SessionContext'
+import { useSession } from '@/app/providers/SessionContext'
 
 function useNavBadges() {
   const interviews = useCollection('interviews')

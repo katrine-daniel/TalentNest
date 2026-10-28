@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import Avatar from '@/components/ui/Avatar'
-import { useSession } from '@/context/SessionContext'
+import { useSession } from '@/app/providers/SessionContext'
 import { cn } from '@/utils/cn'
 
 /** Signed-in user card at the bottom of the sidebar. Links to the user's settings. */

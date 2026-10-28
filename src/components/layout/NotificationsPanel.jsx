@@ -4,7 +4,7 @@ import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import { useCollection } from '@/hooks/useStore'
-import { notificationService } from '@/services/notificationService'
+import { notificationService } from '@/services/notifications/notificationService'
 import { formatRelative } from '@/utils/formatDate'
 import { cn } from '@/utils/cn'
 

@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react'
-import { mockDb } from '@/services/mockDb'
+import { mockDb } from '@/services/storage/mockDb'
 
 const EMPTY = Object.freeze([])
 
