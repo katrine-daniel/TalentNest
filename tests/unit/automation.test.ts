@@ -44,7 +44,12 @@ describe('automation engine', () => {
     const app = db().applications.find((a) => a.candidateId === c.id)!
     expect(db().tasks.filter((t) => t.applicationId === app.id && /Screening call/.test(t.title))).toHaveLength(1)
     // Replaying the same event is skipped by duplicate prevention.
-    const event = { type: 'application.created' as const, entityId: app.id, actorId: RECRUITER, context: { applicationId: app.id, candidateId: c.id, jobId: job.id } }
+    const event = {
+      type: 'application.created' as const,
+      entityId: app.id,
+      actorId: RECRUITER,
+      context: { applicationId: app.id, candidateId: c.id, jobId: job.id },
+    }
     handleEvent(event)
     expect(db().tasks.filter((t) => t.applicationId === app.id && /Screening call/.test(t.title))).toHaveLength(1)
     expect(db().automationRuns[0]).toMatchObject({ status: 'skipped' })
@@ -56,13 +61,19 @@ describe('automation engine', () => {
     await automationRuleService.setEnabled('rule-screen-task', false, { actorId: ADMIN })
     const job = db().jobs.find((j) => j.status === 'open')!
     const before = db().tasks.length
-    const c = await candidateService.create({ firstName: 'Ref', lastName: 'Erral', email: 'ref@example.test', source: 'Referral', jobId: job.id }, { actorId: RECRUITER })
+    const c = await candidateService.create(
+      { firstName: 'Ref', lastName: 'Erral', email: 'ref@example.test', source: 'Referral', jobId: job.id },
+      { actorId: RECRUITER },
+    )
     expect(db().tasks.length).toBe(before)
     expect(db().notifications.some((n) => n.title === 'Referral fast-track' && n.body.includes('Ref Erral'))).toBe(true)
 
     const app = db().applications.find((a) => a.candidateId === c.id)!
     const notifications = db().notifications.length
-    const preview = previewRule({ ...rule, conditions: [{ field: 'candidate.source', operator: 'equals', value: 'LinkedIn' }] }, { type: 'application.created', entityId: app.id, actorId: null, context: { applicationId: app.id } })
+    const preview = previewRule(
+      { ...rule, conditions: [{ field: 'candidate.source', operator: 'equals', value: 'LinkedIn' }] },
+      { type: 'application.created', entityId: app.id, actorId: null, context: { applicationId: app.id } },
+    )
     expect(preview.matches).toBe(false)
     expect(preview.failingConditions).toHaveLength(1)
     expect(db().notifications.length).toBe(notifications)

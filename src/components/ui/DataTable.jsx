@@ -55,7 +55,8 @@ export default function DataTable({
           ))}
         </ul>
       )}
-      <div className={cn('scrollbar-thin overflow-x-auto', mobileCard && 'hidden md:block', className)}>
+      {/* `relative` keeps absolutely positioned sr-only labels inside the scroll area so they can't widen the page. */}
+      <div className={cn('relative scrollbar-thin overflow-x-auto', mobileCard && 'hidden md:block', className)}>
         <table className="w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-line border-b">

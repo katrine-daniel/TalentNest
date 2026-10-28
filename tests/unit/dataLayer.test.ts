@@ -48,7 +48,11 @@ describe('demo persistence', () => {
   })
 
   it('reports background write failures', async () => {
-    const failing = { kind: 'demo' as const, load: async () => (await createDemoDriver({ latencyMs: 0 }).load()), persist: async () => Promise.reject(new Error('offline')) }
+    const failing = {
+      kind: 'demo' as const,
+      load: async () => await createDemoDriver({ latencyMs: 0 }).load(),
+      persist: async () => Promise.reject(new Error('offline')),
+    }
     await dataStore.connect(failing, { force: true })
     const onError = vi.fn()
     const off = dataStore.onPersistError(onError)
@@ -85,7 +89,9 @@ function fakeSupabase(tables: Record<string, Record<string, unknown>[]> = {}) {
 
 describe('supabase driver', () => {
   it('seeds starter templates (never sample candidates) for a new organization', async () => {
-    const { client, calls } = fakeSupabase({ org_members: [{ user_id: 'u1', full_name: 'Owner', email: 'o@x.test', title: null, role: 'Admin', department_id: null, status: 'active' }] })
+    const { client, calls } = fakeSupabase({
+      org_members: [{ user_id: 'u1', full_name: 'Owner', email: 'o@x.test', title: null, role: 'Admin', department_id: null, status: 'active' }],
+    })
     const data = await createSupabaseDriver({ client, orgId: 'org-1', userId: 'u1' }).load()
     expect(data.candidates).toEqual([])
     expect(data.jobs).toEqual([])

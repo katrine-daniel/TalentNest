@@ -80,7 +80,7 @@ export default function AppLayout() {
       <MobileNavigation open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
       <div className={cn('min-h-dvh transition-[padding] duration-200 ease-out md:pl-16', !collapsed && 'lg:pl-64')}>
         <Topbar onOpenNav={() => setMobileNavOpen(true)} />
-        <main id="main" className="mx-auto w-full max-w-[1480px] px-4 pt-5 pb-16 sm:px-6 lg:px-8 lg:pt-6">
+        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1480px] px-4 pt-5 pb-16 focus:outline-none sm:px-6 lg:px-8 lg:pt-6">
           {content}
         </main>
       </div>
