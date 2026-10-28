@@ -40,7 +40,7 @@ export function GlobalActionsProvider({ children }) {
     <GlobalActionsContext.Provider value={api}>
       {children}
       <CandidateForm open={type === 'candidate'} onClose={close} candidate={payload?.candidate} defaultJobId={payload?.jobId} />
-      <JobForm open={type === 'job'} onClose={close} job={payload?.job} />
+      <JobForm open={type === 'job'} onClose={close} job={payload?.job} prefill={payload?.prefill} />
       <ScheduleModal open={type === 'schedule'} onClose={close} interview={payload?.interview} prefill={payload} />
       <AssessmentForm open={type === 'assessment'} onClose={close} prefill={payload} />
       <OfferForm open={type === 'offer'} onClose={close} offer={payload?.offer} prefill={payload} />

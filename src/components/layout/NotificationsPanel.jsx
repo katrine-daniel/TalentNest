@@ -1,9 +1,24 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, CheckCheck, ClipboardCheck, FileSignature, MessageSquareText, UserPlus, X } from 'lucide-react'
+import {
+  AtSign,
+  Bell,
+  CalendarClock,
+  CheckCheck,
+  ClipboardCheck,
+  FileCheck2,
+  FileSignature,
+  ListTodo,
+  MessageSquareText,
+  UserPlus,
+  Workflow,
+  X,
+} from 'lucide-react'
 import Dropdown from '@/components/ui/Dropdown'
 import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import { useCollection } from '@/hooks/useStore'
+import { useSession } from '@/app/providers/SessionContext'
 import { notificationService } from '@/services/notifications/notificationService'
 import { formatRelative } from '@/utils/formatDate'
 import { cn } from '@/utils/cn'
@@ -13,10 +28,18 @@ const ICONS = {
   assessment: ClipboardCheck,
   offer: FileSignature,
   application: UserPlus,
+  mention: AtSign,
+  interview: CalendarClock,
+  requisition: FileCheck2,
+  task: ListTodo,
+  automation: Workflow,
 }
 
 export default function NotificationsPanel() {
-  const notifications = useCollection('notifications')
+  const all = useCollection('notifications')
+  const { actorId } = useSession()
+  // Organization-wide notifications have no recipient; targeted ones are shown only to their recipient.
+  const notifications = useMemo(() => all.filter((n) => !n.userId || n.userId === actorId), [all, actorId])
   const navigate = useNavigate()
   const unread = notifications.filter((n) => !n.read).length
 
@@ -44,7 +67,13 @@ export default function NotificationsPanel() {
         <div>
           <div className="border-line flex items-center justify-between border-b px-4 py-3">
             <p className="text-sm font-semibold">Notifications</p>
-            <Button size="xs" variant="ghost" icon={CheckCheck} disabled={!unread} onClick={() => notificationService.markAllRead()}>
+            <Button
+              size="xs"
+              variant="ghost"
+              icon={CheckCheck}
+              disabled={!unread}
+              onClick={() => notificationService.markAllRead(notifications.map((n) => n.id))}
+            >
               Mark all read
             </Button>
           </div>

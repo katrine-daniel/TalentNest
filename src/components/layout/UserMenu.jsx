@@ -1,33 +1,40 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Eye, RotateCcw, Settings, ShieldCheck } from 'lucide-react'
+import { ChevronDown, LogOut, Monitor, Moon, RotateCcw, Settings, Sun } from 'lucide-react'
 import Dropdown from '@/components/ui/Dropdown'
 import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useSession } from '@/app/providers/SessionContext'
+import { useAuth } from '@/app/providers/AuthProvider'
+import { useTheme } from '@/app/providers/ThemeProvider'
 import { useAsyncAction } from '@/hooks/useAsyncAction'
 import { settingsService } from '@/features/settings/settingsService'
-import { ROLES } from '@/utils/permissions'
 
 export default function UserMenu() {
-  const { user, role, actualRole, setViewAsRole, viewAsRole } = useSession()
+  const { user, role, mode } = useSession()
+  const { signOut } = useAuth()
+  const { preference, setPreference } = useTheme()
   const navigate = useNavigate()
   const [confirmReset, setConfirmReset] = useState(false)
   const reset = useAsyncAction(settingsService.resetDemoData, { success: 'Demo data restored to its original state' })
 
   const items = [
-    { heading: 'View interface as role (demo)' },
-    ...ROLES.map((r) => ({
-      key: `role-${r}`,
-      label: r,
-      icon: r === actualRole ? ShieldCheck : Eye,
-      description: r === actualRole ? 'Your role' : 'Preview permissions',
-      checked: role === r,
-      onSelect: () => setViewAsRole(r === actualRole ? null : r),
-    })),
+    { heading: 'Theme' },
+    { key: 'light', label: 'Light', icon: Sun, checked: preference === 'light', onSelect: () => setPreference('light') },
+    { key: 'dark', label: 'Dark', icon: Moon, checked: preference === 'dark', onSelect: () => setPreference('dark') },
+    { key: 'system', label: 'Match system', icon: Monitor, checked: preference === 'system', onSelect: () => setPreference('system') },
     { divider: true },
     { label: 'Settings', icon: Settings, onSelect: () => navigate('/settings') },
-    { label: 'Reset demo data', icon: RotateCcw, onSelect: () => setConfirmReset(true) },
+    ...(mode === 'demo' ? [{ label: 'Reset demo data', icon: RotateCcw, onSelect: () => setConfirmReset(true) }] : []),
+    { divider: true },
+    {
+      label: mode === 'demo' ? 'Leave demo' : 'Sign out',
+      icon: LogOut,
+      onSelect: async () => {
+        await signOut()
+        navigate('/login', { replace: true })
+      },
+    },
   ]
 
   return (
@@ -35,7 +42,7 @@ export default function UserMenu() {
       <Dropdown
         items={items}
         menuLabel="Account"
-        className="w-64"
+        className="w-60"
         renderTrigger={(props) => (
           <button
             {...props}
@@ -46,8 +53,9 @@ export default function UserMenu() {
             <Avatar name={user.name} size="sm" variant="brand" />
             <span className="hidden text-left leading-tight lg:block">
               <span className="text-ink block text-xs font-medium">{user.name}</span>
-              <span className={viewAsRole ? 'text-brand-600 block text-[11px] font-medium' : 'text-muted block text-[11px]'}>
-                {viewAsRole ? `Viewing as ${role}` : role}
+              <span className="text-muted block text-[11px]">
+                {role}
+                {mode === 'demo' ? ' · demo' : ''}
               </span>
             </span>
             <ChevronDown size={14} className="text-faint hidden lg:block" aria-hidden />

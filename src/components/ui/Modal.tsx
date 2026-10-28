@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
@@ -17,7 +17,19 @@ const SIZES = {
  * Centered dialog on tablet/desktop, bottom sheet on mobile.
  * `footer` is rendered in a sticky action bar.
  */
-export default function Modal({ open, onClose, title, description, size = 'md', children, footer, className, bodyClassName }) {
+interface ModalProps {
+  open: boolean
+  onClose: () => void
+  title: ReactNode
+  description?: ReactNode
+  size?: keyof typeof SIZES
+  children?: ReactNode
+  footer?: ReactNode
+  className?: string
+  bodyClassName?: string
+}
+
+export default function Modal({ open, onClose, title, description, size = 'md', children, footer, className, bodyClassName }: ModalProps) {
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -30,8 +42,8 @@ export default function Modal({ open, onClose, title, description, size = 'md', 
   )
 }
 
-function ModalInner({ onClose, title, description, size, children, footer, className, bodyClassName }) {
-  const ref = useFocusTrap(true, onClose)
+function ModalInner({ onClose, title, description, size = 'md', children, footer, className, bodyClassName }: Omit<ModalProps, 'open'>) {
+  const ref = useFocusTrap<HTMLDivElement>(true, onClose)
   const titleId = useId()
   const descId = useId()
   const isMobile = useIsMobile()

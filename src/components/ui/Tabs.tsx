@@ -1,4 +1,5 @@
-import { useId, useRef } from 'react'
+import { useId, useRef, type ComponentType, type KeyboardEvent, type ReactNode } from 'react'
+import type { LucideProps } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/utils/cn'
 
@@ -6,20 +7,40 @@ import { cn } from '@/utils/cn'
  * Underlined tab list with keyboard support (arrow keys).
  * tabs: [{ value, label, count?, icon? }]
  */
-export default function Tabs({ tabs, value, onChange, className, label = 'Sections' }) {
-  const layoutId = useId()
-  const refs = useRef([])
+interface TabItem {
+  value: string
+  label: ReactNode
+  count?: number
+  icon?: ComponentType<LucideProps>
+}
 
-  const onKey = (e, i) => {
+export default function Tabs({
+  tabs,
+  value,
+  onChange,
+  className,
+  label = 'Sections',
+}: {
+  tabs: TabItem[]
+  value: string
+  onChange: (v: string) => void
+  className?: string
+  label?: string
+}) {
+  const layoutId = useId()
+  const refs = useRef<Array<HTMLButtonElement | null>>([])
+
+  const onKey = (e: KeyboardEvent, i: number) => {
     let next = null
     if (e.key === 'ArrowRight') next = (i + 1) % tabs.length
     if (e.key === 'ArrowLeft') next = (i - 1 + tabs.length) % tabs.length
     if (e.key === 'Home') next = 0
     if (e.key === 'End') next = tabs.length - 1
-    if (next !== null) {
+    const target = next !== null ? tabs[next] : undefined
+    if (next !== null && target) {
       e.preventDefault()
       refs.current[next]?.focus()
-      onChange(tabs[next].value)
+      onChange(target.value)
     }
   }
 

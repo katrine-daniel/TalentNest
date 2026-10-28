@@ -10,7 +10,6 @@ import LoadingState from '@/components/ui/LoadingState'
 import { GlobalActionsProvider } from '@/app/providers/GlobalActionsContext'
 import { useDbStatus } from '@/hooks/useStore'
 import { useIsDesktop } from '@/hooks/useMediaQuery'
-import { mockDb } from '@/services/storage/mockDb'
 import { UI_PREFS_KEY } from '@/config/env'
 import { cn } from '@/utils/cn'
 
@@ -45,7 +44,14 @@ export default function AppLayout() {
 
   let content
   if (status === 'error') {
-    content = <ErrorState title="Demo data could not be loaded" description={error?.message} retryLabel="Restore sample data" onRetry={() => mockDb.reset()} />
+    content = (
+      <ErrorState
+        title="Your workspace could not be loaded"
+        description={error?.message ?? 'Check your connection and try again.'}
+        retryLabel="Reload"
+        onRetry={() => window.location.reload()}
+      />
+    )
   } else if (!ready) {
     content = <LoadingState />
   } else {

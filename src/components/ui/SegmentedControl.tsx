@@ -1,7 +1,31 @@
 import { cn } from '@/utils/cn'
 
 /** Small inline toggle group (view switches, ranges). options: [{ value, label, icon? }] */
-export default function SegmentedControl({ options, value, onChange, label, size = 'md', className }) {
+import type { ComponentType } from 'react'
+import type { LucideProps } from 'lucide-react'
+
+interface SegmentOption {
+  value: string
+  label: string
+  icon?: ComponentType<LucideProps>
+  iconOnly?: boolean
+}
+
+export default function SegmentedControl({
+  options,
+  value,
+  onChange,
+  label,
+  size = 'md',
+  className,
+}: {
+  options: SegmentOption[]
+  value: string
+  onChange: (v: string) => void
+  label: string
+  size?: 'sm' | 'md'
+  className?: string
+}) {
   return (
     <div role="radiogroup" aria-label={label} className={cn('border-line-strong bg-subtle inline-flex rounded-lg border p-0.5', className)}>
       {options.map((o) => {

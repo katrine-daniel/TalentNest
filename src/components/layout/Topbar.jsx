@@ -1,13 +1,27 @@
-import { Menu } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { FlaskConical, Menu, Search } from 'lucide-react'
 import Breadcrumbs from './Breadcrumbs'
-import GlobalSearch, { MobileSearch } from './GlobalSearch'
+import CommandPalette from './CommandPalette'
 import QuickCreateMenu from './QuickCreateMenu'
 import NotificationsPanel from './NotificationsPanel'
 import UserMenu from './UserMenu'
 import { useSession } from '@/app/providers/SessionContext'
 
 export default function Topbar({ onOpenNav }) {
-  const { viewAsRole, role, setViewAsRole } = useSession()
+  const { mode } = useSession()
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen((o) => !o)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   return (
     <header className="border-line bg-surface/90 supports-[backdrop-filter]:bg-surface/80 sticky top-0 z-20 border-b backdrop-blur">
       <div className="flex h-14 items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
@@ -18,25 +32,32 @@ export default function Topbar({ onOpenNav }) {
           <Breadcrumbs />
         </div>
         <div className="hidden flex-1 justify-center md:flex">
-          <GlobalSearch />
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            className="border-line-strong bg-surface text-faint hover:border-brand-300 flex h-9 w-full max-w-md items-center gap-2 rounded-lg border px-3 text-sm transition-colors"
+            aria-label="Search or run a command (Ctrl K)"
+          >
+            <Search size={15} aria-hidden />
+            <span className="flex-1 text-left">Search or jump to…</span>
+            <kbd className="border-line bg-subtle text-muted rounded border px-1.5 text-[10px] font-medium">Ctrl K</kbd>
+          </button>
         </div>
         <div className="flex items-center gap-1 sm:gap-1.5">
-          <div className="md:hidden">
-            <MobileSearch />
-          </div>
+          <button type="button" onClick={() => setPaletteOpen(true)} className="text-ink-soft hover:bg-subtle rounded-lg p-2 md:hidden" aria-label="Search">
+            <Search size={18} />
+          </button>
           <QuickCreateMenu />
           <NotificationsPanel />
           <UserMenu />
         </div>
       </div>
-      {viewAsRole && (
-        <div className="border-brand-100 bg-brand-50 text-brand-800 flex items-center justify-center gap-2 border-t px-4 py-1.5 text-xs">
-          Previewing the interface as <strong className="font-semibold">{role}</strong> — UI only; the backend must enforce permissions.
-          <button type="button" className="font-medium underline underline-offset-2" onClick={() => setViewAsRole(null)}>
-            Exit preview
-          </button>
-        </div>
+      {mode === 'demo' && (
+        <p className="border-brand-100 bg-brand-50 text-brand-800 flex items-center justify-center gap-2 border-t px-4 py-1 text-[11px]">
+          <FlaskConical size={12} aria-hidden /> Demo workspace — fictional data stored only in this browser. No emails, invites or AI calls are sent.
+        </p>
       )}
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </header>
   )
 }

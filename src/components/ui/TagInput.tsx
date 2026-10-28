@@ -1,12 +1,29 @@
-import { useState } from 'react'
+import { useState, type InputHTMLAttributes, type KeyboardEvent } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/utils/cn'
 
 /** Free-form tag entry (skills). Enter or comma adds a tag; Backspace removes the last one. */
-export default function TagInput({ value = [], onChange, suggestions = [], placeholder = 'Type and press Enter', id, invalid, max = 20, ...a11y }) {
+type TagInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> & {
+  value?: string[]
+  onChange: (tags: string[]) => void
+  suggestions?: string[]
+  invalid?: boolean
+  max?: number
+}
+
+export default function TagInput({
+  value = [],
+  onChange,
+  suggestions = [],
+  placeholder = 'Type and press Enter',
+  id,
+  invalid,
+  max = 20,
+  ...a11y
+}: TagInputProps) {
   const [draft, setDraft] = useState('')
 
-  const add = (raw) => {
+  const add = (raw: string) => {
     const tag = raw.trim().replace(/,$/, '')
     if (!tag || value.length >= max) return
     if (value.some((v) => v.toLowerCase() === tag.toLowerCase())) return
@@ -14,14 +31,14 @@ export default function TagInput({ value = [], onChange, suggestions = [], place
     setDraft('')
   }
 
-  const remove = (tag) => onChange(value.filter((v) => v !== tag))
+  const remove = (tag: string) => onChange(value.filter((v) => v !== tag))
 
-  const onKeyDown = (e) => {
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault()
       add(draft)
     } else if (e.key === 'Backspace' && !draft && value.length) {
-      remove(value[value.length - 1])
+      remove(value[value.length - 1] as string)
     }
   }
 

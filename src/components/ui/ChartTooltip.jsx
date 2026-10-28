@@ -29,7 +29,7 @@ export const CHART_COLORS = {
   slate: '#94a3b8',
   red: '#ef4444',
   green: '#10b981',
-  grid: '#eeeef2',
+  grid: 'var(--color-line)',
   axis: '#9a9ea8',
 }
 

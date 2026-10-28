@@ -5,16 +5,26 @@ import { cn } from '@/utils/cn'
 import { NAV_SECTIONS, SETTINGS_NAV } from '@/config/navigation'
 import { useCollection } from '@/hooks/useStore'
 import { useSession } from '@/app/providers/SessionContext'
+import { feedbackCompletion } from '@/features/interviews/feedbackSelectors'
+import { isTaskOverdue } from '@/features/tasks/taskService'
 
+/** Counts that need the signed-in user's attention. */
 function useNavBadges() {
   const interviews = useCollection('interviews')
+  const feedback = useCollection('interviewFeedback')
   const assessments = useCollection('assessments')
+  const requisitions = useCollection('requisitions')
+  const tasks = useCollection('tasks')
+  const { actorId, role } = useSession()
   return useMemo(
     () => ({
-      feedback: interviews.filter((i) => i.status === 'completed' && !i.feedback).length,
+      // Interviews where *this* user still owes a scorecard.
+      feedback: interviews.filter((i) => i.status === 'completed' && feedbackCompletion(i, feedback).pendingInterviewerIds.includes(actorId)).length,
       assessments: assessments.filter((a) => a.status === 'submitted').length,
+      requisitions: requisitions.filter((r) => r.status === 'pending' && (r.approverId === actorId || role === 'Admin')).length,
+      tasks: tasks.filter((t) => t.assigneeId === actorId && isTaskOverdue(t)).length,
     }),
-    [interviews, assessments],
+    [interviews, feedback, assessments, requisitions, tasks, actorId, role],
   )
 }
 

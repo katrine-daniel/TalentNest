@@ -1,7 +1,21 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Button from './Button'
 
-export default function Pagination({ page, pageCount, total, pageSize, onChange, label = 'results' }) {
+export default function Pagination({
+  page,
+  pageCount,
+  total,
+  pageSize,
+  onChange,
+  label = 'results',
+}: {
+  page: number
+  pageCount: number
+  total: number
+  pageSize: number
+  onChange: (page: number) => void
+  label?: string
+}) {
   if (total === 0) return null
   const from = (page - 1) * pageSize + 1
   const to = Math.min(total, page * pageSize)

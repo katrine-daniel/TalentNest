@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from 'react'
 import Modal from './Modal'
 import Button from './Button'
 import { Field, Textarea } from './FormControls'
@@ -20,6 +20,19 @@ export default function ConfirmDialog({
   requireReason = false,
   reasonPlaceholder,
   children,
+}: {
+  open: boolean
+  onClose: () => void
+  onConfirm: (reason: string) => void | Promise<void>
+  title: ReactNode
+  description?: ReactNode
+  confirmLabel?: ReactNode
+  tone?: 'primary' | 'danger'
+  loading?: boolean
+  reasonLabel?: string
+  requireReason?: boolean
+  reasonPlaceholder?: string
+  children?: ReactNode
 }) {
   const [reason, setReason] = useState('')
   const [touched, setTouched] = useState(false)
@@ -34,7 +47,7 @@ export default function ConfirmDialog({
 
   const invalid = requireReason && !reason.trim()
 
-  const submit = (e) => {
+  const submit = (e: FormEvent) => {
     e.preventDefault()
     setTouched(true)
     if (invalid) return

@@ -1,8 +1,19 @@
-import { forwardRef } from 'react'
+import { forwardRef, type InputHTMLAttributes } from 'react'
 import { Search, X } from 'lucide-react'
 import { cn } from '@/utils/cn'
 
-const SearchInput = forwardRef(function SearchInput({ value, onChange, placeholder = 'Search…', className, label = 'Search', shortcut, ...props }, ref) {
+type SearchInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> & {
+  value: string
+  onChange: (v: string) => void
+  label?: string
+  shortcut?: string
+  'data-autofocus'?: boolean
+}
+
+const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(function SearchInput(
+  { value, onChange, placeholder = 'Search…', className, label = 'Search', shortcut, ...props },
+  ref,
+) {
   return (
     <div className={cn('relative', className)}>
       <Search size={15} className="text-faint pointer-events-none absolute top-1/2 left-3 -translate-y-1/2" aria-hidden />

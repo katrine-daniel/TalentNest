@@ -5,7 +5,7 @@ import { cn } from '@/utils/cn'
 
 /** Signed-in user card at the bottom of the sidebar. Links to the user's settings. */
 export default function SidebarProfile({ collapsed = false, onNavigate }) {
-  const { user, role, viewAsRole } = useSession()
+  const { user, role } = useSession()
   return (
     <Link
       to="/settings/users"
@@ -21,9 +21,7 @@ export default function SidebarProfile({ collapsed = false, onNavigate }) {
       {!collapsed && (
         <span className="min-w-0 leading-tight">
           <span className="text-ink block truncate text-sm font-semibold">{user.name}</span>
-          <span className={cn('block truncate text-[11px]', viewAsRole ? 'text-brand-600 font-medium' : 'text-muted')}>
-            {viewAsRole ? `Viewing as ${role}` : user.title}
-          </span>
+          <span className={'text-muted block truncate text-[11px]'}>{user.title || role}</span>
         </span>
       )}
     </Link>

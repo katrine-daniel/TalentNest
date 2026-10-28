@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
@@ -12,7 +12,18 @@ const WIDTHS = {
 }
 
 /** Right-side panel for quick views. Full screen on mobile. */
-export default function Drawer({ open, onClose, title, subtitle, headerActions, size = 'lg', children, footer }) {
+interface DrawerProps {
+  open: boolean
+  onClose: () => void
+  title: ReactNode
+  subtitle?: ReactNode
+  headerActions?: ReactNode
+  size?: keyof typeof WIDTHS
+  children?: ReactNode
+  footer?: ReactNode
+}
+
+export default function Drawer({ open, onClose, title, subtitle, headerActions, size = 'lg', children, footer }: DrawerProps) {
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -25,8 +36,8 @@ export default function Drawer({ open, onClose, title, subtitle, headerActions, 
   )
 }
 
-function DrawerInner({ onClose, title, subtitle, headerActions, size, children, footer }) {
-  const ref = useFocusTrap(true, onClose)
+function DrawerInner({ onClose, title, subtitle, headerActions, size = 'lg', children, footer }: Omit<DrawerProps, 'open'>) {
+  const ref = useFocusTrap<HTMLElement>(true, onClose)
   const titleId = useId()
   return (
     <div className="fixed inset-0 z-50 flex justify-end">

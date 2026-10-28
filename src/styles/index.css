@@ -37,6 +37,94 @@
   --shadow-lift: 0 1px 2px rgb(16 17 20 / 0.06), 0 12px 32px -8px rgb(16 17 20 / 0.18);
 }
 
+/* ------------------------------------------------------------------
+   Dark theme (data-theme="dark" on <html>, set by ThemeProvider).
+   Neutral tokens and light tint shades are redefined; brand 500–900 stay
+   unchanged so primary buttons and the welcome banner keep their colour.
+------------------------------------------------------------------- */
+:root[data-theme='dark'] {
+  --color-canvas: #0f0e14;
+  --color-surface: #18171f;
+  --color-subtle: #22212b;
+  --color-ink: #ecebf2;
+  --color-ink-soft: #c9c8d3;
+  --color-muted: #9a99a8;
+  --color-faint: #6f6e7d;
+  --color-line: #2c2b36;
+  --color-line-strong: #3a3946;
+
+  --color-brand-50: #241c35;
+  --color-brand-100: #2f2445;
+  --color-brand-200: #45336a;
+
+  --color-gray-100: #26252f;
+  --color-gray-200: #31303b;
+  --color-gray-300: #474655;
+
+  --color-red-50: #2e1518;
+  --color-red-100: #46191d;
+  --color-red-200: #5b2025;
+  --color-amber-50: #2c220e;
+  --color-amber-100: #3d2f12;
+  --color-amber-200: #574217;
+  --color-emerald-50: #10261d;
+  --color-emerald-100: #153626;
+  --color-sky-50: #0f2230;
+  --color-sky-100: #133044;
+  --color-teal-50: #0f2624;
+  --color-teal-100: #123431;
+  --color-indigo-50: #1a1c35;
+  --color-indigo-100: #222548;
+  --color-rose-100: #3b1822;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 8px 24px -6px rgb(0 0 0 / 0.6);
+  --shadow-lift: 0 12px 32px -8px rgb(0 0 0 / 0.7);
+}
+
+/* Text shades used on tinted backgrounds need lighter values on dark surfaces. */
+:root[data-theme='dark'] {
+  .text-brand-700,
+  .text-brand-800 {
+    color: var(--color-brand-300);
+  }
+  .text-amber-700,
+  .text-amber-800,
+  .text-amber-900 {
+    color: #fcd34d;
+  }
+  .text-red-600,
+  .text-red-700 {
+    color: #fca5a5;
+  }
+  .text-emerald-600,
+  .text-emerald-700,
+  .text-emerald-800 {
+    color: #6ee7b7;
+  }
+  .text-sky-700,
+  .text-sky-800,
+  .text-sky-900 {
+    color: #7dd3fc;
+  }
+  .text-teal-700,
+  .text-teal-800,
+  .text-teal-900 {
+    color: #5eead4;
+  }
+  .text-indigo-700,
+  .text-indigo-800 {
+    color: #a5b4fc;
+  }
+  .text-gray-600,
+  .text-gray-700 {
+    color: var(--color-ink-soft);
+  }
+  .bg-white\/95 {
+    background-color: rgb(255 255 255 / 0.95);
+  }
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
