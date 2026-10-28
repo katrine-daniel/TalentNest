@@ -101,7 +101,9 @@ export function getDepartmentBreakdown(data, filters = {}) {
   const { jobsById, stageOf } = indexData(data)
   return data.departments
     .map((dept) => {
-      const apps = data.applications.filter((a) => a.status === 'active' && jobsById.get(a.jobId)?.departmentId === dept.id && inScope(a, jobsById, { sinceDays: filters.sinceDays }))
+      const apps = data.applications.filter(
+        (a) => a.status === 'active' && jobsById.get(a.jobId)?.departmentId === dept.id && inScope(a, jobsById, { sinceDays: filters.sinceDays }),
+      )
       const row = { departmentId: dept.id, name: dept.name, short: dept.code, total: apps.length }
       GROUPS.forEach((g) => {
         row[g.key] = apps.filter((a) => g.types.includes(stageOf(a)?.type)).length
@@ -127,7 +129,17 @@ export function getAttentionItems(data, filters = {}) {
 
   data.interviews
     .filter((i) => i.status === 'completed' && !i.feedback && deptOk(i.jobId))
-    .forEach((i) => items.push({ id: `fb-${i.id}`, kind: 'feedback', title: `Feedback pending — ${name(i.candidateId)}`, subtitle: `${i.stageName} · ${jobsById.get(i.jobId)?.title}`, due: i.start, overdue: now - new Date(i.start).getTime() > DAY, link: `/calendar?event=${i.id}` }))
+    .forEach((i) =>
+      items.push({
+        id: `fb-${i.id}`,
+        kind: 'feedback',
+        title: `Feedback pending — ${name(i.candidateId)}`,
+        subtitle: `${i.stageName} · ${jobsById.get(i.jobId)?.title}`,
+        due: i.start,
+        overdue: now - new Date(i.start).getTime() > DAY,
+        link: `/calendar?event=${i.id}`,
+      }),
+    )
 
   data.assessments
     .filter((a) => deptOk(a.jobId) && (isAssessmentOverdue(a, now) || a.status === 'submitted'))
@@ -145,11 +157,34 @@ export function getAttentionItems(data, filters = {}) {
 
   data.offers
     .filter((o) => ['sent', 'negotiating'].includes(o.status) && deptOk(o.jobId) && new Date(o.expiresAt).getTime() < now + 2 * DAY)
-    .forEach((o) => items.push({ id: `of-${o.id}`, kind: 'offer', title: `Offer expiring — ${name(o.candidateId)}`, subtitle: jobsById.get(o.jobId)?.title, due: o.expiresAt, overdue: new Date(o.expiresAt).getTime() < now, link: '/offers' }))
+    .forEach((o) =>
+      items.push({
+        id: `of-${o.id}`,
+        kind: 'offer',
+        title: `Offer expiring — ${name(o.candidateId)}`,
+        subtitle: jobsById.get(o.jobId)?.title,
+        due: o.expiresAt,
+        overdue: new Date(o.expiresAt).getTime() < now,
+        link: '/offers',
+      }),
+    )
 
   data.applications
-    .filter((a) => a.status === 'active' && deptOk(a.jobId) && ['application', 'screening'].includes(stageOf(a)?.type) && now - new Date(a.updatedAt).getTime() > 6 * DAY)
-    .forEach((a) => items.push({ id: `st-${a.id}`, kind: 'stale', title: `No movement in ${Math.round((now - new Date(a.updatedAt).getTime()) / DAY)} days — ${name(a.candidateId)}`, subtitle: `${stageOf(a)?.name} · ${jobsById.get(a.jobId)?.title}`, due: a.updatedAt, overdue: false, link: `/candidates/${a.candidateId}` }))
+    .filter(
+      (a) =>
+        a.status === 'active' && deptOk(a.jobId) && ['application', 'screening'].includes(stageOf(a)?.type) && now - new Date(a.updatedAt).getTime() > 6 * DAY,
+    )
+    .forEach((a) =>
+      items.push({
+        id: `st-${a.id}`,
+        kind: 'stale',
+        title: `No movement in ${Math.round((now - new Date(a.updatedAt).getTime()) / DAY)} days — ${name(a.candidateId)}`,
+        subtitle: `${stageOf(a)?.name} · ${jobsById.get(a.jobId)?.title}`,
+        due: a.updatedAt,
+        overdue: false,
+        link: `/candidates/${a.candidateId}`,
+      }),
+    )
 
   const order = { feedback: 0, assessment: 1, offer: 2, review: 3, stale: 4 }
   return items.sort((a, b) => order[a.kind] - order[b.kind] || new Date(a.due) - new Date(b.due))
@@ -165,7 +200,13 @@ export function getUpcomingSchedule(data, { departmentId, days = 7 } = {}) {
     .filter((i) => i.status === 'scheduled' && deptOk(i.jobId) && new Date(i.start).getTime() >= start.getTime() && new Date(i.start).getTime() < end)
     .map((i) => ({ kind: 'interview', id: i.id, at: i.start, item: i }))
   const assessments = data.assessments
-    .filter((a) => ['pending', 'in-progress'].includes(a.status) && deptOk(a.jobId) && new Date(a.deadline).getTime() >= start.getTime() && new Date(a.deadline).getTime() < end)
+    .filter(
+      (a) =>
+        ['pending', 'in-progress'].includes(a.status) &&
+        deptOk(a.jobId) &&
+        new Date(a.deadline).getTime() >= start.getTime() &&
+        new Date(a.deadline).getTime() < end,
+    )
     .map((a) => ({ kind: 'assessment', id: a.id, at: a.deadline, item: a }))
   return [...interviews, ...assessments].sort((a, b) => new Date(a.at) - new Date(b.at))
 }
@@ -174,9 +215,21 @@ export function getAssessmentPassRates(data, filters = {}) {
   const { jobsById } = indexData(data)
   return data.assessmentTemplates
     .map((t) => {
-      const evaluated = data.assessments.filter((a) => a.templateId === t.id && a.status === 'evaluated' && (!filters.departmentId || filters.departmentId === 'all' || jobsById.get(a.jobId)?.departmentId === filters.departmentId))
+      const evaluated = data.assessments.filter(
+        (a) =>
+          a.templateId === t.id &&
+          a.status === 'evaluated' &&
+          (!filters.departmentId || filters.departmentId === 'all' || jobsById.get(a.jobId)?.departmentId === filters.departmentId),
+      )
       const passed = evaluated.filter((a) => a.score >= t.passMark).length
-      return { id: t.id, name: t.name.replace(' Assessment', '').replace(' — Web Stack', ''), evaluated: evaluated.length, passed, rate: evaluated.length ? Math.round((passed / evaluated.length) * 100) : 0, passMark: t.passMark }
+      return {
+        id: t.id,
+        name: t.name.replace(' Assessment', '').replace(' — Web Stack', ''),
+        evaluated: evaluated.length,
+        passed,
+        rate: evaluated.length ? Math.round((passed / evaluated.length) * 100) : 0,
+        passMark: t.passMark,
+      }
     })
     .filter((r) => r.evaluated > 0)
 }
@@ -220,7 +273,9 @@ export function getTimeToHire(data) {
 
 export function getOfferStats(data, filters = {}) {
   const { jobsById } = indexData(data)
-  const offers = data.offers.filter((o) => !filters.departmentId || filters.departmentId === 'all' || jobsById.get(o.jobId)?.departmentId === filters.departmentId)
+  const offers = data.offers.filter(
+    (o) => !filters.departmentId || filters.departmentId === 'all' || jobsById.get(o.jobId)?.departmentId === filters.departmentId,
+  )
   const count = (s) => offers.filter((o) => o.status === s).length
   const accepted = count('accepted')
   const declined = count('declined')
@@ -247,7 +302,9 @@ export function getRecruiterWorkload(data) {
     .filter((u) => u.status === 'active')
     .map((u) => {
       const apps = data.applications.filter((a) => a.status === 'active' && jobsById.get(a.jobId)?.recruiterId === u.id)
-      const interviews = data.interviews.filter((i) => i.status === 'scheduled' && jobsById.get(i.jobId)?.recruiterId === u.id && new Date(i.start).getTime() > now)
+      const interviews = data.interviews.filter(
+        (i) => i.status === 'scheduled' && jobsById.get(i.jobId)?.recruiterId === u.id && new Date(i.start).getTime() > now,
+      )
       const jobs = data.jobs.filter((j) => j.recruiterId === u.id && j.status === 'open')
       return { userId: u.id, name: u.name.split(' ')[0], fullName: u.name, candidates: apps.length, interviews: interviews.length, vacancies: jobs.length }
     })

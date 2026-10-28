@@ -56,9 +56,23 @@ export default function CandidatesPage() {
   const empty = useMemo(
     () =>
       total === 0 ? (
-        <EmptyState icon={Users} title="No candidates yet" description="Add your first candidate or import applications from a vacancy." action={<Button variant="primary" icon={UserPlus} onClick={() => actions.openCandidateForm()}>Add candidate</Button>} />
+        <EmptyState
+          icon={Users}
+          title="No candidates yet"
+          description="Add your first candidate or import applications from a vacancy."
+          action={
+            <Button variant="primary" icon={UserPlus} onClick={() => actions.openCandidateForm()}>
+              Add candidate
+            </Button>
+          }
+        />
       ) : (
-        <EmptyState icon={SearchX} title="No candidates match these filters" description="Try a different search term or clear some filters." action={<Button onClick={reset}>Clear filters</Button>} />
+        <EmptyState
+          icon={SearchX}
+          title="No candidates match these filters"
+          description="Try a different search term or clear some filters."
+          action={<Button onClick={reset}>Clear filters</Button>}
+        />
       ),
     [total, actions, reset],
   )
@@ -75,11 +89,11 @@ export default function CandidatesPage() {
         }
       />
 
-      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
-        <div className="space-y-3 border-b border-line p-4">
+      <div className="border-line/80 bg-surface shadow-card rounded-2xl border">
+        <div className="border-line space-y-3 border-b p-4">
           <CandidateFilters filters={filters} setFilter={setFilter} reset={reset} activeCount={activeCount} />
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs text-muted" aria-live="polite">
+            <p className="text-muted text-xs" aria-live="polite">
               {rows.length === total ? `Showing all ${total}` : `${rows.length} of ${total} match`}
             </p>
             <div className="flex items-center gap-2">
@@ -93,7 +107,9 @@ export default function CandidatesPage() {
                 options={SORT_OPTIONS}
                 className="h-9! w-44 text-xs"
               >
-                {!SORT_OPTIONS.some((o) => o.value === `${table.sort.key}:${table.sort.dir}`) && <option value={`${table.sort.key}:${table.sort.dir}`}>Custom sort</option>}
+                {!SORT_OPTIONS.some((o) => o.value === `${table.sort.key}:${table.sort.dir}`) && (
+                  <option value={`${table.sort.key}:${table.sort.dir}`}>Custom sort</option>
+                )}
               </Select>
               <SegmentedControl
                 className="max-md:hidden"

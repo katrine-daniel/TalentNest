@@ -46,9 +46,9 @@ export default function WorkflowBuilder({ stages, onChange, counts = {}, readOnl
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.16 }}
-                className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface p-2 sm:flex-nowrap"
+                className="border-line bg-surface flex flex-wrap items-center gap-2 rounded-lg border p-2 sm:flex-nowrap"
               >
-                <span className="flex w-6 shrink-0 items-center justify-center text-xs font-medium text-faint tabular">{i + 1}</span>
+                <span className="text-faint tabular flex w-6 shrink-0 items-center justify-center text-xs font-medium">{i + 1}</span>
                 <span className={cn('h-2 w-2 shrink-0 rounded-full', STAGE_TYPES[stage.type]?.dot)} aria-hidden />
                 <Input
                   aria-label={`Stage ${i + 1} name`}
@@ -67,9 +67,29 @@ export default function WorkflowBuilder({ stages, onChange, counts = {}, readOnl
                   />
                 </div>
                 <div className="ml-auto flex items-center gap-0.5">
-                  {count > 0 && <span className="mr-1 rounded bg-subtle px-1.5 text-xxs text-muted tabular" title="Candidates currently in this stage">{count}</span>}
-                  <Button size="sm" variant="ghost" iconOnly icon={ArrowUp} aria-label={`Move ${stage.name} up`} disabled={i <= 1 || fixed} onClick={() => move(i, -1)} />
-                  <Button size="sm" variant="ghost" iconOnly icon={ArrowDown} aria-label={`Move ${stage.name} down`} disabled={fixed || i >= stages.length - 2} onClick={() => move(i, 1)} />
+                  {count > 0 && (
+                    <span className="bg-subtle text-xxs text-muted tabular mr-1 rounded px-1.5" title="Candidates currently in this stage">
+                      {count}
+                    </span>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    iconOnly
+                    icon={ArrowUp}
+                    aria-label={`Move ${stage.name} up`}
+                    disabled={i <= 1 || fixed}
+                    onClick={() => move(i, -1)}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    iconOnly
+                    icon={ArrowDown}
+                    aria-label={`Move ${stage.name} down`}
+                    disabled={fixed || i >= stages.length - 2}
+                    onClick={() => move(i, 1)}
+                  />
                   <Button
                     size="sm"
                     variant="danger-ghost"
@@ -90,7 +110,7 @@ export default function WorkflowBuilder({ stages, onChange, counts = {}, readOnl
         <Button size="sm" variant="secondary" icon={Plus} onClick={add}>
           Add stage
         </Button>
-        <p className="text-xs text-muted">First stage collects applications; the last stage marks a hire.</p>
+        <p className="text-muted text-xs">First stage collects applications; the last stage marks a hire.</p>
       </div>
       {error && (
         <p className="mt-2 text-xs text-red-600" role="alert">
@@ -106,12 +126,16 @@ export function WorkflowPreview({ stages, counts = {} }) {
     <ol className="flex flex-wrap items-center gap-y-2 text-xs">
       {stages.map((stage, i) => (
         <li key={stage.id ?? stage.key} className="flex items-center">
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1">
+          <span className="border-line bg-surface inline-flex items-center gap-1.5 rounded-md border px-2 py-1">
             <span className={cn('h-1.5 w-1.5 rounded-full', STAGE_TYPES[stage.type]?.dot)} aria-hidden />
             <span className="text-ink">{stage.name}</span>
             {counts[stage.id] > 0 && <span className="text-muted tabular">· {counts[stage.id]}</span>}
           </span>
-          {i < stages.length - 1 && <span className="mx-1.5 text-faint" aria-hidden>→</span>}
+          {i < stages.length - 1 && (
+            <span className="text-faint mx-1.5" aria-hidden>
+              →
+            </span>
+          )}
         </li>
       ))}
     </ol>

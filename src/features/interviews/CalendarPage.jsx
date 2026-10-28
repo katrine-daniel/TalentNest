@@ -37,7 +37,12 @@ export default function CalendarPage() {
   const global = useGlobalActions()
   const { can } = useSession()
 
-  const interviewEvents = useInterviewEvents({ department: filters.department, interviewer: filters.interviewer, status: filters.status, includeCancelled: true })
+  const interviewEvents = useInterviewEvents({
+    department: filters.department,
+    interviewer: filters.interviewer,
+    status: filters.status,
+    includeCancelled: true,
+  })
   const assessmentEvents = useAssessmentEvents({ department: filters.department })
   const events = useMemo(
     () => [...interviewEvents, ...(filters.assessments === 'show' && filters.interviewer === 'all' ? assessmentEvents : [])],
@@ -46,7 +51,10 @@ export default function CalendarPage() {
 
   // Deep links (?event=…) open the event and jump the calendar to its date.
   const allEvents = useInterviewEvents({ includeCancelled: true })
-  const selected = useMemo(() => allEvents.find((e) => e.id === filters.event) ?? assessmentEvents.find((e) => e.id === filters.event) ?? null, [allEvents, assessmentEvents, filters.event])
+  const selected = useMemo(
+    () => allEvents.find((e) => e.id === filters.event) ?? assessmentEvents.find((e) => e.id === filters.event) ?? null,
+    [allEvents, assessmentEvents, filters.event],
+  )
   useEffect(() => {
     if (selected) setCursor(new Date(selected.start))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,7 +87,7 @@ export default function CalendarPage() {
 
       <div className="grid grid-cols-1 gap-6 2xl:grid-cols-4">
         <Panel className="2xl:col-span-3" bodyClassName="">
-          <div className="flex flex-col gap-3 border-b border-line p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="border-line flex flex-col gap-3 border-b p-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={() => setCursor(new Date())}>
                 Today
@@ -101,7 +109,7 @@ export default function CalendarPage() {
               ]}
             />
           </div>
-          <div className="grid grid-cols-2 gap-2 border-b border-line p-3 sm:grid-cols-4">
+          <div className="border-line grid grid-cols-2 gap-2 border-b p-3 sm:grid-cols-4">
             <FilterSelect label="Department" value={filters.department} onChange={(v) => setFilter('department', v)} options={options.departments} />
             <FilterSelect label="Interviewer" value={filters.interviewer} onChange={(v) => setFilter('interviewer', v)} options={options.interviewers} />
             <FilterSelect label="Status" value={filters.status} onChange={(v) => setFilter('status', v)} options={toOptions('interview')} allLabel="Any" />
@@ -125,9 +133,9 @@ export default function CalendarPage() {
               setFilter('view', 'day')
             }}
           />
-          <ul className="flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-4 py-3">
+          <ul className="border-line flex flex-wrap gap-x-4 gap-y-1 border-t px-4 py-3">
             {Object.entries(EVENT_ACCENTS).map(([key, a]) => (
-              <li key={key} className="flex items-center gap-1.5 text-xxs text-muted">
+              <li key={key} className="text-xxs text-muted flex items-center gap-1.5">
                 <span className={`h-2 w-2 rounded-full ${a.dot}`} aria-hidden />
                 {a.label}
               </li>

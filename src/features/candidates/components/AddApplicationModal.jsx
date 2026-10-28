@@ -19,7 +19,10 @@ export default function AddApplicationModal({ open, onClose, candidate, existing
     }
   }, [open])
 
-  const options = useMemo(() => jobs.filter((j) => j.status === 'open' && !existingJobIds.includes(j.id)).map((j) => ({ value: j.id, label: `${j.title} · ${j.location}` })), [jobs, existingJobIds])
+  const options = useMemo(
+    () => jobs.filter((j) => j.status === 'open' && !existingJobIds.includes(j.id)).map((j) => ({ value: j.id, label: `${j.title} · ${j.location}` })),
+    [jobs, existingJobIds],
+  )
 
   const submit = async (e) => {
     e.preventDefault()

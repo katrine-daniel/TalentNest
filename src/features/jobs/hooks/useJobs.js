@@ -81,7 +81,9 @@ export function useOrgOptions() {
   return useMemo(
     () => ({
       departments: departments.map((d) => ({ value: d.id, label: d.name })),
-      recruiters: users.filter((u) => (u.role === 'Recruiter' || u.role === 'Admin') && u.status !== 'deactivated').map((u) => ({ value: u.id, label: u.name })),
+      recruiters: users
+        .filter((u) => (u.role === 'Recruiter' || u.role === 'Admin') && u.status !== 'deactivated')
+        .map((u) => ({ value: u.id, label: u.name })),
       hiringManagers: users.filter((u) => u.role === 'Hiring Manager' || u.role === 'Admin').map((u) => ({ value: u.id, label: u.name })),
       interviewers: users.filter((u) => u.status === 'active').map((u) => ({ value: u.id, label: u.name, description: u.title })),
       jobs: jobs.map((j) => ({ value: j.id, label: j.title, status: j.status })),

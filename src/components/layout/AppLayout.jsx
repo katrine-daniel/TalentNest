@@ -45,21 +45,19 @@ export default function AppLayout() {
 
   let content
   if (status === 'error') {
-    content = (
-      <ErrorState
-        title="Demo data could not be loaded"
-        description={error?.message}
-        retryLabel="Restore sample data"
-        onRetry={() => mockDb.reset()}
-      />
-    )
+    content = <ErrorState title="Demo data could not be loaded" description={error?.message} retryLabel="Restore sample data" onRetry={() => mockDb.reset()} />
   } else if (!ready) {
     content = <LoadingState />
   } else {
     content = (
       <ErrorBoundary resetKey={location.pathname}>
         <Suspense fallback={<LoadingState />}>
-          <motion.div key={location.pathname} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
+          >
             <Outlet />
           </motion.div>
         </Suspense>
@@ -69,7 +67,7 @@ export default function AppLayout() {
 
   return (
     <GlobalActionsProvider>
-      <a href="#main" className="sr-only z-50 rounded-md bg-brand-600 px-3 py-2 text-white focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
+      <a href="#main" className="bg-brand-600 sr-only z-50 rounded-md px-3 py-2 text-white focus:not-sr-only focus:fixed focus:top-2 focus:left-2">
         Skip to content
       </a>
       <Sidebar collapsed={collapsed} canToggle={isDesktop} onToggle={() => setCollapsedPref((c) => !c)} />

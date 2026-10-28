@@ -8,7 +8,13 @@ import { useSchedulingActions } from '@/features/interviews/hooks/useScheduling'
 /** Records an evaluator's score for a submitted assessment. */
 export default function ScoreAssessmentModal({ row, onClose }) {
   const actions = useSchedulingActions()
-  const { register, handleSubmit, reset, watch, formState: { errors } } = useForm()
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm()
   const passMark = row?.template?.passMark ?? 60
 
   useEffect(() => {
@@ -49,7 +55,12 @@ export default function ScoreAssessmentModal({ row, onClose }) {
               min={0}
               max={100}
               data-autofocus
-              {...register('score', { required: 'Score is required', valueAsNumber: true, min: { value: 0, message: '0–100' }, max: { value: 100, message: '0–100' } })}
+              {...register('score', {
+                required: 'Score is required',
+                valueAsNumber: true,
+                min: { value: 0, message: '0–100' },
+                max: { value: 100, message: '0–100' },
+              })}
               invalid={!!errors.score}
             />
           )}

@@ -16,10 +16,14 @@ export function Field({ label, error, hint, required, children, className, id: i
   return (
     <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
-        <label htmlFor={id} className="text-xs font-medium text-ink-soft">
+        <label htmlFor={id} className="text-ink-soft text-xs font-medium">
           {label}
-          {required && <span className="ml-0.5 text-red-500" aria-hidden>*</span>}
-          {optional && <span className="ml-1 font-normal text-faint">(optional)</span>}
+          {required && (
+            <span className="ml-0.5 text-red-500" aria-hidden>
+              *
+            </span>
+          )}
+          {optional && <span className="text-faint ml-1 font-normal">(optional)</span>}
         </label>
       )}
       {typeof children === 'function' ? children({ id, 'aria-describedby': describedBy, 'aria-invalid': Boolean(error) || undefined }) : children}
@@ -28,7 +32,7 @@ export function Field({ label, error, hint, required, children, className, id: i
           <AlertCircle size={12} aria-hidden /> {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="text-xs text-muted">
+        <p id={`${id}-hint`} className="text-muted text-xs">
           {hint}
         </p>
       ) : null}
@@ -56,7 +60,7 @@ export const Select = forwardRef(function Select({ className, invalid, options =
         ))}
         {children}
       </select>
-      <ChevronDown size={15} className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-faint" aria-hidden />
+      <ChevronDown size={15} className="text-faint pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2" aria-hidden />
     </div>
   )
 })
@@ -71,7 +75,7 @@ export function FilterSelect({ label, value, onChange, options, allLabel = 'All'
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          'h-10 w-full appearance-none rounded-lg border bg-surface pr-8 pl-3 text-sm transition-colors outline-none hover:border-gray-300 focus:border-brand-500 focus:ring-3 focus:ring-brand-100 sm:h-9',
+          'bg-surface focus:border-brand-500 focus:ring-brand-100 h-10 w-full appearance-none rounded-lg border pr-8 pl-3 text-sm transition-colors outline-none hover:border-gray-300 focus:ring-3 sm:h-9',
           active ? 'border-brand-300 text-brand-800' : 'border-line-strong text-ink-soft',
         )}
       >
@@ -84,7 +88,7 @@ export function FilterSelect({ label, value, onChange, options, allLabel = 'All'
           </option>
         ))}
       </select>
-      <ChevronDown size={15} className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-faint" aria-hidden />
+      <ChevronDown size={15} className="text-faint pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2" aria-hidden />
     </div>
   )
 }
@@ -92,10 +96,10 @@ export function FilterSelect({ label, value, onChange, options, allLabel = 'All'
 export const Checkbox = forwardRef(function Checkbox({ label, description, className, ...props }, ref) {
   return (
     <label className={cn('flex cursor-pointer items-start gap-2.5 text-sm', className)}>
-      <input ref={ref} type="checkbox" className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded border-line-strong accent-brand-600" {...props} />
+      <input ref={ref} type="checkbox" className="border-line-strong accent-brand-600 mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded" {...props} />
       <span>
         <span className="text-ink">{label}</span>
-        {description && <span className="block text-xs text-muted">{description}</span>}
+        {description && <span className="text-muted block text-xs">{description}</span>}
       </span>
     </label>
   )

@@ -23,10 +23,22 @@ function QuestionsView({ data, editing, draft, setDraft }) {
               value={q.question}
               onChange={(e) => setDraft({ items: draft.items.map((x) => (x.id === q.id ? { ...x, question: e.target.value } : x)) })}
             />
-            <Button size="sm" variant="ghost" iconOnly icon={Trash2} aria-label={`Remove question ${i + 1}`} onClick={() => setDraft({ items: draft.items.filter((x) => x.id !== q.id) })} />
+            <Button
+              size="sm"
+              variant="ghost"
+              iconOnly
+              icon={Trash2}
+              aria-label={`Remove question ${i + 1}`}
+              onClick={() => setDraft({ items: draft.items.filter((x) => x.id !== q.id) })}
+            />
           </div>
         ))}
-        <Button size="sm" variant="ghost" icon={Plus} onClick={() => setDraft({ items: [...draft.items, { id: `q-${Date.now()}`, question: '', focus: 'Custom', lookFor: '' }] })}>
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={Plus}
+          onClick={() => setDraft({ items: [...draft.items, { id: `q-${Date.now()}`, question: '', focus: 'Custom', lookFor: '' }] })}
+        >
           Add question
         </Button>
       </div>
@@ -36,12 +48,12 @@ function QuestionsView({ data, editing, draft, setDraft }) {
     <ol className="space-y-3">
       {data.items.map((q, i) => (
         <li key={q.id} className="flex gap-3 text-sm">
-          <span className="w-5 shrink-0 text-xs font-medium text-faint tabular">{i + 1}.</span>
+          <span className="text-faint tabular w-5 shrink-0 text-xs font-medium">{i + 1}.</span>
           <div>
             <p className="text-ink">{q.question}</p>
             {(q.focus || q.lookFor) && (
-              <p className="mt-0.5 text-xs text-muted">
-                {q.focus && <span className="font-medium text-brand-700">{q.focus}</span>}
+              <p className="text-muted mt-0.5 text-xs">
+                {q.focus && <span className="text-brand-700 font-medium">{q.focus}</span>}
                 {q.lookFor && ` — look for: ${q.lookFor}`}
               </p>
             )}
@@ -62,8 +74,8 @@ function EmailView({ data, editing, draft, setDraft }) {
     )
   }
   return (
-    <div className="rounded-lg border border-line text-sm">
-      <div className="space-y-0.5 border-b border-line px-3 py-2 text-xs">
+    <div className="border-line rounded-lg border text-sm">
+      <div className="border-line space-y-0.5 border-b px-3 py-2 text-xs">
         <p>
           <span className="text-muted">To:</span> {data.to}
         </p>
@@ -71,7 +83,7 @@ function EmailView({ data, editing, draft, setDraft }) {
           <span className="text-muted">Subject:</span> <span className="font-medium">{data.subject}</span>
         </p>
       </div>
-      <p className="px-3 py-3 leading-relaxed whitespace-pre-line text-ink-soft">{data.body}</p>
+      <p className="text-ink-soft px-3 py-3 leading-relaxed whitespace-pre-line">{data.body}</p>
     </div>
   )
 }
@@ -84,12 +96,12 @@ function FeedbackView({ data }) {
         {data.entries.map((e) => {
           const rec = RECOMMENDATIONS.find((r) => r.value === e.recommendation)
           return (
-            <li key={e.id} className="rounded-lg border border-line p-3 text-sm">
+            <li key={e.id} className="border-line rounded-lg border p-3 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{e.stage}</span>
-                <span className="text-xs text-muted">· {e.interviewer}</span>
+                <span className="text-muted text-xs">· {e.interviewer}</span>
                 <StatusBadge tone={rec?.tone}>{rec?.label}</StatusBadge>
-                <span className="ml-auto text-xs text-muted tabular">avg {e.average}/5</span>
+                <span className="text-muted tabular ml-auto text-xs">avg {e.average}/5</span>
               </div>
               <p className="mt-1.5 text-xs">
                 <span className="font-medium text-emerald-700">+</span> {e.strengths}
@@ -110,9 +122,9 @@ function FunnelView({ data }) {
     <ul className="space-y-3">
       {data.insights.map((i) => (
         <li key={i.headline} className="text-sm">
-          <p className="font-medium text-ink">{i.headline}</p>
-          <p className="mt-0.5 text-xs text-muted">Evidence: {i.evidence}</p>
-          <p className="mt-0.5 text-xs text-brand-700">Suggestion: {i.suggestion}</p>
+          <p className="text-ink font-medium">{i.headline}</p>
+          <p className="text-muted mt-0.5 text-xs">Evidence: {i.evidence}</p>
+          <p className="text-brand-700 mt-0.5 text-xs">Suggestion: {i.suggestion}</p>
         </li>
       ))}
     </ul>
@@ -124,7 +136,8 @@ function toPlainText(response) {
   if (kind === 'email') return `Subject: ${data.subject}\n\n${data.body}`
   if (kind === 'questions') return data.items.map((q, i) => `${i + 1}. ${q.question}`).join('\n')
   if (kind === 'funnel') return data.insights.map((i) => `• ${i.headline}\n  ${i.suggestion}`).join('\n')
-  if (kind === 'feedbackSummary') return [data.overview, ...data.entries.map((e) => `${e.stage} (${e.interviewer}): ${e.recommendation}. + ${e.strengths} − ${e.concerns}`)].join('\n')
+  if (kind === 'feedbackSummary')
+    return [data.overview, ...data.entries.map((e) => `${e.stage} (${e.interviewer}): ${e.recommendation}. + ${e.strengths} − ${e.concerns}`)].join('\n')
   if (kind === 'skillMatch') return [`Match ${data.score}%`, ...data.rows.map((r) => `${r.skill}: ${r.level} — ${r.evidence}`)].join('\n')
   if (kind === 'resume') return [data.name, data.currentRole, `${data.experienceYears} yrs`, `Skills: ${data.skills.join(', ')}`].join('\n')
   return data.text ?? ''
@@ -140,7 +153,7 @@ export default function AIMessage({ message, onRetry, onSaveEdit }) {
   if (message.role === 'user') {
     return (
       <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex justify-end">
-        <p className="max-w-[85%] rounded-2xl rounded-br-md bg-brand-600 px-4 py-2 text-sm text-white">{message.text}</p>
+        <p className="bg-brand-600 max-w-[85%] rounded-2xl rounded-br-md px-4 py-2 text-sm text-white">{message.text}</p>
       </motion.div>
     )
   }
@@ -149,13 +162,13 @@ export default function AIMessage({ message, onRetry, onSaveEdit }) {
 
   return (
     <motion.article initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} className="flex gap-3" aria-live="polite" aria-busy={status === 'loading'}>
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+      <span className="bg-brand-50 text-brand-600 mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full">
         <Sparkles size={14} aria-hidden />
       </span>
-      <div className="min-w-0 flex-1 rounded-2xl border border-line/80 bg-surface shadow-card">
+      <div className="border-line/80 bg-surface shadow-card min-w-0 flex-1 rounded-2xl border">
         {status === 'loading' && (
           <div className="space-y-2.5 p-4" role="status">
-            <p className="text-xs text-muted">Preparing simulated response…</p>
+            <p className="text-muted text-xs">Preparing simulated response…</p>
             <Skeleton className="h-3 w-3/4" />
             <Skeleton className="h-3 w-full" />
             <Skeleton className="h-3 w-2/3" />
@@ -165,7 +178,7 @@ export default function AIMessage({ message, onRetry, onSaveEdit }) {
         {status === 'error' && (
           <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center" role="alert">
             <AlertTriangle size={16} className="shrink-0 text-amber-600" aria-hidden />
-            <p className="flex-1 text-sm text-ink-soft">{error}</p>
+            <p className="text-ink-soft flex-1 text-sm">{error}</p>
             <Button size="sm" icon={RotateCcw} onClick={() => onRetry(message.id)}>
               Retry
             </Button>
@@ -174,7 +187,7 @@ export default function AIMessage({ message, onRetry, onSaveEdit }) {
 
         {status === 'done' && response && (
           <>
-            <header className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2.5">
+            <header className="border-line flex flex-wrap items-center gap-2 border-b px-4 py-2.5">
               <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">{response.title}</h3>
               <StatusBadge tone="neutral" dot={false}>
                 Simulated
@@ -192,10 +205,10 @@ export default function AIMessage({ message, onRetry, onSaveEdit }) {
               {response.kind === 'email' && <EmailView data={response.data} editing={editing} draft={draft} setDraft={setDraft} />}
               {response.kind === 'feedbackSummary' && <FeedbackView data={response.data} />}
               {response.kind === 'funnel' && <FunnelView data={response.data} />}
-              {response.kind === 'text' && <p className="text-sm leading-relaxed text-ink-soft">{response.data.text}</p>}
-              {response.caveat && <p className="mt-3 rounded-md bg-subtle px-3 py-2 text-xs text-muted">{response.caveat}</p>}
+              {response.kind === 'text' && <p className="text-ink-soft text-sm leading-relaxed">{response.data.text}</p>}
+              {response.caveat && <p className="bg-subtle text-muted mt-3 rounded-md px-3 py-2 text-xs">{response.caveat}</p>}
             </div>
-            <footer className="flex flex-wrap items-center gap-1 border-t border-line px-2 py-1.5">
+            <footer className="border-line flex flex-wrap items-center gap-1 border-t px-2 py-1.5">
               {response.sources?.length > 0 && (
                 <Button size="xs" variant="ghost" icon={FileSearch} onClick={() => setShowSources((s) => !s)} aria-expanded={showSources}>
                   Sources ({response.sources.length})
@@ -256,14 +269,14 @@ export default function AIMessage({ message, onRetry, onSaveEdit }) {
               )}
             </footer>
             {showSources && (
-              <ul className="space-y-1 border-t border-line bg-subtle/50 px-4 py-3 text-xs">
+              <ul className="border-line bg-subtle/50 space-y-1 border-t px-4 py-3 text-xs">
                 {response.sources.map((s) => (
                   <li key={s.label}>
-                    <span className="font-medium text-ink">{s.label}</span>
+                    <span className="text-ink font-medium">{s.label}</span>
                     {s.detail && <span className="text-muted"> — {s.detail}</span>}
                   </li>
                 ))}
-                <li className="pt-1 text-faint">Generated locally from TalentNest demo records on {formatDate(new Date())}.</li>
+                <li className="text-faint pt-1">Generated locally from TalentNest demo records on {formatDate(new Date())}.</li>
               </ul>
             )}
           </>

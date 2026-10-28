@@ -21,8 +21,18 @@ import { formatDate, formatRelative } from '@/utils/formatDate'
 const inr = (n) => `₹${Number(n).toLocaleString('en-IN')}`
 
 const CONFIRM_COPY = {
-  accepted: { title: 'Record offer as accepted?', body: 'The candidate moves to the Hired stage and an onboarding checklist starts.', label: 'Mark accepted', tone: 'primary' },
-  declined: { title: 'Record offer as declined?', body: 'The application is marked as not progressing. You can restore it later from the candidate profile.', label: 'Mark declined', tone: 'danger' },
+  accepted: {
+    title: 'Record offer as accepted?',
+    body: 'The candidate moves to the Hired stage and an onboarding checklist starts.',
+    label: 'Mark accepted',
+    tone: 'primary',
+  },
+  declined: {
+    title: 'Record offer as declined?',
+    body: 'The application is marked as not progressing. You can restore it later from the candidate profile.',
+    label: 'Mark declined',
+    tone: 'danger',
+  },
   sent: { title: 'Mark offer as sent?', body: 'Demo mode records the status only; no offer letter is emailed.', label: 'Mark sent', tone: 'primary' },
 }
 
@@ -50,7 +60,9 @@ export default function OffersPage() {
       })),
     [offers, candidatesById, jobsById],
   )
-  const filtered = rows.filter((r) => (status === 'active' ? ['draft', 'sent', 'negotiating'].includes(r.offer.status) : status === 'all' ? true : r.offer.status === status))
+  const filtered = rows.filter((r) =>
+    status === 'active' ? ['draft', 'sent', 'negotiating'].includes(r.offer.status) : status === 'all' ? true : r.offer.status === status,
+  )
   const table = useTableState(filtered, { initialSort: { key: 'expiresAt', dir: 'asc' }, pageSize: 50 })
   const accepted = rows.filter((r) => r.offer.status === 'accepted')
   const decided = rows.filter((r) => ['accepted', 'declined'].includes(r.offer.status)).length
@@ -66,7 +78,7 @@ export default function OffersPage() {
           <Avatar name={r.name} size="sm" />
           <div className="min-w-0">
             <p className="truncate font-medium">{r.name}</p>
-            <p className="truncate text-xs text-muted">{r.job?.title}</p>
+            <p className="text-muted truncate text-xs">{r.job?.title}</p>
           </div>
         </div>
       ),
@@ -79,7 +91,7 @@ export default function OffersPage() {
       render: (r) => (
         <span className="tabular">
           {inr(r.offer.salary)}
-          {r.offer.joiningBonus > 0 && <span className="block text-xs text-muted">+ {inr(r.offer.joiningBonus)} bonus</span>}
+          {r.offer.joiningBonus > 0 && <span className="text-muted block text-xs">+ {inr(r.offer.joiningBonus)} bonus</span>}
         </span>
       ),
     },
@@ -89,7 +101,11 @@ export default function OffersPage() {
       header: 'Valid until',
       sortable: true,
       hideBelow: 'md',
-      render: (r) => <span className={r.expiringSoon ? 'font-medium text-amber-700' : 'text-ink-soft'}>{['accepted', 'declined'].includes(r.offer.status) ? '—' : formatRelative(r.offer.expiresAt)}</span>,
+      render: (r) => (
+        <span className={r.expiringSoon ? 'font-medium text-amber-700' : 'text-ink-soft'}>
+          {['accepted', 'declined'].includes(r.offer.status) ? '—' : formatRelative(r.offer.expiresAt)}
+        </span>
+      ),
     },
     { key: 'status', header: 'Status', render: (r) => <StatusBadge kind="offer" value={r.offer.status} /> },
     {
@@ -106,10 +122,26 @@ export default function OffersPage() {
               items={[
                 { label: 'Mark as sent', icon: Send, disabled: !canManage || s !== 'draft', onSelect: () => setConfirm({ row: r, status: 'sent' }) },
                 { label: 'Revise offer', icon: Pencil, disabled: !canManage || !open, onSelect: () => global.openOffer({ offer: r.offer }) },
-                { label: 'Candidate is negotiating', icon: Handshake, disabled: !canManage || s !== 'sent', onSelect: () => actions.setStatus.run(r.id, 'negotiating') },
+                {
+                  label: 'Candidate is negotiating',
+                  icon: Handshake,
+                  disabled: !canManage || s !== 'sent',
+                  onSelect: () => actions.setStatus.run(r.id, 'negotiating'),
+                },
                 { divider: true },
-                { label: 'Mark accepted', icon: CheckCircle2, disabled: !canManage || !['sent', 'negotiating'].includes(s), onSelect: () => setConfirm({ row: r, status: 'accepted' }) },
-                { label: 'Mark declined', icon: ThumbsDown, danger: true, disabled: !canManage || !['sent', 'negotiating'].includes(s), onSelect: () => setConfirm({ row: r, status: 'declined' }) },
+                {
+                  label: 'Mark accepted',
+                  icon: CheckCircle2,
+                  disabled: !canManage || !['sent', 'negotiating'].includes(s),
+                  onSelect: () => setConfirm({ row: r, status: 'accepted' }),
+                },
+                {
+                  label: 'Mark declined',
+                  icon: ThumbsDown,
+                  danger: true,
+                  disabled: !canManage || !['sent', 'negotiating'].includes(s),
+                  onSelect: () => setConfirm({ row: r, status: 'declined' }),
+                },
               ]}
               renderTrigger={(props) => <Button {...props} size="sm" variant="ghost" iconOnly icon={MoreHorizontal} aria-label={`Actions for ${r.name}`} />}
             />
@@ -136,7 +168,12 @@ export default function OffersPage() {
       <MetricStrip columns={4}>
         <MetricCard label="Awaiting response" icon={Timer} value={count('sent') + count('negotiating')} detail={`${count('negotiating')} negotiating`} />
         <MetricCard label="Drafts" icon={FileSignature} value={count('draft')} detail="Pending approval" />
-        <MetricCard label="Acceptance rate" icon={CheckCircle2} value={decided ? Math.round((accepted.length / decided) * 100) : 0} detail={`% of ${decided} decided offers`} />
+        <MetricCard
+          label="Acceptance rate"
+          icon={CheckCircle2}
+          value={decided ? Math.round((accepted.length / decided) * 100) : 0}
+          detail={`% of ${decided} decided offers`}
+        />
         <MetricCard label="Onboarding" icon={UserRoundCheck} value={accepted.length} detail="New hires in progress" emphasis />
       </MetricStrip>
 
@@ -151,8 +188,8 @@ export default function OffersPage() {
       />
 
       {tab === 'offers' ? (
-        <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
-          <div className="no-scrollbar flex gap-1.5 overflow-x-auto border-b border-line p-3" role="group" aria-label="Filter offers by status">
+        <div className="border-line/80 bg-surface shadow-card rounded-2xl border">
+          <div className="no-scrollbar border-line flex gap-1.5 overflow-x-auto border-b p-3" role="group" aria-label="Filter offers by status">
             {[
               ['active', 'Open'],
               ['accepted', 'Accepted'],
@@ -164,7 +201,7 @@ export default function OffersPage() {
                 type="button"
                 aria-pressed={status === value}
                 onClick={() => setStatus(value)}
-                className={`shrink-0 rounded-md border px-2.5 py-1 text-xs ${status === value ? 'border-brand-200 bg-brand-50 font-medium text-brand-700' : 'border-line text-muted hover:text-ink'}`}
+                className={`shrink-0 rounded-md border px-2.5 py-1 text-xs ${status === value ? 'border-brand-200 bg-brand-50 text-brand-700 font-medium' : 'border-line text-muted hover:text-ink'}`}
               >
                 {label}
               </button>
@@ -181,11 +218,13 @@ export default function OffersPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{r.name}</p>
-                    <p className="truncate text-xs text-muted">{r.job?.title}</p>
+                    <p className="text-muted truncate text-xs">{r.job?.title}</p>
                   </div>
                   <StatusBadge kind="offer" value={r.offer.status} />
                 </div>
-                <p className="text-sm tabular">{inr(r.offer.salary)} · starts {formatDate(r.offer.startDate)}</p>
+                <p className="tabular text-sm">
+                  {inr(r.offer.salary)} · starts {formatDate(r.offer.startDate)}
+                </p>
                 {['sent', 'negotiating'].includes(r.offer.status) && (
                   <div className="flex gap-2">
                     <Button size="xs" variant="primary" onClick={() => setConfirm({ row: r, status: 'accepted' })} disabled={!canManage}>
@@ -210,7 +249,14 @@ export default function OffersPage() {
           {accepted
             .sort((a, b) => new Date(a.offer.startDate) - new Date(b.offer.startDate))
             .map((r) => (
-              <OnboardingChecklist key={r.id} offer={r.offer} candidateName={r.name} jobTitle={r.job?.title} onToggle={actions.toggleTask.run} disabled={!canManage} />
+              <OnboardingChecklist
+                key={r.id}
+                offer={r.offer}
+                candidateName={r.name}
+                jobTitle={r.job?.title}
+                onToggle={actions.toggleTask.run}
+                disabled={!canManage}
+              />
             ))}
         </div>
       ) : (

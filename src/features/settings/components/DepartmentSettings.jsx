@@ -21,13 +21,29 @@ export default function DepartmentSettings({ readOnly }) {
   const [deleting, setDeleting] = useState(null)
   const save = useAsyncAction(settingsService.saveDepartment, { success: 'Department saved' })
   const remove = useAsyncAction(settingsService.deleteDepartment, { success: 'Department deleted' })
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm()
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm()
 
   useEffect(() => {
     if (editing) reset({ name: '', code: '', headId: '', color: SWATCHES[0], ...editing })
   }, [editing, reset])
 
-  const stats = useMemo(() => Object.fromEntries(departments.map((d) => [d.id, { open: jobs.filter((j) => j.departmentId === d.id && j.status === 'open').length, total: jobs.filter((j) => j.departmentId === d.id).length }])), [departments, jobs])
+  const stats = useMemo(
+    () =>
+      Object.fromEntries(
+        departments.map((d) => [
+          d.id,
+          { open: jobs.filter((j) => j.departmentId === d.id && j.status === 'open').length, total: jobs.filter((j) => j.departmentId === d.id).length },
+        ]),
+      ),
+    [departments, jobs],
+  )
 
   const onSubmit = async (values) => {
     const res = await save.run({ ...editing, ...values, code: values.code.toUpperCase() })
@@ -42,22 +58,30 @@ export default function DepartmentSettings({ readOnly }) {
           Add department
         </Button>
       </div>
-      <ul className="divide-y divide-line rounded-2xl border border-line/80 bg-surface shadow-card">
+      <ul className="divide-line border-line/80 bg-surface shadow-card divide-y rounded-2xl border">
         {departments.map((d) => (
           <li key={d.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
             <span className="h-3 w-3 rounded-sm" style={{ background: d.color }} aria-hidden />
             <div className="min-w-0 flex-1">
               <p className="font-medium">
-                {d.name} <span className="text-xs font-normal text-faint">{d.code}</span>
+                {d.name} <span className="text-faint text-xs font-normal">{d.code}</span>
               </p>
-              <p className="text-xs text-muted">
+              <p className="text-muted text-xs">
                 Head: {usersById.get(d.headId)?.name ?? 'Unassigned'} · {stats[d.id]?.open ?? 0} open of {stats[d.id]?.total ?? 0} vacancies
               </p>
             </div>
             <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setEditing(d)} disabled={readOnly}>
               Edit
             </Button>
-            <Button size="sm" variant="danger-ghost" iconOnly icon={Trash2} aria-label={`Delete ${d.name}`} onClick={() => setDeleting(d)} disabled={readOnly} />
+            <Button
+              size="sm"
+              variant="danger-ghost"
+              iconOnly
+              icon={Trash2}
+              aria-label={`Delete ${d.name}`}
+              onClick={() => setDeleting(d)}
+              disabled={readOnly}
+            />
           </li>
         ))}
       </ul>
@@ -83,14 +107,38 @@ export default function DepartmentSettings({ readOnly }) {
             {(a) => <Input {...a} {...register('name', rules.name('Name'))} invalid={!!errors.name} data-autofocus />}
           </Field>
           <Field label="Short code" required error={errors.code?.message} hint="2–4 letters, used in charts">
-            {(a) => <Input {...a} maxLength={4} {...register('code', { required: 'Code is required', pattern: { value: /^[A-Za-z]{2,4}$/, message: 'Use 2–4 letters' } })} invalid={!!errors.code} />}
+            {(a) => (
+              <Input
+                {...a}
+                maxLength={4}
+                {...register('code', { required: 'Code is required', pattern: { value: /^[A-Za-z]{2,4}$/, message: 'Use 2–4 letters' } })}
+                invalid={!!errors.code}
+              />
+            )}
           </Field>
-          <Field label="Department head">{(a) => <Select {...a} {...register('headId')} options={users.filter((u) => u.status === 'active').map((u) => ({ value: u.id, label: u.name }))} placeholder="Unassigned" />}</Field>
+          <Field label="Department head">
+            {(a) => (
+              <Select
+                {...a}
+                {...register('headId')}
+                options={users.filter((u) => u.status === 'active').map((u) => ({ value: u.id, label: u.name }))}
+                placeholder="Unassigned"
+              />
+            )}
+          </Field>
           <fieldset>
-            <legend className="mb-1.5 text-xs font-medium text-ink-soft">Colour</legend>
+            <legend className="text-ink-soft mb-1.5 text-xs font-medium">Colour</legend>
             <div className="flex gap-2">
               {SWATCHES.map((s) => (
-                <button key={s} type="button" onClick={() => setValue('color', s)} className={`h-7 w-7 rounded-md ring-offset-2 ${color === s ? 'ring-2 ring-brand-600' : ''}`} style={{ background: s }} aria-label={`Colour ${s}`} aria-pressed={color === s} />
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setValue('color', s)}
+                  className={`h-7 w-7 rounded-md ring-offset-2 ${color === s ? 'ring-brand-600 ring-2' : ''}`}
+                  style={{ background: s }}
+                  aria-label={`Colour ${s}`}
+                  aria-pressed={color === s}
+                />
               ))}
             </div>
           </fieldset>

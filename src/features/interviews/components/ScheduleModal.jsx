@@ -35,7 +35,15 @@ export default function ScheduleModal({ open, onClose, interview, prefill }) {
   const actions = useSchedulingActions()
   const [conflict, setConflict] = useState(null)
 
-  const { register, handleSubmit, control, reset, watch, setValue, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm({
     defaultValues: { applicationId: '', stageId: '', date: '', time: '', durationMin: '45', interviewerIds: [], mode: 'Video', location: '', notes: '' },
   })
 
@@ -121,10 +129,33 @@ export default function ScheduleModal({ open, onClose, interview, prefill }) {
         {!isReschedule && (
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Candidate & vacancy" required error={errors.applicationId?.message} className="sm:col-span-2">
-              {(a) => <Select {...a} {...register('applicationId', rules.required('Candidate'))} options={appOptions} placeholder="Select an active application" invalid={!!errors.applicationId} data-autofocus />}
+              {(a) => (
+                <Select
+                  {...a}
+                  {...register('applicationId', rules.required('Candidate'))}
+                  options={appOptions}
+                  placeholder="Select an active application"
+                  invalid={!!errors.applicationId}
+                  data-autofocus
+                />
+              )}
             </Field>
-            <Field label="Interview stage" required error={errors.stageId?.message} hint={job && !stageOptions.length ? 'This vacancy has no interview stages.' : undefined}>
-              {(a) => <Select {...a} {...register('stageId', rules.required('Stage'))} options={stageOptions} placeholder={job ? 'Select stage' : 'Select a candidate first'} disabled={!job} invalid={!!errors.stageId} />}
+            <Field
+              label="Interview stage"
+              required
+              error={errors.stageId?.message}
+              hint={job && !stageOptions.length ? 'This vacancy has no interview stages.' : undefined}
+            >
+              {(a) => (
+                <Select
+                  {...a}
+                  {...register('stageId', rules.required('Stage'))}
+                  options={stageOptions}
+                  placeholder={job ? 'Select stage' : 'Select a candidate first'}
+                  disabled={!job}
+                  invalid={!!errors.stageId}
+                />
+              )}
             </Field>
           </div>
         )}
@@ -147,19 +178,34 @@ export default function ScheduleModal({ open, onClose, interview, prefill }) {
               name="interviewerIds"
               control={control}
               rules={{ validate: (v) => v.length > 0 || 'Select at least one interviewer' }}
-              render={({ field }) => <InterviewerPicker id={a.id} value={field.value} onChange={field.onChange} departmentId={job?.departmentId} invalid={!!errors.interviewerIds} />}
+              render={({ field }) => (
+                <InterviewerPicker id={a.id} value={field.value} onChange={field.onChange} departmentId={job?.departmentId} invalid={!!errors.interviewerIds} />
+              )}
             />
           )}
         </Field>
 
         <div className="space-y-3">
-          <p className="text-xs font-medium text-ink-soft">Format</p>
-          <Controller name="mode" control={control} render={({ field }) => <SegmentedControl label="Interview format" options={MODES} value={field.value} onChange={field.onChange} />} />
+          <p className="text-ink-soft text-xs font-medium">Format</p>
+          <Controller
+            name="mode"
+            control={control}
+            render={({ field }) => <SegmentedControl label="Interview format" options={MODES} value={field.value} onChange={field.onChange} />}
+          />
           {mode === 'Video' ? (
-            <MockNotice>A meeting link will be generated once a calendar/meeting integration (Google Meet, Teams, Zoom) is connected. No invite is sent in demo mode.</MockNotice>
+            <MockNotice>
+              A meeting link will be generated once a calendar/meeting integration (Google Meet, Teams, Zoom) is connected. No invite is sent in demo mode.
+            </MockNotice>
           ) : (
             <Field label={mode === 'Phone' ? 'Phone details' : 'Location'} required error={errors.location?.message}>
-              {(a) => <Input {...a} {...register('location', { validate: (v) => mode === 'Video' || !!v.trim() || 'Location is required' })} placeholder={mode === 'Phone' ? 'Interviewer calls candidate on file number' : 'Office and room'} invalid={!!errors.location} />}
+              {(a) => (
+                <Input
+                  {...a}
+                  {...register('location', { validate: (v) => mode === 'Video' || !!v.trim() || 'Location is required' })}
+                  placeholder={mode === 'Phone' ? 'Interviewer calls candidate on file number' : 'Office and room'}
+                  invalid={!!errors.location}
+                />
+              )}
             </Field>
           )}
         </div>

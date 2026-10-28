@@ -17,16 +17,7 @@ export const PERMISSIONS = [
 
 export const DEFAULT_ROLE_PERMISSIONS = {
   Admin: PERMISSIONS.map((p) => p.key),
-  Recruiter: [
-    'candidates.manage',
-    'pipeline.move',
-    'jobs.manage',
-    'interviews.schedule',
-    'feedback.submit',
-    'offers.manage',
-    'analytics.view',
-    'ai.use',
-  ],
+  Recruiter: ['candidates.manage', 'pipeline.move', 'jobs.manage', 'interviews.schedule', 'feedback.submit', 'offers.manage', 'analytics.view', 'ai.use'],
   'Hiring Manager': ['pipeline.move', 'interviews.schedule', 'feedback.submit', 'analytics.view', 'ai.use'],
   Interviewer: ['feedback.submit'],
 }

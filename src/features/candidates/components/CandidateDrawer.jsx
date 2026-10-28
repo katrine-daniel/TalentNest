@@ -29,7 +29,13 @@ export default function CandidateDrawer({ candidateId, open, onClose, focusAppli
         onClose={onClose}
         title={candidate ? fullName(candidate) : ''}
         subtitle={candidate ? `${candidate.ref} · ${candidate.currentTitle}` : ''}
-        headerActions={candidate && <Button size="sm" variant="secondary" icon={ExternalLink} to={`/candidates/${candidate.id}`} onClick={onClose}>Full profile</Button>}
+        headerActions={
+          candidate && (
+            <Button size="sm" variant="secondary" icon={ExternalLink} to={`/candidates/${candidate.id}`} onClick={onClose}>
+              Full profile
+            </Button>
+          )
+        }
       >
         {candidate && (
           <div className="space-y-7 p-5">
@@ -70,7 +76,13 @@ export default function CandidateDrawer({ candidateId, open, onClose, focusAppli
           </div>
         )}
       </Drawer>
-      <StageChangeDialog change={stageMove.change} job={stageMove.change?.job} onClose={stageMove.cancel} onConfirm={stageMove.confirm} loading={stageMove.pending} />
+      <StageChangeDialog
+        change={stageMove.change}
+        job={stageMove.change?.job}
+        onClose={stageMove.cancel}
+        onConfirm={stageMove.confirm}
+        loading={stageMove.pending}
+      />
     </>
   )
 }

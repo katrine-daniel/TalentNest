@@ -22,11 +22,14 @@ export const settingsService = {
   },
 
   async updateUser(id, patch) {
-    return mockRequest(() => {
-      let updated
-      mockDb.write('users', (list) => list.map((u) => (u.id === id ? (updated = { ...u, ...patch }) : u)))
-      return updated
-    }, { latency: 200 })
+    return mockRequest(
+      () => {
+        let updated
+        mockDb.write('users', (list) => list.map((u) => (u.id === id ? (updated = { ...u, ...patch }) : u)))
+        return updated
+      },
+      { latency: 200 },
+    )
   },
 
   // Roles -------------------------------------------------------------------
@@ -53,14 +56,17 @@ export const settingsService = {
 
   // Workflow templates --------------------------------------------------------
   async saveWorkflowTemplate(values) {
-    return mockRequest(() => {
-      if (!values.name?.trim()) throw new ServiceError('Template name is required')
-      if (values.stages.length < 3) throw new ServiceError('A workflow needs at least three stages')
-      if (values.stages[0].type !== 'application') throw new ServiceError('The first stage must be an application stage')
-      if (values.stages.at(-1).type !== 'hired') throw new ServiceError('The last stage must be a Hired stage')
-      const stages = values.stages.map((s, i) => ({ key: s.key ?? `s${i}-${createId('k')}`, name: s.name.trim(), type: s.type }))
-      return upsert('workflowTemplates', { ...values, stages }, 'wf')
-    }, { latency: 400 })
+    return mockRequest(
+      () => {
+        if (!values.name?.trim()) throw new ServiceError('Template name is required')
+        if (values.stages.length < 3) throw new ServiceError('A workflow needs at least three stages')
+        if (values.stages[0].type !== 'application') throw new ServiceError('The first stage must be an application stage')
+        if (values.stages.at(-1).type !== 'hired') throw new ServiceError('The last stage must be a Hired stage')
+        const stages = values.stages.map((s, i) => ({ key: s.key ?? `s${i}-${createId('k')}`, name: s.name.trim(), type: s.type }))
+        return upsert('workflowTemplates', { ...values, stages }, 'wf')
+      },
+      { latency: 400 },
+    )
   },
 
   async deleteWorkflowTemplate(id) {
@@ -78,7 +84,13 @@ export const settingsService = {
 
   // Assessment templates & scorecards -----------------------------------------
   async saveAssessmentTemplate(values) {
-    return mockRequest(() => upsert('assessmentTemplates', { ...values, durationMin: Number(values.durationMin), passMark: Number(values.passMark), questionCount: Number(values.questionCount) }, 'at'))
+    return mockRequest(() =>
+      upsert(
+        'assessmentTemplates',
+        { ...values, durationMin: Number(values.durationMin), passMark: Number(values.passMark), questionCount: Number(values.questionCount) },
+        'at',
+      ),
+    )
   },
 
   async saveScorecard(values) {

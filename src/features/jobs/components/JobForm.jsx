@@ -126,29 +126,71 @@ export default function JobForm({ open, onClose, job }) {
       <form id="job-form" onSubmit={handleSubmit(onSubmit)} noValidate className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
           <Field label="Job title" required error={errors.title?.message}>
-            {(a) => <Input {...a} {...register('title', { ...rules.required('Job title'), minLength: { value: 4, message: 'Use a descriptive title' } })} invalid={!!errors.title} placeholder="e.g. Travel Consultant — International" data-autofocus />}
+            {(a) => (
+              <Input
+                {...a}
+                {...register('title', { ...rules.required('Job title'), minLength: { value: 4, message: 'Use a descriptive title' } })}
+                invalid={!!errors.title}
+                placeholder="e.g. Travel Consultant — International"
+                data-autofocus
+              />
+            )}
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Department" required error={errors.departmentId?.message}>
-              {(a) => <Select {...a} {...register('departmentId', rules.required('Department'))} options={options.departments} placeholder="Select department" invalid={!!errors.departmentId} />}
+              {(a) => (
+                <Select
+                  {...a}
+                  {...register('departmentId', rules.required('Department'))}
+                  options={options.departments}
+                  placeholder="Select department"
+                  invalid={!!errors.departmentId}
+                />
+              )}
             </Field>
             <Field label="Job category" required error={errors.category?.message}>
-              {(a) => <Select {...a} {...register('category', rules.required('Category'))} options={JOB_CATEGORIES.map((c) => ({ value: c, label: c }))} placeholder="Select category" invalid={!!errors.category} />}
+              {(a) => (
+                <Select
+                  {...a}
+                  {...register('category', rules.required('Category'))}
+                  options={JOB_CATEGORIES.map((c) => ({ value: c, label: c }))}
+                  placeholder="Select category"
+                  invalid={!!errors.category}
+                />
+              )}
             </Field>
             <Field label="Location" required error={errors.location?.message}>
               {(a) => <Input {...a} {...register('location', rules.required('Location'))} invalid={!!errors.location} placeholder="City" />}
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Work mode">{(a) => <Select {...a} {...register('workMode')} options={WORK_MODES.map((m) => ({ value: m, label: m }))} />}</Field>
-              <Field label="Type">{(a) => <Select {...a} {...register('employmentType')} options={EMPLOYMENT_TYPES.map((m) => ({ value: m, label: m }))} />}</Field>
+              <Field label="Type">
+                {(a) => <Select {...a} {...register('employmentType')} options={EMPLOYMENT_TYPES.map((m) => ({ value: m, label: m }))} />}
+              </Field>
             </div>
             <Field label="Openings" required error={errors.openings?.message}>
-              {(a) => <Input {...a} type="number" min={1} {...register('openings', rules.positiveInt('Openings', { min: 1, max: 200 }))} invalid={!!errors.openings} />}
+              {(a) => (
+                <Input
+                  {...a}
+                  type="number"
+                  min={1}
+                  {...register('openings', rules.positiveInt('Openings', { min: 1, max: 200 }))}
+                  invalid={!!errors.openings}
+                />
+              )}
             </Field>
             <Field label="Status">{(a) => <Select {...a} {...register('status')} options={toOptions('job')} />}</Field>
             <div className="grid grid-cols-2 gap-3 sm:col-span-2">
               <Field label="Min. experience (yrs)" required error={errors.experienceMin?.message}>
-                {(a) => <Input {...a} type="number" min={0} {...register('experienceMin', rules.positiveInt('Minimum', { min: 0, max: 30 }))} invalid={!!errors.experienceMin} />}
+                {(a) => (
+                  <Input
+                    {...a}
+                    type="number"
+                    min={0}
+                    {...register('experienceMin', rules.positiveInt('Minimum', { min: 0, max: 30 }))}
+                    invalid={!!errors.experienceMin}
+                  />
+                )}
               </Field>
               <Field label="Max. experience (yrs)" required error={errors.experienceMax?.message}>
                 {(a) => (
@@ -156,7 +198,10 @@ export default function JobForm({ open, onClose, job }) {
                     {...a}
                     type="number"
                     min={0}
-                    {...register('experienceMax', { ...rules.positiveInt('Maximum', { min: 0, max: 40 }), validate: (v) => v >= Number(getValues('experienceMin')) || 'Must be ≥ minimum' })}
+                    {...register('experienceMax', {
+                      ...rules.positiveInt('Maximum', { min: 0, max: 40 }),
+                      validate: (v) => v >= Number(getValues('experienceMin')) || 'Must be ≥ minimum',
+                    })}
                     invalid={!!errors.experienceMax}
                   />
                 )}
@@ -171,7 +216,9 @@ export default function JobForm({ open, onClose, job }) {
                     type="number"
                     min={0}
                     step={10000}
-                    {...register('salaryMax', { validate: (v) => !v || !getValues('salaryMin') || Number(v) >= Number(getValues('salaryMin')) || 'Must be ≥ starting salary' })}
+                    {...register('salaryMax', {
+                      validate: (v) => !v || !getValues('salaryMin') || Number(v) >= Number(getValues('salaryMin')) || 'Must be ≥ starting salary',
+                    })}
                     invalid={!!errors.salaryMax}
                   />
                 )}
@@ -184,22 +231,50 @@ export default function JobForm({ open, onClose, job }) {
                 name="skills"
                 control={control}
                 rules={{ validate: (v) => v.length >= 2 || 'Add at least two skills' }}
-                render={({ field }) => <TagInput {...a} value={field.value} onChange={field.onChange} suggestions={skillSuggestions} invalid={!!errors.skills} />}
+                render={({ field }) => (
+                  <TagInput {...a} value={field.value} onChange={field.onChange} suggestions={skillSuggestions} invalid={!!errors.skills} />
+                )}
               />
             )}
           </Field>
           <Field label="Job description" required error={errors.description?.message}>
-            {(a) => <Textarea {...a} rows={5} {...register('description', { ...rules.required('Description'), minLength: { value: 40, message: 'Add at least a few sentences (40+ characters)' } })} invalid={!!errors.description} />}
+            {(a) => (
+              <Textarea
+                {...a}
+                rows={5}
+                {...register('description', {
+                  ...rules.required('Description'),
+                  minLength: { value: 40, message: 'Add at least a few sentences (40+ characters)' },
+                })}
+                invalid={!!errors.description}
+              />
+            )}
           </Field>
         </div>
 
         <div className="space-y-4 lg:col-span-2">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
             <Field label="Hiring manager" required error={errors.hiringManagerId?.message}>
-              {(a) => <Select {...a} {...register('hiringManagerId', rules.required('Hiring manager'))} options={options.hiringManagers} placeholder="Select hiring manager" invalid={!!errors.hiringManagerId} />}
+              {(a) => (
+                <Select
+                  {...a}
+                  {...register('hiringManagerId', rules.required('Hiring manager'))}
+                  options={options.hiringManagers}
+                  placeholder="Select hiring manager"
+                  invalid={!!errors.hiringManagerId}
+                />
+              )}
             </Field>
             <Field label="Recruiter" required error={errors.recruiterId?.message}>
-              {(a) => <Select {...a} {...register('recruiterId', rules.required('Recruiter'))} options={options.recruiters} placeholder="Select recruiter" invalid={!!errors.recruiterId} />}
+              {(a) => (
+                <Select
+                  {...a}
+                  {...register('recruiterId', rules.required('Recruiter'))}
+                  options={options.recruiters}
+                  placeholder="Select recruiter"
+                  invalid={!!errors.recruiterId}
+                />
+              )}
             </Field>
           </div>
           <Field
@@ -208,10 +283,19 @@ export default function JobForm({ open, onClose, job }) {
             hint={isEdit ? 'Stages below belong to this vacancy only.' : 'Stages are copied to this vacancy so you can tailor them.'}
             error={errors.workflowTemplateId?.message}
           >
-            {(a) => <Select {...a} {...register('workflowTemplateId', isEdit ? {} : rules.required('Workflow template'))} options={options.workflowTemplates} placeholder="Choose a template" disabled={isEdit} invalid={!!errors.workflowTemplateId} />}
+            {(a) => (
+              <Select
+                {...a}
+                {...register('workflowTemplateId', isEdit ? {} : rules.required('Workflow template'))}
+                options={options.workflowTemplates}
+                placeholder="Choose a template"
+                disabled={isEdit}
+                invalid={!!errors.workflowTemplateId}
+              />
+            )}
           </Field>
           <div>
-            <p className="mb-2 text-xs font-medium text-ink-soft">Recruitment stages</p>
+            <p className="text-ink-soft mb-2 text-xs font-medium">Recruitment stages</p>
             {stages.length ? (
               <WorkflowBuilder
                 stages={stages}
@@ -224,7 +308,7 @@ export default function JobForm({ open, onClose, job }) {
                 }}
               />
             ) : (
-              <p className="rounded-lg border border-dashed border-line-strong px-4 py-6 text-center text-xs text-muted">
+              <p className="border-line-strong text-muted rounded-lg border border-dashed px-4 py-6 text-center text-xs">
                 {stagesError ?? 'Select a workflow template to load its stages.'}
               </p>
             )}

@@ -58,10 +58,13 @@ export default function WorkflowSettings({ readOnly }) {
               <button
                 type="button"
                 onClick={() => setSelectedId(t.id)}
-                className={cn('w-full rounded-lg border px-3 py-2.5 text-left transition-colors', t.id === selectedId ? 'border-brand-200 bg-brand-50' : 'border-transparent hover:bg-subtle')}
+                className={cn(
+                  'w-full rounded-lg border px-3 py-2.5 text-left transition-colors',
+                  t.id === selectedId ? 'border-brand-200 bg-brand-50' : 'hover:bg-subtle border-transparent',
+                )}
               >
                 <span className="block text-sm font-medium">{t.name}</span>
-                <span className="block text-xs text-muted">
+                <span className="text-muted block text-xs">
                   {t.stages.length} stages · {jobs.filter((j) => j.workflowTemplateId === t.id).length} vacancies
                 </span>
               </button>
@@ -83,17 +86,27 @@ export default function WorkflowSettings({ readOnly }) {
       </div>
 
       {draft ? (
-        <div className="space-y-5 rounded-2xl border border-line/80 bg-surface shadow-card p-5">
+        <div className="border-line/80 bg-surface shadow-card space-y-5 rounded-2xl border p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Template name" required>
-              {(a) => <Input {...a} value={draft.name} disabled={readOnly} onChange={(e) => setDraft({ ...draft, name: e.target.value })} invalid={!draft.name.trim()} />}
+              {(a) => (
+                <Input
+                  {...a}
+                  value={draft.name}
+                  disabled={readOnly}
+                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                  invalid={!draft.name.trim()}
+                />
+              )}
             </Field>
             <Field label="Description" optional>
-              {(a) => <Textarea {...a} rows={1} value={draft.description} disabled={readOnly} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />}
+              {(a) => (
+                <Textarea {...a} rows={1} value={draft.description} disabled={readOnly} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
+              )}
             </Field>
           </div>
           <div>
-            <p className="mb-2 text-xs font-medium text-ink-soft">Stages</p>
+            <p className="text-ink-soft mb-2 text-xs font-medium">Stages</p>
             {readOnly ? (
               <WorkflowBuilder readOnly stages={draft.stages} />
             ) : (
@@ -107,10 +120,18 @@ export default function WorkflowSettings({ readOnly }) {
               />
             )}
           </div>
-          {usage > 0 && <p className="text-xs text-muted">Changes apply to new vacancies. The {usage} existing vacancies using this template keep their own stages.</p>}
-          <div className="flex flex-wrap justify-between gap-2 border-t border-line pt-4">
+          {usage > 0 && (
+            <p className="text-muted text-xs">Changes apply to new vacancies. The {usage} existing vacancies using this template keep their own stages.</p>
+          )}
+          <div className="border-line flex flex-wrap justify-between gap-2 border-t pt-4">
             {draft.id ? (
-              <Button variant="danger-ghost" icon={Trash2} onClick={() => setDeleting(true)} disabled={readOnly || usage > 0} title={usage > 0 ? 'Templates in use cannot be deleted' : undefined}>
+              <Button
+                variant="danger-ghost"
+                icon={Trash2}
+                onClick={() => setDeleting(true)}
+                disabled={readOnly || usage > 0}
+                title={usage > 0 ? 'Templates in use cannot be deleted' : undefined}
+              >
                 Delete
               </Button>
             ) : (

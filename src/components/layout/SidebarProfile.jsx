@@ -12,13 +12,18 @@ export default function SidebarProfile({ collapsed = false, onNavigate }) {
       onClick={onNavigate}
       title={collapsed ? `${user.name} · ${role}` : undefined}
       aria-label={`${user.name}, ${role}. Open settings`}
-      className={cn('flex items-center gap-3 rounded-xl transition-colors hover:bg-subtle', collapsed ? 'justify-center p-1' : 'border border-line/80 bg-linear-to-br from-brand-50 to-surface p-2.5')}
+      className={cn(
+        'hover:bg-subtle flex items-center gap-3 rounded-xl transition-colors',
+        collapsed ? 'justify-center p-1' : 'border-line/80 from-brand-50 to-surface border bg-linear-to-br p-2.5',
+      )}
     >
       <Avatar name={user.name} size={collapsed ? 'sm' : 'md'} variant="brand" />
       {!collapsed && (
         <span className="min-w-0 leading-tight">
-          <span className="block truncate text-sm font-semibold text-ink">{user.name}</span>
-          <span className={cn('block truncate text-[11px]', viewAsRole ? 'font-medium text-brand-600' : 'text-muted')}>{viewAsRole ? `Viewing as ${role}` : user.title}</span>
+          <span className="text-ink block truncate text-sm font-semibold">{user.name}</span>
+          <span className={cn('block truncate text-[11px]', viewAsRole ? 'text-brand-600 font-medium' : 'text-muted')}>
+            {viewAsRole ? `Viewing as ${role}` : user.title}
+          </span>
         </span>
       )}
     </Link>

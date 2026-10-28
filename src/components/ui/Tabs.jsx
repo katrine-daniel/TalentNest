@@ -24,7 +24,7 @@ export default function Tabs({ tabs, value, onChange, className, label = 'Sectio
   }
 
   return (
-    <div role="tablist" aria-label={label} className={cn('no-scrollbar -mb-px flex gap-1 overflow-x-auto border-b border-line', className)}>
+    <div role="tablist" aria-label={label} className={cn('no-scrollbar border-line -mb-px flex gap-1 overflow-x-auto border-b', className)}>
       {tabs.map((tab, i) => {
         const selected = tab.value === value
         const Icon = tab.icon
@@ -40,15 +40,17 @@ export default function Tabs({ tabs, value, onChange, className, label = 'Sectio
             onClick={() => onChange(tab.value)}
             className={cn(
               'relative flex shrink-0 items-center gap-2 px-3 py-2.5 text-sm whitespace-nowrap transition-colors',
-              selected ? 'font-medium text-ink' : 'text-muted hover:text-ink',
+              selected ? 'text-ink font-medium' : 'text-muted hover:text-ink',
             )}
           >
             {Icon && <Icon size={15} aria-hidden />}
             {tab.label}
             {tab.count !== undefined && (
-              <span className={cn('rounded px-1.5 text-xxs tabular', selected ? 'bg-brand-50 text-brand-700' : 'bg-subtle text-muted')}>{tab.count}</span>
+              <span className={cn('text-xxs tabular rounded px-1.5', selected ? 'bg-brand-50 text-brand-700' : 'bg-subtle text-muted')}>{tab.count}</span>
             )}
-            {selected && <motion.span layoutId={layoutId} className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-brand-600" transition={{ duration: 0.2 }} />}
+            {selected && (
+              <motion.span layoutId={layoutId} className="bg-brand-600 absolute inset-x-2 -bottom-px h-0.5 rounded-full" transition={{ duration: 0.2 }} />
+            )}
           </button>
         )
       })}

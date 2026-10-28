@@ -17,35 +17,44 @@ function patchAssessment(id, updater) {
 
 export const assessmentService = {
   async assign(values, { actorId }) {
-    return mockRequest(() => {
-      const app = mockDb.read('applications').find((a) => a.id === values.applicationId)
-      if (!app) throw new ServiceError('Select a candidate application')
-      const duplicate = mockDb
-        .read('assessments')
-        .some((a) => a.applicationId === app.id && a.templateId === values.templateId && ['pending', 'in-progress', 'submitted'].includes(a.status))
-      if (duplicate) throw new ServiceError('This assessment is already open for the candidate')
-      const job = mockDb.read('jobs').find((j) => j.id === app.jobId)
-      const stage = job.stages.find((s) => s.type === 'assessment') ?? job.stages.find((s) => s.id === app.stageId)
-      const assessment = {
-        id: createId('asm'),
-        applicationId: app.id,
-        candidateId: app.candidateId,
-        jobId: app.jobId,
-        stageId: stage.id,
-        templateId: values.templateId,
-        assignedAt: new Date().toISOString(),
-        deadline: values.deadline,
-        assignedById: actorId,
-        status: 'pending',
-        score: null,
-        completedAt: null,
-        reminderSentAt: null,
-        notes: values.notes ?? '',
-      }
-      mockDb.write('assessments', (list) => [assessment, ...list])
-      logActivity({ type: 'assessment', text: `Assessment assigned to ${candidateName(app.candidateId)}`, actorId, candidateId: app.candidateId, jobId: app.jobId })
-      return assessment
-    }, { latency: 420 })
+    return mockRequest(
+      () => {
+        const app = mockDb.read('applications').find((a) => a.id === values.applicationId)
+        if (!app) throw new ServiceError('Select a candidate application')
+        const duplicate = mockDb
+          .read('assessments')
+          .some((a) => a.applicationId === app.id && a.templateId === values.templateId && ['pending', 'in-progress', 'submitted'].includes(a.status))
+        if (duplicate) throw new ServiceError('This assessment is already open for the candidate')
+        const job = mockDb.read('jobs').find((j) => j.id === app.jobId)
+        const stage = job.stages.find((s) => s.type === 'assessment') ?? job.stages.find((s) => s.id === app.stageId)
+        const assessment = {
+          id: createId('asm'),
+          applicationId: app.id,
+          candidateId: app.candidateId,
+          jobId: app.jobId,
+          stageId: stage.id,
+          templateId: values.templateId,
+          assignedAt: new Date().toISOString(),
+          deadline: values.deadline,
+          assignedById: actorId,
+          status: 'pending',
+          score: null,
+          completedAt: null,
+          reminderSentAt: null,
+          notes: values.notes ?? '',
+        }
+        mockDb.write('assessments', (list) => [assessment, ...list])
+        logActivity({
+          type: 'assessment',
+          text: `Assessment assigned to ${candidateName(app.candidateId)}`,
+          actorId,
+          candidateId: app.candidateId,
+          jobId: app.jobId,
+        })
+        return assessment
+      },
+      { latency: 420 },
+    )
   },
 
   async recordScore(id, { score, notes }, { actorId }) {
@@ -58,7 +67,13 @@ export const assessmentService = {
         completedAt: a.completedAt ?? new Date().toISOString(),
         evaluatorId: actorId,
       }))
-      logActivity({ type: 'assessment', text: `Assessment evaluated for ${candidateName(updated.candidateId)} (${score}%)`, actorId, candidateId: updated.candidateId, jobId: updated.jobId })
+      logActivity({
+        type: 'assessment',
+        text: `Assessment evaluated for ${candidateName(updated.candidateId)} (${score}%)`,
+        actorId,
+        candidateId: updated.candidateId,
+        jobId: updated.jobId,
+      })
       return updated
     })
   },
@@ -66,7 +81,13 @@ export const assessmentService = {
   async extendDeadline(id, deadline, { actorId }) {
     return mockRequest(() => {
       const updated = patchAssessment(id, (a) => ({ ...a, deadline, status: a.status === 'expired' ? 'pending' : a.status }))
-      logActivity({ type: 'assessment', text: `Assessment deadline extended for ${candidateName(updated.candidateId)}`, actorId, candidateId: updated.candidateId, jobId: updated.jobId })
+      logActivity({
+        type: 'assessment',
+        text: `Assessment deadline extended for ${candidateName(updated.candidateId)}`,
+        actorId,
+        candidateId: updated.candidateId,
+        jobId: updated.jobId,
+      })
       return updated
     })
   },
@@ -79,7 +100,13 @@ export const assessmentService = {
   async cancel(id, { actorId }) {
     return mockRequest(() => {
       const updated = patchAssessment(id, (a) => ({ ...a, status: 'cancelled' }))
-      logActivity({ type: 'assessment', text: `Assessment cancelled for ${candidateName(updated.candidateId)}`, actorId, candidateId: updated.candidateId, jobId: updated.jobId })
+      logActivity({
+        type: 'assessment',
+        text: `Assessment cancelled for ${candidateName(updated.candidateId)}`,
+        actorId,
+        candidateId: updated.candidateId,
+        jobId: updated.jobId,
+      })
       return updated
     })
   },

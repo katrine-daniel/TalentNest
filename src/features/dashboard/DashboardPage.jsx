@@ -39,7 +39,8 @@ export default function DashboardPage() {
   const upcoming = useMemo(() => getUpcomingSchedule(data, { departmentId: department, days: 7 }), [data, department])
   const attention = useMemo(() => getAttentionItems(data, filters), [data, filters])
   const activity = useMemo(
-    () => (department === 'all' ? data.activities : data.activities.filter((a) => !a.jobId || data.jobs.find((j) => j.id === a.jobId)?.departmentId === department)),
+    () =>
+      department === 'all' ? data.activities : data.activities.filter((a) => !a.jobId || data.jobs.find((j) => j.id === a.jobId)?.departmentId === department),
     [data, department],
   )
 
@@ -51,13 +52,28 @@ export default function DashboardPage() {
       >
         <FilterSelect label="Department" value={department} onChange={setDepartment} options={options.departments} allLabel="All" className="w-full sm:w-56" />
         <div className="flex w-full gap-2 sm:w-auto">
-          <Button icon={UserPlus} onClick={() => actions.openCandidateForm()} disabled={!can('candidates.manage')} className="flex-1 border-white/20! bg-white/10! text-white! hover:bg-white/20! sm:flex-none">
+          <Button
+            icon={UserPlus}
+            onClick={() => actions.openCandidateForm()}
+            disabled={!can('candidates.manage')}
+            className="flex-1 border-white/20! bg-white/10! text-white! hover:bg-white/20! sm:flex-none"
+          >
             Add candidate
           </Button>
-          <Button icon={BriefcaseBusiness} onClick={() => actions.openJobForm()} disabled={!can('jobs.manage')} className="border-white/20! bg-white/10! text-white! hover:bg-white/20! max-lg:hidden">
+          <Button
+            icon={BriefcaseBusiness}
+            onClick={() => actions.openJobForm()}
+            disabled={!can('jobs.manage')}
+            className="border-white/20! bg-white/10! text-white! hover:bg-white/20! max-lg:hidden"
+          >
             New vacancy
           </Button>
-          <Button icon={CalendarPlus} onClick={() => actions.openSchedule()} disabled={!can('interviews.schedule')} className="flex-1 border-transparent! bg-white! text-brand-700! hover:bg-brand-50! sm:flex-none">
+          <Button
+            icon={CalendarPlus}
+            onClick={() => actions.openSchedule()}
+            disabled={!can('interviews.schedule')}
+            className="text-brand-700! hover:bg-brand-50! flex-1 border-transparent! bg-white! sm:flex-none"
+          >
             Schedule
           </Button>
         </div>
@@ -65,8 +81,20 @@ export default function DashboardPage() {
 
       <MetricStrip>
         <MetricCard label="Active candidates" icon={Users} value={metrics.activeCandidates} detail={`${metrics.newThisWeek} new this week`} to="/candidates" />
-        <MetricCard label="Open vacancies" icon={BriefcaseBusiness} value={metrics.openVacancies} detail={`${metrics.openings} positions to fill`} to="/jobs?status=open" />
-        <MetricCard label="Interviews scheduled" icon={CalendarClock} value={metrics.interviewsScheduled} detail={`${metrics.interviewsToday} today`} to="/calendar" />
+        <MetricCard
+          label="Open vacancies"
+          icon={BriefcaseBusiness}
+          value={metrics.openVacancies}
+          detail={`${metrics.openings} positions to fill`}
+          to="/jobs?status=open"
+        />
+        <MetricCard
+          label="Interviews scheduled"
+          icon={CalendarClock}
+          value={metrics.interviewsScheduled}
+          detail={`${metrics.interviewsToday} today`}
+          to="/calendar"
+        />
         <MetricCard
           label="Assessments pending"
           icon={ClipboardList}
@@ -109,7 +137,15 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Panel title="Upcoming this week" description="Interviews and assessment deadlines" actions={<Button size="sm" variant="ghost" to="/calendar">Open calendar</Button>}>
+        <Panel
+          title="Upcoming this week"
+          description="Interviews and assessment deadlines"
+          actions={
+            <Button size="sm" variant="ghost" to="/calendar">
+              Open calendar
+            </Button>
+          }
+        >
           <UpcomingInterviews items={upcoming} />
         </Panel>
         <Panel id="attention" title="Pending feedback & overdue actions" description="Sorted by urgency">

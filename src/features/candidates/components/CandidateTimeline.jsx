@@ -16,9 +16,24 @@ export default function CandidateTimeline({ app, job }) {
         const Icon = ICONS[h.kind] ?? ArrowRight
         const by = usersById.get(h.byId)
         let text
-        if (h.kind === 'applied') text = <>Applied — entered <strong className="font-medium">{stageName(h.toStageId)}</strong></>
-        else if (h.kind === 'rejected') text = <>Not progressed at <strong className="font-medium">{stageName(h.toStageId)}</strong></>
-        else if (h.kind === 'restored') text = <>Restored to <strong className="font-medium">{stageName(h.toStageId)}</strong></>
+        if (h.kind === 'applied')
+          text = (
+            <>
+              Applied — entered <strong className="font-medium">{stageName(h.toStageId)}</strong>
+            </>
+          )
+        else if (h.kind === 'rejected')
+          text = (
+            <>
+              Not progressed at <strong className="font-medium">{stageName(h.toStageId)}</strong>
+            </>
+          )
+        else if (h.kind === 'restored')
+          text = (
+            <>
+              Restored to <strong className="font-medium">{stageName(h.toStageId)}</strong>
+            </>
+          )
         else
           text = (
             <>
@@ -27,13 +42,15 @@ export default function CandidateTimeline({ app, job }) {
           )
         return (
           <li key={h.id} className="flex gap-3 text-sm">
-            <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${h.kind === 'rejected' ? 'bg-red-50 text-red-600' : h.kind === 'hired' ? 'bg-emerald-50 text-emerald-600' : 'bg-subtle text-muted'}`}>
+            <span
+              className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${h.kind === 'rejected' ? 'bg-red-50 text-red-600' : h.kind === 'hired' ? 'bg-emerald-50 text-emerald-600' : 'bg-subtle text-muted'}`}
+            >
               <Icon size={12} aria-hidden />
             </span>
             <div className="min-w-0">
               <p className="text-ink">{text}</p>
-              {h.note && <p className="mt-0.5 text-xs text-ink-soft">“{h.note}”</p>}
-              <p className="mt-0.5 text-xs text-muted">
+              {h.note && <p className="text-ink-soft mt-0.5 text-xs">“{h.note}”</p>}
+              <p className="text-muted mt-0.5 text-xs">
                 {formatDateTime(h.at)}
                 {by ? ` · ${by.name}` : ''}
               </p>

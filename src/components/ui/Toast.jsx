@@ -43,7 +43,11 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={api}>
       {children}
       {createPortal(
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-2 p-4 sm:items-end sm:p-6" aria-live="polite" aria-atomic="false">
+        <div
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-2 p-4 sm:items-end sm:p-6"
+          aria-live="polite"
+          aria-atomic="false"
+        >
           <AnimatePresence initial={false}>
             {toasts.map((t) => {
               const { Icon, className } = ICONS[t.type]
@@ -55,16 +59,16 @@ export function ToastProvider({ children }) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.15 } }}
                   role={t.type === 'error' ? 'alert' : 'status'}
-                  className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border border-line bg-surface px-4 py-3 shadow-pop"
+                  className="border-line bg-surface shadow-pop pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border px-4 py-3"
                 >
                   <Icon size={18} className={cn('mt-px shrink-0', className)} aria-hidden />
                   <div className="min-w-0 flex-1 text-sm">
-                    {t.title && <p className="font-medium text-ink">{t.title}</p>}
-                    <p className={cn(t.title ? 'text-xs text-muted' : 'text-ink')}>{t.message}</p>
+                    {t.title && <p className="text-ink font-medium">{t.title}</p>}
+                    <p className={cn(t.title ? 'text-muted text-xs' : 'text-ink')}>{t.message}</p>
                     {t.action && (
                       <button
                         type="button"
-                        className="mt-1 text-xs font-medium text-brand-600 hover:underline"
+                        className="text-brand-600 mt-1 text-xs font-medium hover:underline"
                         onClick={() => {
                           t.action.onClick()
                           dismiss(t.id)
@@ -74,7 +78,7 @@ export function ToastProvider({ children }) {
                       </button>
                     )}
                   </div>
-                  <button type="button" onClick={() => dismiss(t.id)} className="rounded p-0.5 text-faint hover:text-ink" aria-label="Dismiss notification">
+                  <button type="button" onClick={() => dismiss(t.id)} className="text-faint hover:text-ink rounded p-0.5" aria-label="Dismiss notification">
                     <X size={14} />
                   </button>
                 </motion.div>

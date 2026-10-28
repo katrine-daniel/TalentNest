@@ -16,10 +16,25 @@ export default function AssessmentTemplates({ readOnly }) {
   const assessments = useCollection('assessments')
   const [editing, setEditing] = useState(null)
   const save = useAsyncAction(settingsService.saveAssessmentTemplate, { success: 'Assessment template saved' })
-  const { register, handleSubmit, reset, formState: { errors } } = useForm()
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm()
 
   useEffect(() => {
-    if (editing) reset({ name: '', type: 'Domain knowledge', durationMin: 45, passMark: 60, questionCount: 20, provider: 'Internal (mock)', workflowTemplateIds: [], ...editing })
+    if (editing)
+      reset({
+        name: '',
+        type: 'Domain knowledge',
+        durationMin: 45,
+        passMark: 60,
+        questionCount: 20,
+        provider: 'Internal (mock)',
+        workflowTemplateIds: [],
+        ...editing,
+      })
   }, [editing, reset])
 
   const onSubmit = async (values) => {
@@ -34,7 +49,7 @@ export default function AssessmentTemplates({ readOnly }) {
           New template
         </Button>
       </div>
-      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
+      <div className="border-line/80 bg-surface shadow-card rounded-2xl border">
         <DataTable
           rows={templates}
           columns={[
@@ -48,14 +63,16 @@ export default function AssessmentTemplates({ readOnly }) {
               key: 'edit',
               header: <span className="sr-only">Edit</span>,
               align: 'right',
-              render: (t) => <Button size="sm" variant="ghost" iconOnly icon={Pencil} aria-label={`Edit ${t.name}`} onClick={() => setEditing(t)} disabled={readOnly} />,
+              render: (t) => (
+                <Button size="sm" variant="ghost" iconOnly icon={Pencil} aria-label={`Edit ${t.name}`} onClick={() => setEditing(t)} disabled={readOnly} />
+              ),
             },
           ]}
           mobileCard={(t) => (
             <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <p className="font-medium">{t.name}</p>
-                <p className="text-xs text-muted">
+                <p className="text-muted text-xs">
                   {t.type} · {t.durationMin} min · pass {t.passMark}%
                 </p>
               </div>
@@ -89,13 +106,24 @@ export default function AssessmentTemplates({ readOnly }) {
               {(a) => <Input {...a} {...register('provider')} />}
             </Field>
             <Field label="Duration (minutes)" required error={errors.durationMin?.message}>
-              {(a) => <Input {...a} type="number" {...register('durationMin', rules.positiveInt('Duration', { min: 5, max: 240 }))} invalid={!!errors.durationMin} />}
+              {(a) => (
+                <Input {...a} type="number" {...register('durationMin', rules.positiveInt('Duration', { min: 5, max: 240 }))} invalid={!!errors.durationMin} />
+              )}
             </Field>
             <Field label="Questions" required error={errors.questionCount?.message}>
-              {(a) => <Input {...a} type="number" {...register('questionCount', rules.positiveInt('Questions', { min: 1, max: 200 }))} invalid={!!errors.questionCount} />}
+              {(a) => (
+                <Input
+                  {...a}
+                  type="number"
+                  {...register('questionCount', rules.positiveInt('Questions', { min: 1, max: 200 }))}
+                  invalid={!!errors.questionCount}
+                />
+              )}
             </Field>
             <Field label="Pass mark (%)" required error={errors.passMark?.message}>
-              {(a) => <Input {...a} type="number" {...register('passMark', rules.positiveInt('Pass mark', { min: 1, max: 100 }))} invalid={!!errors.passMark} />}
+              {(a) => (
+                <Input {...a} type="number" {...register('passMark', rules.positiveInt('Pass mark', { min: 1, max: 100 }))} invalid={!!errors.passMark} />
+              )}
             </Field>
           </div>
         </form>

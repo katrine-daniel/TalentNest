@@ -27,15 +27,15 @@ export default function Breadcrumbs() {
           return (
             <li key={c.to} className={i === 0 && crumbs.length > 1 ? 'hidden min-w-0 items-center gap-1 sm:flex' : 'flex min-w-0 items-center gap-1'}>
               {last ? (
-                <span aria-current="page" className="truncate font-medium text-ink">
+                <span aria-current="page" className="text-ink truncate font-medium">
                   {c.label}
                 </span>
               ) : (
                 <>
-                  <Link to={c.to} className="truncate text-muted hover:text-ink">
+                  <Link to={c.to} className="text-muted hover:text-ink truncate">
                     {c.label}
                   </Link>
-                  <ChevronRight size={14} className="shrink-0 text-faint" aria-hidden />
+                  <ChevronRight size={14} className="text-faint shrink-0" aria-hidden />
                 </>
               )}
             </li>

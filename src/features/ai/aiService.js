@@ -64,7 +64,10 @@ export async function extractResume({ candidateId }) {
       languages: c.languages,
       experience: c.experience,
       education: c.education,
-      highlights: c.experience.map((e) => e.summary).filter(Boolean).slice(0, 3),
+      highlights: c.experience
+        .map((e) => e.summary)
+        .filter(Boolean)
+        .slice(0, 3),
     },
     sources: [{ label: source, detail: 'Fields: contact, roles, dates, skills, education, languages' }],
     caveat: c.resume ? null : 'No resume file is attached, so this summary reflects only what was entered on the profile.',
@@ -90,8 +93,7 @@ export async function matchSkills({ candidateId, jobId }) {
   const matched = rows.filter((r) => r.level === 'match').length
   const partial = rows.filter((r) => r.level === 'partial').length
   const score = Math.round(((matched + partial * 0.5) / j.skills.length) * 100)
-  const expFit =
-    c.experienceYears < j.experienceMin ? 'below' : c.experienceYears > j.experienceMax ? 'above' : 'within'
+  const expFit = c.experienceYears < j.experienceMin ? 'below' : c.experienceYears > j.experienceMax ? 'above' : 'within'
   return {
     kind: 'skillMatch',
     title: `Skill match — ${fullName(c)} × ${j.title}`,
@@ -112,39 +114,83 @@ export async function matchSkills({ candidateId, jobId }) {
 // --- Question generation -----------------------------------------------------
 const INTERVIEW_BANK = {
   'dep-eng': [
-    ['Walk me through how you would structure state for a multi-step flight booking form.', 'Frontend architecture', 'Separates server and UI state; mentions validation and persistence between steps.'],
-    ['A fare search API is slow at peak. How do you investigate and fix it?', 'Performance', 'Measures first; caching strategy; mentions timeouts from GDS providers.'],
+    [
+      'Walk me through how you would structure state for a multi-step flight booking form.',
+      'Frontend architecture',
+      'Separates server and UI state; mentions validation and persistence between steps.',
+    ],
+    [
+      'A fare search API is slow at peak. How do you investigate and fix it?',
+      'Performance',
+      'Measures first; caching strategy; mentions timeouts from GDS providers.',
+    ],
     ['Describe a production incident you owned end-to-end.', 'Ownership', 'Clear timeline, root cause, follow-up actions, blameless tone.'],
-    ['How do you keep a shared component library consistent across teams?', 'Collaboration', 'Versioning, documentation, review process, accessibility checks.'],
+    [
+      'How do you keep a shared component library consistent across teams?',
+      'Collaboration',
+      'Versioning, documentation, review process, accessibility checks.',
+    ],
     ['How would you test a payment confirmation page?', 'Quality', 'Unit + integration + E2E split; handles failure states and retries.'],
   ],
   'dep-cc': [
-    ['A US caller is angry because their flight was cancelled and they missed a connection. Walk me through the call.', 'De-escalation', 'Acknowledges emotion, takes ownership, offers concrete options, confirms next steps.'],
-    ['How do you keep your average handle time low without rushing the customer?', 'Efficiency', 'Uses knowledge base, structured probing, avoids unnecessary holds.'],
+    [
+      'A US caller is angry because their flight was cancelled and they missed a connection. Walk me through the call.',
+      'De-escalation',
+      'Acknowledges emotion, takes ownership, offers concrete options, confirms next steps.',
+    ],
+    [
+      'How do you keep your average handle time low without rushing the customer?',
+      'Efficiency',
+      'Uses knowledge base, structured probing, avoids unnecessary holds.',
+    ],
     ['Tell me about a time you turned an unhappy customer into a satisfied one.', 'Customer empathy', 'Specific situation, measurable outcome.'],
     ['How do you stay alert and consistent during night shifts?', 'Shift readiness', 'Realistic routine; understands rotational shifts.'],
-    ['A customer asks for a refund that policy does not allow. What do you say?', 'Policy adherence', 'Explains policy clearly, offers alternatives, escalates appropriately.'],
+    [
+      'A customer asks for a refund that policy does not allow. What do you say?',
+      'Policy adherence',
+      'Explains policy clearly, offers alternatives, escalates appropriately.',
+    ],
   ],
   'dep-travel': [
-    ['Plan a 10-day Europe itinerary for a family of four with a ₹6L budget. What do you ask first?', 'Needs discovery', 'Asks dates, visa status, preferences, flexibility before proposing.'],
+    [
+      'Plan a 10-day Europe itinerary for a family of four with a ₹6L budget. What do you ask first?',
+      'Needs discovery',
+      'Asks dates, visa status, preferences, flexibility before proposing.',
+    ],
     ['Explain the difference between a re-issue and a revalidation.', 'Fare knowledge', 'Accurate definitions and when each applies.'],
-    ['A corporate traveller wants a fare outside policy. How do you handle it?', 'Policy & tact', 'Checks policy, offers compliant alternatives, routes approvals.'],
+    [
+      'A corporate traveller wants a fare outside policy. How do you handle it?',
+      'Policy & tact',
+      'Checks policy, offers compliant alternatives, routes approvals.',
+    ],
     ['How do you upsell travel insurance without sounding pushy?', 'Sales', 'Value-led framing tied to the traveller’s itinerary.'],
     ['Which GDS commands do you use most often for availability and pricing?', 'GDS proficiency', 'Correct commands for Amadeus or Sabre.'],
   ],
   'dep-bcf': [
-    ['A client wants business class to New York with a stopover in London. How do you build the fare?', 'Fare construction', 'Considers stopover rules, fare basis, routing restrictions.'],
+    [
+      'A client wants business class to New York with a stopover in London. How do you build the fare?',
+      'Fare construction',
+      'Considers stopover rules, fare basis, routing restrictions.',
+    ],
     ['How do you handle an HNI client who changes plans three times in a day?', 'Client handling', 'Patience, proactive options, clear cost communication.'],
     ['When would you recommend an award booking over a paid premium fare?', 'Premium expertise', 'Understands award availability, surcharges and value.'],
     ['Explain fare rules that commonly cause re-issue penalties in premium cabins.', 'Fare rules', 'Change fees, fare differences, validity.'],
   ],
   'dep-hotel': [
-    ['A group of 40 needs rooms during a peak weekend and the hotel is nearly full. What do you do?', 'Group bookings', 'Checks allotments, alternatives, negotiates release dates.'],
+    [
+      'A group of 40 needs rooms during a peak weekend and the hotel is nearly full. What do you do?',
+      'Group bookings',
+      'Checks allotments, alternatives, negotiates release dates.',
+    ],
     ['How do you prevent overbookings across channel managers?', 'Inventory control', 'Understands sync delays, stop-sells, manual checks.'],
     ['Describe how you handle a guest complaint about a rate mismatch.', 'Guest communication', 'Investigates rate codes, owns resolution.'],
   ],
   'dep-ofr': [
-    ['Our rate on one OTA is 8% lower than direct. How do you investigate?', 'Rate parity', 'Checks mapping, promotions, currency, cached rates; documents evidence.'],
+    [
+      'Our rate on one OTA is 8% lower than direct. How do you investigate?',
+      'Rate parity',
+      'Checks mapping, promotions, currency, cached rates; documents evidence.',
+    ],
     ['How would you model the impact of a 5% rate increase on occupancy?', 'Analysis', 'Uses historical elasticity, segments, and presents ranges.'],
     ['Write a SQL query outline to find parity breaches by channel per week.', 'SQL', 'Correct grouping and date handling.'],
   ],
@@ -160,14 +206,17 @@ export async function generateInterviewQuestions({ jobId, stageName }) {
   await latency()
   const j = getJob(jobId)
   const isHr = lower(stageName ?? '').includes('hr')
-  const bank = isHr ? HR_QUESTIONS : INTERVIEW_BANK[j.departmentId] ?? INTERVIEW_BANK['dep-travel']
+  const bank = isHr ? HR_QUESTIONS : (INTERVIEW_BANK[j.departmentId] ?? INTERVIEW_BANK['dep-travel'])
   return {
     kind: 'questions',
     title: `Interview questions — ${stageName || 'Interview'} · ${j.title}`,
     data: {
       items: bank.map(([question, focus, lookFor], i) => ({ id: `q${i}`, question, focus, lookFor })),
     },
-    sources: [{ label: `Vacancy: ${j.title}`, detail: `Skills: ${j.skills.join(', ')}` }, { label: 'TalentNest question library (demo)', detail: isHr ? 'HR round set' : 'Department set' }],
+    sources: [
+      { label: `Vacancy: ${j.title}`, detail: `Skills: ${j.skills.join(', ')}` },
+      { label: 'TalentNest question library (demo)', detail: isHr ? 'HR round set' : 'Department set' },
+    ],
     editable: true,
   }
 }
@@ -359,7 +408,10 @@ export async function funnelInsights() {
     kind: 'funnel',
     title: 'Hiring funnel insights',
     data: { insights, funnel },
-    sources: [{ label: 'Pipeline data', detail: `${data.applications.length} applications across ${data.jobs.length} vacancies` }, { label: 'Interview & assessment records', detail: `${data.interviews.length} interviews, ${data.assessments.length} assessments` }],
+    sources: [
+      { label: 'Pipeline data', detail: `${data.applications.length} applications across ${data.jobs.length} vacancies` },
+      { label: 'Interview & assessment records', detail: `${data.interviews.length} interviews, ${data.assessments.length} assessments` },
+    ],
   }
 }
 

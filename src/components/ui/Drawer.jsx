@@ -45,26 +45,26 @@ function DrawerInner({ onClose, title, subtitle, headerActions, size, children, 
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={cn('relative flex h-full w-full flex-col bg-surface shadow-lift outline-none', WIDTHS[size])}
+        className={cn('bg-surface shadow-lift relative flex h-full w-full flex-col outline-none', WIDTHS[size])}
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ duration: 0.24, ease: [0.2, 0, 0, 1] }}
       >
-        <header className="flex items-start gap-3 border-b border-line px-5 py-3.5">
+        <header className="border-line flex items-start gap-3 border-b px-5 py-3.5">
           <div className="min-w-0 flex-1">
             <h2 id={titleId} className="truncate text-base font-semibold">
               {title}
             </h2>
-            {subtitle && <div className="mt-0.5 text-xs text-muted">{subtitle}</div>}
+            {subtitle && <div className="text-muted mt-0.5 text-xs">{subtitle}</div>}
           </div>
           {headerActions}
-          <button type="button" onClick={onClose} className="-mr-1.5 rounded-md p-1.5 text-muted hover:bg-subtle hover:text-ink" aria-label="Close panel">
+          <button type="button" onClick={onClose} className="text-muted hover:bg-subtle hover:text-ink -mr-1.5 rounded-md p-1.5" aria-label="Close panel">
             <X size={18} />
           </button>
         </header>
-        <div className="flex-1 overflow-y-auto scrollbar-thin">{children}</div>
-        {footer && <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3">{footer}</footer>}
+        <div className="flex-1 scrollbar-thin overflow-y-auto">{children}</div>
+        {footer && <footer className="border-line flex flex-wrap items-center justify-end gap-2 border-t px-5 py-3">{footer}</footer>}
       </motion.aside>
     </div>
   )

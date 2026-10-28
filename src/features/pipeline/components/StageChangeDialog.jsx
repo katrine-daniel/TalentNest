@@ -27,7 +27,7 @@ export default function StageChangeDialog({ change, job, onClose, onConfirm, loa
       onConfirm={onConfirm}
     >
       {from && to && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg bg-subtle px-3 py-2.5">
+        <div className="bg-subtle flex flex-wrap items-center gap-2 rounded-lg px-3 py-2.5">
           <StatusBadge tone={STAGE_TYPES[from.type]?.tone}>{from.name}</StatusBadge>
           <ArrowRight size={14} className="text-faint" aria-hidden />
           <StatusBadge tone={STAGE_TYPES[to.type]?.tone}>{to.name}</StatusBadge>

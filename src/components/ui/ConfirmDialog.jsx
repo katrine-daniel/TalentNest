@@ -59,11 +59,20 @@ export default function ConfirmDialog({
       }
     >
       <form id={formId} onSubmit={submit} className="space-y-4">
-        {description && <p className="text-sm leading-relaxed text-ink-soft">{description}</p>}
+        {description && <p className="text-ink-soft text-sm leading-relaxed">{description}</p>}
         {children}
         {reasonLabel && (
           <Field label={reasonLabel} required={requireReason} optional={!requireReason} error={touched && invalid ? `${reasonLabel} is required` : null}>
-            {(a11y) => <Textarea {...a11y} value={reason} onChange={(e) => setReason(e.target.value)} placeholder={reasonPlaceholder} invalid={touched && invalid} data-autofocus />}
+            {(a11y) => (
+              <Textarea
+                {...a11y}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder={reasonPlaceholder}
+                invalid={touched && invalid}
+                data-autofocus
+              />
+            )}
           </Field>
         )}
       </form>

@@ -6,7 +6,7 @@ export function Skeleton({ className, style }) {
 
 export function TableSkeleton({ rows = 6, columns = 5 }) {
   return (
-    <div className="divide-y divide-line" role="status" aria-label="Loading">
+    <div className="divide-line divide-y" role="status" aria-label="Loading">
       {Array.from({ length: rows }, (_, r) => (
         <div key={r} className="flex items-center gap-4 px-4 py-3.5">
           <Skeleton className="h-8 w-8 rounded-full" />
@@ -34,7 +34,7 @@ export default function LoadingState({ variant = 'page' }) {
   if (variant === 'inline') {
     return (
       <div className="flex items-center justify-center py-12" role="status">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" />
+        <span className="border-brand-200 border-t-brand-600 h-5 w-5 animate-spin rounded-full border-2" />
         <span className="sr-only">Loading</span>
       </div>
     )
@@ -45,19 +45,19 @@ export default function LoadingState({ variant = 'page' }) {
         <Skeleton className="h-6 w-56" />
         <Skeleton className="h-3.5 w-80 max-w-full" />
       </div>
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-3 xl:grid-cols-6">
+      <div className="border-line bg-line grid grid-cols-2 gap-px overflow-hidden rounded-xl border md:grid-cols-3 xl:grid-cols-6">
         {Array.from({ length: 6 }, (_, i) => (
-          <div key={i} className="space-y-3 bg-surface p-4">
+          <div key={i} className="bg-surface space-y-3 p-4">
             <Skeleton className="h-3 w-24" />
             <Skeleton className="h-7 w-14" />
           </div>
         ))}
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="rounded-2xl border border-line/80 bg-surface shadow-card p-5 lg:col-span-2">
+        <div className="border-line/80 bg-surface shadow-card rounded-2xl border p-5 lg:col-span-2">
           <ChartSkeleton />
         </div>
-        <div className="space-y-3 rounded-2xl border border-line/80 bg-surface shadow-card p-5">
+        <div className="border-line/80 bg-surface shadow-card space-y-3 rounded-2xl border p-5">
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-6 w-full" />
           ))}

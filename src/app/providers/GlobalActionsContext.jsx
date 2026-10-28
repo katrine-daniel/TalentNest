@@ -15,7 +15,12 @@ const GlobalActionsContext = createContext(null)
 export function GlobalActionsProvider({ children }) {
   const [dialog, setDialog] = useState({ type: null, payload: null })
 
-  const open = useCallback((type) => (payload = null) => setDialog({ type, payload }), [])
+  const open = useCallback(
+    (type) =>
+      (payload = null) =>
+        setDialog({ type, payload }),
+    [],
+  )
   const close = useCallback(() => setDialog((d) => ({ ...d, type: null })), [])
 
   const api = useMemo(

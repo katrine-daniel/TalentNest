@@ -115,7 +115,14 @@ export function useApplicationOptions({ stageTypes } = {}) {
         })
         .filter((x) => x.job && x.candidate && (!stageTypes || stageTypes.includes(x.stage?.type)))
         .sort((x, y) => fullName(x.candidate).localeCompare(fullName(y.candidate)))
-        .map(({ a, job, stage, candidate }) => ({ value: a.id, label: `${fullName(candidate)} — ${job.title} (${stage?.name})`, application: a, job, stage, candidate })),
+        .map(({ a, job, stage, candidate }) => ({
+          value: a.id,
+          label: `${fullName(candidate)} — ${job.title} (${stage?.name})`,
+          application: a,
+          job,
+          stage,
+          candidate,
+        })),
     [applications, candidatesById, jobsById, stageTypes],
   )
 }
@@ -142,7 +149,9 @@ export function useOfferActions() {
   const { actorId } = useSession()
   const ctx = { actorId }
   return {
-    create: useAsyncAction((values) => offerService.create(values, ctx), { success: (o) => (o.status === 'sent' ? 'Offer marked as sent (demo — nothing emailed)' : 'Offer saved as draft') }),
+    create: useAsyncAction((values) => offerService.create(values, ctx), {
+      success: (o) => (o.status === 'sent' ? 'Offer marked as sent (demo — nothing emailed)' : 'Offer saved as draft'),
+    }),
     update: useAsyncAction((id, patch) => offerService.update(id, patch, ctx), { success: 'Offer updated' }),
     setStatus: useAsyncAction((id, status) => offerService.setStatus(id, status, ctx), { success: (o) => `Offer marked as ${o.status}` }),
     toggleTask: useAsyncAction((offerId, taskId) => offerService.toggleOnboardingTask(offerId, taskId)),

@@ -54,7 +54,7 @@ export function AvatarStack({ names = [], max = 3, size = 'xs' }) {
         <Avatar key={n} name={n} size={size} className="ring-2 ring-white" title={n} />
       ))}
       {names.length > max && (
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-[10px] font-medium text-muted ring-2 ring-white">
+        <span className="text-muted inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-[10px] font-medium ring-2 ring-white">
           +{names.length - max}
         </span>
       )}

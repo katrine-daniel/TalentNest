@@ -8,7 +8,7 @@ export default function ErrorState({ title = 'Something went wrong', description
         <AlertTriangle size={18} aria-hidden />
       </span>
       <h3 className="text-sm font-semibold">{title}</h3>
-      {description && <p className="mt-1 max-w-md text-xs text-muted">{description}</p>}
+      {description && <p className="text-muted mt-1 max-w-md text-xs">{description}</p>}
       {onRetry && (
         <Button className="mt-4" size="sm" icon={RotateCcw} onClick={onRetry}>
           {retryLabel}

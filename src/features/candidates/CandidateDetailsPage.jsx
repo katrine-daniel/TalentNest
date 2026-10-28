@@ -10,7 +10,15 @@ import StatusBadge from '@/components/ui/StatusBadge'
 import ApplicationCard from '@/features/candidates/components/ApplicationCard'
 import AddApplicationModal from '@/features/candidates/components/AddApplicationModal'
 import StageBadge from '@/features/candidates/components/StageBadge'
-import { ContactDetails, EducationList, ExperienceList, NotesSection, ResumeSection, SectionTitle, SkillsList } from '@/features/candidates/components/CandidateProfile'
+import {
+  ContactDetails,
+  EducationList,
+  ExperienceList,
+  NotesSection,
+  ResumeSection,
+  SectionTitle,
+  SkillsList,
+} from '@/features/candidates/components/CandidateProfile'
 import StageChangeDialog from '@/features/pipeline/components/StageChangeDialog'
 import RecentActivity from '@/features/dashboard/components/RecentActivity'
 import FeedbackSummary from '@/features/interviews/components/FeedbackSummary'
@@ -66,11 +74,11 @@ export default function CandidateDetailsPage() {
               <h1 className="text-xl font-semibold tracking-tight">{name}</h1>
               {primary && <StageBadge app={primary.app} stage={primary.stage} />}
             </div>
-            <p className="mt-0.5 text-sm text-muted">
+            <p className="text-muted mt-0.5 text-sm">
               {candidate.currentTitle}
               {candidate.currentCompany !== '—' && ` at ${candidate.currentCompany}`} · {candidate.experienceYears} yrs experience
             </p>
-            <p className="mt-0.5 text-xs text-faint">
+            <p className="text-faint mt-0.5 text-xs">
               {candidate.ref} · {candidate.location}
             </p>
           </div>
@@ -85,7 +93,12 @@ export default function CandidateDetailsPage() {
           <Button icon={Sparkles} to={`/ai-assistant?candidate=${candidate.id}${primary ? `&job=${primary.job.id}` : ''}`} disabled={!can('ai.use')}>
             Ask AI
           </Button>
-          <Button variant="primary" icon={CalendarPlus} onClick={() => global.openSchedule({ applicationId: primary?.app.id })} disabled={!can('interviews.schedule') || primary?.app.status !== 'active'}>
+          <Button
+            variant="primary"
+            icon={CalendarPlus}
+            onClick={() => global.openSchedule({ applicationId: primary?.app.id })}
+            disabled={!can('interviews.schedule') || primary?.app.status !== 'active'}
+          >
             Schedule
           </Button>
         </div>
@@ -103,7 +116,12 @@ export default function CandidateDetailsPage() {
                   ))}
                 </div>
               ) : (
-                <EmptyState icon={BriefcaseBusiness} title="Not applied to any vacancy" description="Add this candidate to an open vacancy to start their pipeline." action={<Button onClick={() => setAdding(true)}>Add to vacancy</Button>} />
+                <EmptyState
+                  icon={BriefcaseBusiness}
+                  title="Not applied to any vacancy"
+                  description="Add this candidate to an open vacancy to start their pipeline."
+                  action={<Button onClick={() => setAdding(true)}>Add to vacancy</Button>}
+                />
               ))}
 
             {tab === 'profile' && (
@@ -121,19 +139,23 @@ export default function CandidateDetailsPage() {
               <div className="space-y-6">
                 <Panel title="Interviews" description={`${feedbackCount} with submitted feedback`}>
                   {interviews.length ? (
-                    <ul className="divide-y divide-line border-t border-line">
+                    <ul className="divide-line border-line divide-y border-t">
                       {interviews.map((i) => (
                         <li key={i.id} className="space-y-3 px-5 py-4">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
                               <p className="text-sm font-medium">{i.stageName}</p>
-                              <p className="text-xs text-muted">
+                              <p className="text-muted text-xs">
                                 {formatDateTime(i.start)} · {i.mode}
                               </p>
                             </div>
                             <StatusBadge kind="interview" value={i.status} />
                           </div>
-                          {i.feedback ? <FeedbackSummary interview={i} /> : i.status === 'completed' ? <p className="text-xs text-amber-700">Feedback has not been submitted yet.</p> : null}
+                          {i.feedback ? (
+                            <FeedbackSummary interview={i} />
+                          ) : i.status === 'completed' ? (
+                            <p className="text-xs text-amber-700">Feedback has not been submitted yet.</p>
+                          ) : null}
                         </li>
                       ))}
                     </ul>
@@ -143,19 +165,21 @@ export default function CandidateDetailsPage() {
                 </Panel>
                 <Panel title="Assessments">
                   {assessments.length ? (
-                    <ul className="divide-y divide-line border-t border-line">
+                    <ul className="divide-line border-line divide-y border-t">
                       {assessments.map((a) => {
                         const t = templatesById.get(a.templateId)
                         return (
                           <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-5 py-3">
                             <div>
                               <p className="text-sm font-medium">{t?.name}</p>
-                              <p className="text-xs text-muted">
+                              <p className="text-muted text-xs">
                                 Assigned {formatDate(a.assignedAt)} · Due {formatDate(a.deadline)} · Pass mark {t?.passMark}%
                               </p>
                             </div>
                             {a.score != null ? (
-                              <span className={`text-sm font-semibold tabular ${a.score >= (t?.passMark ?? 60) ? 'text-emerald-700' : 'text-red-600'}`}>{a.score}%</span>
+                              <span className={`tabular text-sm font-semibold ${a.score >= (t?.passMark ?? 60) ? 'text-emerald-700' : 'text-red-600'}`}>
+                                {a.score}%
+                              </span>
                             ) : (
                               <StatusBadge kind="assessment" value={a.status} />
                             )}
@@ -196,13 +220,19 @@ export default function CandidateDetailsPage() {
           <Panel bodyClassName="p-5">
             <SectionTitle>Skills</SectionTitle>
             <SkillsList skills={candidate.skills} highlight={primary?.job.skills ?? []} />
-            {primary && <p className="mt-3 text-xxs text-faint">Highlighted skills match {primary.job.title}.</p>}
+            {primary && <p className="text-xxs text-faint mt-3">Highlighted skills match {primary.job.title}.</p>}
           </Panel>
         </aside>
       </div>
 
       <AddApplicationModal open={adding} onClose={() => setAdding(false)} candidate={candidate} existingJobIds={apps.map((a) => a.job.id)} />
-      <StageChangeDialog change={stageMove.change} job={stageMove.change?.job} onClose={stageMove.cancel} onConfirm={stageMove.confirm} loading={stageMove.pending} />
+      <StageChangeDialog
+        change={stageMove.change}
+        job={stageMove.change?.job}
+        onClose={stageMove.cancel}
+        onConfirm={stageMove.confirm}
+        loading={stageMove.pending}
+      />
     </div>
   )
 }

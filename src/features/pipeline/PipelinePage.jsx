@@ -36,21 +36,40 @@ export default function PipelinePage() {
     () =>
       jobs
         .filter((j) => j.status !== 'draft')
-        .map((j) => ({ value: j.id, label: `${j.title} (${applications.filter((a) => a.jobId === j.id && a.status === 'active').length})${j.status !== 'open' ? ` — ${j.status.replace('-', ' ')}` : ''}` })),
+        .map((j) => ({
+          value: j.id,
+          label: `${j.title} (${applications.filter((a) => a.jobId === j.id && a.status === 'active').length})${j.status !== 'open' ? ` — ${j.status.replace('-', ' ')}` : ''}`,
+        })),
     [jobs, applications],
   )
   const jobId = filters.job || jobs.find((j) => j.status === 'open')?.id || jobOptions[0]?.value
 
-  const pipeline = useRecruitmentPipeline(jobId, { query: filters.q, recruiterId: filters.recruiter, showRejected: filters.rejected === 'show', sortBy: filters.sort })
+  const pipeline = useRecruitmentPipeline(jobId, {
+    query: filters.q,
+    recruiterId: filters.recruiter,
+    showRejected: filters.rejected === 'show',
+    sortBy: filters.sort,
+  })
   const stageMove = useStageMove(pipeline.move)
   const [drawerCard, setDrawerCard] = useState(null)
   const [rejectCard, setRejectCard] = useState(null)
   const [activityOpen, setActivityOpen] = useState(false)
 
-  const requestMove = (card, toStageId) => stageMove.request({ app: { ...card.app, stageId: card.stageId }, job: pipeline.job, toStageId, candidateName: card.name })
+  const requestMove = (card, toStageId) =>
+    stageMove.request({ app: { ...card.app, stageId: card.stageId }, job: pipeline.job, toStageId, candidateName: card.name })
 
   if (!pipeline.job) {
-    return <EmptyState title="No vacancies to show" description="Create a vacancy to start building its pipeline." action={<Button variant="primary" onClick={() => global.openJobForm()}>New vacancy</Button>} />
+    return (
+      <EmptyState
+        title="No vacancies to show"
+        description="Create a vacancy to start building its pipeline."
+        action={
+          <Button variant="primary" onClick={() => global.openJobForm()}>
+            New vacancy
+          </Button>
+        }
+      />
+    )
   }
 
   return (
@@ -66,14 +85,19 @@ export default function PipelinePage() {
             <Button icon={Pencil} onClick={() => global.openJobForm({ job: pipeline.job })} disabled={!can('jobs.manage')}>
               Edit workflow
             </Button>
-            <Button variant="primary" icon={UserPlus} onClick={() => global.openCandidateForm({ jobId })} disabled={!can('candidates.manage') || pipeline.job.status === 'closed'}>
+            <Button
+              variant="primary"
+              icon={UserPlus}
+              onClick={() => global.openCandidateForm({ jobId })}
+              disabled={!can('candidates.manage') || pipeline.job.status === 'closed'}
+            >
               Add candidate
             </Button>
           </>
         }
       />
 
-      <div className="mb-4 space-y-3 rounded-2xl border border-line/80 bg-surface shadow-card p-4">
+      <div className="border-line/80 bg-surface shadow-card mb-4 space-y-3 rounded-2xl border p-4">
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
           <Select aria-label="Vacancy" value={jobId} onChange={(e) => setFilter('job', e.target.value)} options={jobOptions} />
           <SearchInput value={filters.q} onChange={(v) => setFilter('q', v)} placeholder="Search name, skill or ID" label="Search pipeline" />
@@ -89,7 +113,11 @@ export default function PipelinePage() {
             ]}
           />
           <div className="flex items-center px-1">
-            <Checkbox label="Show not progressed" checked={filters.rejected === 'show'} onChange={(e) => setFilter('rejected', e.target.checked ? 'show' : 'hide')} />
+            <Checkbox
+              label="Show not progressed"
+              checked={filters.rejected === 'show'}
+              onChange={(e) => setFilter('rejected', e.target.checked ? 'show' : 'hide')}
+            />
           </div>
         </div>
         <div className="no-scrollbar overflow-x-auto">
@@ -97,7 +125,7 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      {!canMove && <p className="mb-3 text-xs text-muted">Your role can view the pipeline but not move candidates.</p>}
+      {!canMove && <p className="text-muted mb-3 text-xs">Your role can view the pipeline but not move candidates.</p>}
 
       <PipelineBoard
         columns={pipeline.columns}
@@ -127,11 +155,17 @@ export default function PipelinePage() {
         }}
       />
 
-      <CandidateDrawer candidateId={drawerCard?.candidate.id} focusApplicationId={drawerCard?.id} open={Boolean(drawerCard)} onClose={() => setDrawerCard(null)} moveFn={pipeline.move} />
+      <CandidateDrawer
+        candidateId={drawerCard?.candidate.id}
+        focusApplicationId={drawerCard?.id}
+        open={Boolean(drawerCard)}
+        onClose={() => setDrawerCard(null)}
+        moveFn={pipeline.move}
+      />
 
       <Drawer open={activityOpen} onClose={() => setActivityOpen(false)} title="Stage history" subtitle={pipeline.job.title} size="md">
         {pipeline.transitions.length ? (
-          <ol className="divide-y divide-line">
+          <ol className="divide-line divide-y">
             {pipeline.transitions.slice(0, 80).map((t) => (
               <li key={t.id} className="flex gap-3 px-5 py-3">
                 <Avatar name={fullName(t.candidate)} size="sm" />
@@ -148,8 +182,8 @@ export default function PipelinePage() {
                       </>
                     )}
                   </p>
-                  {t.note && <p className="text-xs text-ink-soft">“{t.note}”</p>}
-                  <p className="text-xs text-muted">
+                  {t.note && <p className="text-ink-soft text-xs">“{t.note}”</p>}
+                  <p className="text-muted text-xs">
                     {formatRelative(t.at)}
                     {t.by && ` · ${t.by.name}`}
                   </p>

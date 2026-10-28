@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ------------------------------------------------------------------
    TalentNest design tokens
@@ -6,7 +6,7 @@
    selected controls and key interactive elements.
 ------------------------------------------------------------------- */
 @theme {
-  --font-sans: "Poppins", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --color-brand-50: #f6f2fc;
   --color-brand-100: #ece4f8;
@@ -65,7 +65,7 @@
   }
 
   button,
-  [role="button"] {
+  [role='button'] {
     cursor: pointer;
   }
 
@@ -73,8 +73,8 @@
     cursor: not-allowed;
   }
 
-  input[type="date"]::-webkit-calendar-picker-indicator,
-  input[type="time"]::-webkit-calendar-picker-indicator {
+  input[type='date']::-webkit-calendar-picker-indicator,
+  input[type='time']::-webkit-calendar-picker-indicator {
     opacity: 0.55;
     cursor: pointer;
   }

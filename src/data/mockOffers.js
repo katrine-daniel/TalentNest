@@ -46,7 +46,12 @@ export function buildOffers({ applications, jobs, candidates }) {
         onboarding: onboardingChecklist(base.id, intBetween(rng, 1, 5)),
       })
     } else if (app.status === 'rejected') {
-      offers.push({ ...base, status: 'declined', respondedAt: new Date(new Date(offerStageEntry).getTime() + DAY * 3).toISOString(), notes: 'Accepted a counter-offer from current employer.' })
+      offers.push({
+        ...base,
+        status: 'declined',
+        respondedAt: new Date(new Date(offerStageEntry).getTime() + DAY * 3).toISOString(),
+        notes: 'Accepted a counter-offer from current employer.',
+      })
     } else {
       const status = pick(rng, ['sent', 'sent', 'sent', 'negotiating', 'draft'])
       offers.push({ ...base, status, sentAt: status === 'draft' ? null : base.sentAt })

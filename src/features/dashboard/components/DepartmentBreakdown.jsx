@@ -15,7 +15,7 @@ export default function DepartmentBreakdown({ rows }) {
     <div className="px-2">
       <ul className="mb-2 flex flex-wrap gap-x-4 gap-y-1 px-3">
         {BREAKDOWN_GROUPS.map((g) => (
-          <li key={g.key} className="flex items-center gap-1.5 text-xxs text-muted">
+          <li key={g.key} className="text-xxs text-muted flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-sm" style={{ background: GROUP_COLORS[g.key] }} aria-hidden />
             {g.label}
           </li>

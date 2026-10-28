@@ -18,11 +18,15 @@ export default function MetricCard({ label, value, detail, icon: Icon, to, empha
         )}
         {to && <ArrowUpRight size={14} className="text-faint opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />}
       </div>
-      <p className="mt-3 truncate text-xs text-muted">{label}</p>
+      <p className="text-muted mt-3 truncate text-xs">{label}</p>
       <div className={cn('mt-0.5 text-2xl font-semibold tracking-tight', emphasis ? 'text-brand-700' : 'text-ink')}>
         <AnimatedNumber value={value} />
       </div>
-      {detail && <p className={cn('mt-1 truncate text-xs', detailTone === 'warn' ? 'text-amber-700' : detailTone === 'danger' ? 'text-red-600' : 'text-muted')}>{detail}</p>}
+      {detail && (
+        <p className={cn('mt-1 truncate text-xs', detailTone === 'warn' ? 'text-amber-700' : detailTone === 'danger' ? 'text-red-600' : 'text-muted')}>
+          {detail}
+        </p>
+      )}
     </>
   )
 
@@ -57,5 +61,9 @@ const STRIP_COLUMNS = {
 }
 
 export function MetricStrip({ children, columns = 6, className }) {
-  return <div className={cn('grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line/80 bg-line shadow-card', STRIP_COLUMNS[columns], className)}>{children}</div>
+  return (
+    <div className={cn('border-line/80 bg-line shadow-card grid grid-cols-2 gap-px overflow-hidden rounded-2xl border', STRIP_COLUMNS[columns], className)}>
+      {children}
+    </div>
+  )
 }

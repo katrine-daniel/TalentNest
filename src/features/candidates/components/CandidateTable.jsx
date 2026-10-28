@@ -19,10 +19,14 @@ export default function CandidateTable({ rows, sort, onSort, onOpen, onSchedule,
         <div className="flex min-w-0 items-center gap-3">
           <Avatar name={r.name} size="sm" />
           <div className="min-w-0">
-            <Link to={`/candidates/${r.id}`} onClick={(e) => e.stopPropagation()} className="block truncate font-medium text-ink hover:text-brand-700 hover:underline">
+            <Link
+              to={`/candidates/${r.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-ink hover:text-brand-700 block truncate font-medium hover:underline"
+            >
               {r.name}
             </Link>
-            <span className="block truncate text-xs text-muted">
+            <span className="text-muted block truncate text-xs">
               {r.candidate.ref} · {r.candidate.email}
             </span>
           </div>
@@ -37,16 +41,32 @@ export default function CandidateTable({ rows, sort, onSort, onOpen, onSchedule,
         r.primary ? (
           <div className="max-w-56 min-w-0">
             <span className="block truncate text-sm">{r.primary.job.title}</span>
-            {r.apps.length > 1 && <span className="text-xs text-muted">+{r.apps.length - 1} more application{r.apps.length > 2 ? 's' : ''}</span>}
+            {r.apps.length > 1 && (
+              <span className="text-muted text-xs">
+                +{r.apps.length - 1} more application{r.apps.length > 2 ? 's' : ''}
+              </span>
+            )}
           </div>
         ) : (
-          <span className="text-xs text-faint">Talent pool</span>
+          <span className="text-faint text-xs">Talent pool</span>
         ),
     },
     { key: 'stageRank', header: 'Stage', sortable: true, render: (r) => <StageBadge app={r.primary?.app} stage={r.primary?.stage} /> },
-    { key: 'experienceYears', header: 'Exp.', sortable: true, hideBelow: 'md', render: (r) => <span className="tabular text-ink-soft">{r.candidate.experienceYears} yrs</span> },
+    {
+      key: 'experienceYears',
+      header: 'Exp.',
+      sortable: true,
+      hideBelow: 'md',
+      render: (r) => <span className="tabular text-ink-soft">{r.candidate.experienceYears} yrs</span>,
+    },
     { key: 'recruiter', header: 'Recruiter', hideBelow: 'xl', render: (r) => <span className="text-ink-soft">{r.recruiter?.name ?? '—'}</span> },
-    { key: 'appliedAt', header: 'Applied', sortable: true, hideBelow: 'lg', render: (r) => <span className="whitespace-nowrap text-ink-soft">{formatRelative(r.appliedAt)}</span> },
+    {
+      key: 'appliedAt',
+      header: 'Applied',
+      sortable: true,
+      hideBelow: 'lg',
+      render: (r) => <span className="text-ink-soft whitespace-nowrap">{formatRelative(r.appliedAt)}</span>,
+    },
     {
       key: 'actions',
       header: <span className="sr-only">Actions</span>,

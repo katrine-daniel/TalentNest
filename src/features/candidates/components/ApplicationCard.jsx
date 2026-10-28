@@ -60,14 +60,14 @@ export default function ApplicationCard({ entry, candidateName, onRequestMove, d
   }))
 
   return (
-    <article className="rounded-2xl border border-line/80 bg-surface shadow-card">
+    <article className="border-line/80 bg-surface shadow-card rounded-2xl border">
       <div className="space-y-3 p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <Link to={`/jobs/${job.id}`} className="font-medium text-ink hover:text-brand-700 hover:underline">
+            <Link to={`/jobs/${job.id}`} className="text-ink hover:text-brand-700 font-medium hover:underline">
               {job.title}
             </Link>
-            <p className="text-xs text-muted">
+            <p className="text-muted text-xs">
               Applied {formatDate(app.appliedAt)} · {job.location}
             </p>
           </div>
@@ -101,9 +101,24 @@ export default function ApplicationCard({ entry, candidateName, onRequestMove, d
               align="start"
               menuLabel="Schedule"
               items={[
-                { label: 'Schedule interview', icon: CalendarPlus, disabled: !can('interviews.schedule'), onSelect: () => global.openSchedule({ applicationId: app.id }) },
-                { label: 'Assign assessment', icon: ClipboardCheck, disabled: !can('interviews.schedule'), onSelect: () => global.openAssessment({ applicationId: app.id }) },
-                { label: 'Create offer', icon: FileSignature, disabled: !can('offers.manage') || Boolean(offer && offer.status !== 'declined'), onSelect: () => global.openOffer({ applicationId: app.id }) },
+                {
+                  label: 'Schedule interview',
+                  icon: CalendarPlus,
+                  disabled: !can('interviews.schedule'),
+                  onSelect: () => global.openSchedule({ applicationId: app.id }),
+                },
+                {
+                  label: 'Assign assessment',
+                  icon: ClipboardCheck,
+                  disabled: !can('interviews.schedule'),
+                  onSelect: () => global.openAssessment({ applicationId: app.id }),
+                },
+                {
+                  label: 'Create offer',
+                  icon: FileSignature,
+                  disabled: !can('offers.manage') || Boolean(offer && offer.status !== 'declined'),
+                  onSelect: () => global.openOffer({ applicationId: app.id }),
+                },
               ]}
               renderTrigger={(props) => (
                 <Button {...props} size="sm" iconRight={ChevronDown}>
@@ -129,7 +144,7 @@ export default function ApplicationCard({ entry, candidateName, onRequestMove, d
       </div>
 
       {(interviews.length > 0 || assessments.length > 0 || offer) && (
-        <ul className="divide-y divide-line border-t border-line text-sm">
+        <ul className="divide-line border-line divide-y border-t text-sm">
           {interviews.map((i) => (
             <li key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
               <span className={cn('h-2 w-2 shrink-0 rounded-full', STAGE_TYPES.interview.dot)} aria-hidden />
@@ -137,7 +152,12 @@ export default function ApplicationCard({ entry, candidateName, onRequestMove, d
                 {i.stageName}
                 <span className="text-muted"> · {formatDateTime(i.start)}</span>
               </Link>
-              <span className="text-xs text-muted">{i.interviewerIds.map((id) => usersById.get(id)?.name).filter(Boolean).join(', ')}</span>
+              <span className="text-muted text-xs">
+                {i.interviewerIds
+                  .map((id) => usersById.get(id)?.name)
+                  .filter(Boolean)
+                  .join(', ')}
+              </span>
               {i.feedback ? (
                 <StatusBadge tone={['yes', 'strong-yes'].includes(i.feedback.recommendation) ? 'green' : 'red'}>
                   {i.feedback.recommendation.replace('-', ' ')}
@@ -159,7 +179,9 @@ export default function ApplicationCard({ entry, candidateName, onRequestMove, d
                   <span className="text-muted"> · due {formatDate(a.deadline)}</span>
                 </span>
                 {a.score != null ? (
-                  <StatusBadge tone={a.score >= (t?.passMark ?? 60) ? 'green' : 'red'}>{a.score}% {a.score >= (t?.passMark ?? 60) ? 'pass' : 'below pass mark'}</StatusBadge>
+                  <StatusBadge tone={a.score >= (t?.passMark ?? 60) ? 'green' : 'red'}>
+                    {a.score}% {a.score >= (t?.passMark ?? 60) ? 'pass' : 'below pass mark'}
+                  </StatusBadge>
                 ) : (
                   <StatusBadge kind="assessment" value={a.status} />
                 )}
@@ -180,8 +202,14 @@ export default function ApplicationCard({ entry, candidateName, onRequestMove, d
 
       <AnimatePresence initial={false}>
         {expanded && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-            <div className="border-t border-line bg-subtle/40 p-4">
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="border-line bg-subtle/40 border-t p-4">
               <CandidateTimeline app={app} job={job} />
             </div>
           </motion.div>

@@ -1,5 +1,15 @@
 import { Link } from 'react-router-dom'
-import { ArrowRightLeft, BriefcaseBusiness, CalendarClock, ClipboardCheck, FileSignature, MessageSquareText, StickyNote, UserPlus, UserRoundPen } from 'lucide-react'
+import {
+  ArrowRightLeft,
+  BriefcaseBusiness,
+  CalendarClock,
+  ClipboardCheck,
+  FileSignature,
+  MessageSquareText,
+  StickyNote,
+  UserPlus,
+  UserRoundPen,
+} from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
 import { useLookups } from '@/hooks/useStore'
 import { formatRelative } from '@/utils/formatDate'
@@ -26,11 +36,11 @@ export default function RecentActivity({ items, limit = 8, linkCandidates = true
         const Icon = ACTIVITY_ICONS[a.type] ?? ArrowRightLeft
         const actor = usersById.get(a.actorId)
         const last = i === Math.min(limit, items.length) - 1
-        const text = <span className="text-sm leading-snug text-ink">{a.text}</span>
+        const text = <span className="text-ink text-sm leading-snug">{a.text}</span>
         return (
           <li key={a.id} className="relative flex gap-3 pb-4 last:pb-0">
-            {!last && <span className="absolute top-7 bottom-0 left-[13px] w-px bg-line" aria-hidden />}
-            <span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-line bg-surface text-muted">
+            {!last && <span className="bg-line absolute top-7 bottom-0 left-[13px] w-px" aria-hidden />}
+            <span className="border-line bg-surface text-muted relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border">
               <Icon size={13} aria-hidden />
             </span>
             <div className="min-w-0 pt-0.5">
@@ -41,7 +51,7 @@ export default function RecentActivity({ items, limit = 8, linkCandidates = true
               ) : (
                 text
               )}
-              <p className="mt-0.5 text-xs text-muted">
+              <p className="text-muted mt-0.5 text-xs">
                 {actor ? `${actor.name} · ` : ''}
                 {formatRelative(a.at)}
               </p>

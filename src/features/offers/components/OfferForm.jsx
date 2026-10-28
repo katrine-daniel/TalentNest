@@ -19,16 +19,40 @@ export default function OfferForm({ open, onClose, offer, prefill }) {
   const appOptions = useApplicationOptions({ stageTypes: OFFER_STAGES })
   const { candidatesById, jobsById } = useLookups()
   const actions = useOfferActions()
-  const { register, handleSubmit, reset, watch, setValue, getValues, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    getValues,
+    formState: { errors },
+  } = useForm({
     defaultValues: { applicationId: '', salary: '', joiningBonus: 0, startDate: '', expiresAt: '', notes: '', send: true },
   })
 
   useEffect(() => {
     if (!open) return
     if (offer) {
-      reset({ applicationId: offer.applicationId, salary: offer.salary, joiningBonus: offer.joiningBonus, startDate: toInputDate(offer.startDate), expiresAt: toInputDate(offer.expiresAt), notes: offer.notes ?? '', send: false })
+      reset({
+        applicationId: offer.applicationId,
+        salary: offer.salary,
+        joiningBonus: offer.joiningBonus,
+        startDate: toInputDate(offer.startDate),
+        expiresAt: toInputDate(offer.expiresAt),
+        notes: offer.notes ?? '',
+        send: false,
+      })
     } else {
-      reset({ applicationId: prefill?.applicationId ?? '', salary: '', joiningBonus: 0, startDate: toInputDate(addDays(new Date(), 21)), expiresAt: toInputDate(addDays(new Date(), 7)), notes: '', send: true })
+      reset({
+        applicationId: prefill?.applicationId ?? '',
+        salary: '',
+        joiningBonus: 0,
+        startDate: toInputDate(addDays(new Date(), 21)),
+        expiresAt: toInputDate(addDays(new Date(), 7)),
+        notes: '',
+        send: true,
+      })
     }
   }, [open, offer, prefill, reset])
 
@@ -46,7 +70,15 @@ export default function OfferForm({ open, onClose, offer, prefill }) {
 
   const onSubmit = async (values) => {
     const payload = { ...values, startDate: combineDateTime(values.startDate, '09:30'), expiresAt: combineDateTime(values.expiresAt, '23:59') }
-    const res = isEdit ? await actions.update.run(offer.id, { salary: payload.salary, joiningBonus: Number(payload.joiningBonus) || 0, startDate: payload.startDate, expiresAt: payload.expiresAt, notes: payload.notes }) : await actions.create.run(payload)
+    const res = isEdit
+      ? await actions.update.run(offer.id, {
+          salary: payload.salary,
+          joiningBonus: Number(payload.joiningBonus) || 0,
+          startDate: payload.startDate,
+          expiresAt: payload.expiresAt,
+          notes: payload.notes,
+        })
+      : await actions.create.run(payload)
     if (res.ok) onClose()
   }
 
@@ -57,7 +89,11 @@ export default function OfferForm({ open, onClose, offer, prefill }) {
       open={open}
       onClose={onClose}
       title={isEdit ? 'Revise offer' : 'Create offer'}
-      description={isEdit ? `${fullName(candidatesById.get(offer.candidateId))} · ${jobsById.get(offer.jobId)?.title}` : 'Offers can be prepared for candidates in interview, decision or offer stages.'}
+      description={
+        isEdit
+          ? `${fullName(candidatesById.get(offer.candidateId))} · ${jobsById.get(offer.jobId)?.title}`
+          : 'Offers can be prepared for candidates in interview, decision or offer stages.'
+      }
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={pending}>
@@ -71,12 +107,31 @@ export default function OfferForm({ open, onClose, offer, prefill }) {
     >
       <form id="offer-form" onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         {!isEdit && (
-          <Field label="Candidate & vacancy" required error={errors.applicationId?.message} hint={!appOptions.length ? 'No candidates are currently in an interview, decision or offer stage.' : undefined}>
-            {(a) => <Select {...a} {...register('applicationId', rules.required('Candidate'))} options={appOptions} placeholder="Select application" invalid={!!errors.applicationId} data-autofocus />}
+          <Field
+            label="Candidate & vacancy"
+            required
+            error={errors.applicationId?.message}
+            hint={!appOptions.length ? 'No candidates are currently in an interview, decision or offer stage.' : undefined}
+          >
+            {(a) => (
+              <Select
+                {...a}
+                {...register('applicationId', rules.required('Candidate'))}
+                options={appOptions}
+                placeholder="Select application"
+                invalid={!!errors.applicationId}
+                data-autofocus
+              />
+            )}
           </Field>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Annual CTC (₹)" required error={errors.salary?.message} hint={job ? `Band ${formatINR(job.salaryMin)} – ${formatINR(job.salaryMax)}` : undefined}>
+          <Field
+            label="Annual CTC (₹)"
+            required
+            error={errors.salary?.message}
+            hint={job ? `Band ${formatINR(job.salaryMin)} – ${formatINR(job.salaryMax)}` : undefined}
+          >
             {(a) => (
               <Input
                 {...a}

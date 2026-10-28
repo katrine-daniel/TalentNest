@@ -47,9 +47,7 @@ function locationFor(mode, job) {
 function buildFeedback(rng, scorecardId, interviewerId, at, positive) {
   const scorecard = mockScorecards.find((s) => s.id === scorecardId)
   const base = positive ? 3.6 : 2.2
-  const ratings = Object.fromEntries(
-    scorecard.criteria.map((c) => [c.id, Math.max(1, Math.min(5, Math.round(base + rng() * 1.6)))]),
-  )
+  const ratings = Object.fromEntries(scorecard.criteria.map((c) => [c.id, Math.max(1, Math.min(5, Math.round(base + rng() * 1.6)))]))
   const avg = Object.values(ratings).reduce((a, b) => a + b, 0) / scorecard.criteria.length
   return {
     submittedById: interviewerId,

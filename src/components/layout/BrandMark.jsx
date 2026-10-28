@@ -11,8 +11,8 @@ export default function BrandMark({ collapsed = false, onClick }) {
       </svg>
       {!collapsed && (
         <span className="leading-tight">
-          <span className="block text-[15px] font-semibold tracking-tight text-ink">TalentNest</span>
-          <span className="block text-[10px] text-muted">Skyline Voyages Group</span>
+          <span className="text-ink block text-[15px] font-semibold tracking-tight">TalentNest</span>
+          <span className="text-muted block text-[10px]">Skyline Voyages Group</span>
         </span>
       )}
     </Link>

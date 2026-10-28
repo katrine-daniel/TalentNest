@@ -25,7 +25,14 @@ export default function JobDetailsPage() {
   const canManage = can('jobs.manage')
 
   if (!row) {
-    return <EmptyState icon={BriefcaseBusiness} title="Vacancy not found" description="It may have been removed." action={<Button to="/jobs">Back to vacancies</Button>} />
+    return (
+      <EmptyState
+        icon={BriefcaseBusiness}
+        title="Vacancy not found"
+        description="It may have been removed."
+        action={<Button to="/jobs">Back to vacancies</Button>}
+      />
+    )
   }
   const { job } = row
 
@@ -42,14 +49,14 @@ export default function JobDetailsPage() {
             <h1 className="text-xl font-semibold tracking-tight">{job.title}</h1>
             <StatusBadge kind="job" value={job.status} />
           </div>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted">
+          <p className="text-muted mt-1 flex flex-wrap items-center gap-x-2 text-sm">
             <span>{row.department?.name}</span>·
             <span className="inline-flex items-center gap-1">
               <MapPin size={13} aria-hidden /> {job.location}
             </span>
             ·<span>{job.openings} openings</span>
           </p>
-          <div className="mt-3 flex items-center gap-3 text-xs text-muted">
+          <div className="text-muted mt-3 flex items-center gap-3 text-xs">
             <StageDistribution byStage={row.byStage} total={row.active} />
             <span>
               {row.active} active · {row.applicants} total · {row.hired} hired
@@ -59,7 +66,13 @@ export default function JobDetailsPage() {
         <div className="flex flex-wrap gap-2">
           <Dropdown
             menuLabel="Change status"
-            items={toOptions('job').map((o) => ({ key: o.value, label: o.label, checked: job.status === o.value, disabled: job.status === o.value, onSelect: () => changeStatus(o.value) }))}
+            items={toOptions('job').map((o) => ({
+              key: o.value,
+              label: o.label,
+              checked: job.status === o.value,
+              disabled: job.status === o.value,
+              onSelect: () => changeStatus(o.value),
+            }))}
             renderTrigger={(props) => (
               <Button {...props} iconRight={ChevronDown} disabled={!canManage} loading={actions.setStatus.pending}>
                 Status

@@ -26,10 +26,10 @@ function LegendRow({ items }) {
   return (
     <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1 pt-2">
       {items.map((i) => (
-        <li key={i.label} className="flex items-center gap-1.5 text-xxs text-muted">
+        <li key={i.label} className="text-xxs text-muted flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-sm" style={{ background: i.color }} aria-hidden />
           {i.label}
-          {i.value !== undefined && <strong className="font-semibold text-ink tabular">{i.value}</strong>}
+          {i.value !== undefined && <strong className="text-ink tabular font-semibold">{i.value}</strong>}
         </li>
       ))}
     </ul>
@@ -43,10 +43,17 @@ export function FunnelChart({ data }) {
         <CartesianGrid stroke={CHART_COLORS.grid} vertical={false} />
         <XAxis dataKey="label" {...AXIS_PROPS} />
         <YAxis {...AXIS_PROPS} allowDecimals={false} />
-        <Tooltip content={<ChartTooltip formatter={(v, n, p) => `${v}${p.payload.conversion && p.payload.key !== 'application' ? ` (${p.payload.conversion}% of previous)` : ''}`} />} cursor={{ fill: '#f3f3f6' }} />
+        <Tooltip
+          content={
+            <ChartTooltip
+              formatter={(v, n, p) => `${v}${p.payload.conversion && p.payload.key !== 'application' ? ` (${p.payload.conversion}% of previous)` : ''}`}
+            />
+          }
+          cursor={{ fill: '#f3f3f6' }}
+        />
         <Bar dataKey="count" name="Candidates" radius={[4, 4, 0, 0]} maxBarSize={56} label={{ position: 'top', fontSize: 11, fill: '#3a3d46' }}>
           {data.map((d, i) => (
-            <Cell key={d.key} fill={i === data.length - 1 ? CHART_COLORS.teal : FUNNEL_RAMP[i] ?? FUNNEL_RAMP.at(-1)} />
+            <Cell key={d.key} fill={i === data.length - 1 ? CHART_COLORS.teal : (FUNNEL_RAMP[i] ?? FUNNEL_RAMP.at(-1))} />
           ))}
         </Bar>
       </BarChart>
@@ -87,7 +94,10 @@ export function PassRateChart({ data }) {
         <CartesianGrid stroke={CHART_COLORS.grid} horizontal={false} />
         <XAxis type="number" domain={[0, 100]} {...AXIS_PROPS} tickFormatter={pct} />
         <YAxis type="category" dataKey="name" {...AXIS_PROPS} width={150} tick={{ ...AXIS_PROPS.tick, fill: '#3a3d46' }} />
-        <Tooltip content={<ChartTooltip formatter={(v, n, p) => `${v}% (${p.payload.passed}/${p.payload.evaluated}, pass mark ${p.payload.passMark}%)`} />} cursor={{ fill: '#f3f3f6' }} />
+        <Tooltip
+          content={<ChartTooltip formatter={(v, n, p) => `${v}% (${p.payload.passed}/${p.payload.evaluated}, pass mark ${p.payload.passMark}%)`} />}
+          cursor={{ fill: '#f3f3f6' }}
+        />
         <Bar dataKey="rate" name="Pass rate" radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11, fill: '#3a3d46', formatter: pct }}>
           {data.map((d) => (
             <Cell key={d.id} fill={d.rate < 50 ? CHART_COLORS.amber : CHART_COLORS.brand} />
@@ -105,8 +115,17 @@ export function InterviewConversionChart({ data }) {
         <CartesianGrid stroke={CHART_COLORS.grid} horizontal={false} />
         <XAxis type="number" domain={[0, 100]} {...AXIS_PROPS} tickFormatter={pct} />
         <YAxis type="category" dataKey="stage" {...AXIS_PROPS} width={150} tick={{ ...AXIS_PROPS.tick, fill: '#3a3d46' }} />
-        <Tooltip content={<ChartTooltip formatter={(v, n, p) => `${v}% advanced (${p.payload.advanced} of ${p.payload.completed})`} />} cursor={{ fill: '#f3f3f6' }} />
-        <Bar dataKey="rate" name="Recommended to advance" fill={CHART_COLORS.sky} radius={[0, 4, 4, 0]} label={{ position: 'right', fontSize: 11, fill: '#3a3d46', formatter: pct }} />
+        <Tooltip
+          content={<ChartTooltip formatter={(v, n, p) => `${v}% advanced (${p.payload.advanced} of ${p.payload.completed})`} />}
+          cursor={{ fill: '#f3f3f6' }}
+        />
+        <Bar
+          dataKey="rate"
+          name="Recommended to advance"
+          fill={CHART_COLORS.sky}
+          radius={[0, 4, 4, 0]}
+          label={{ position: 'right', fontSize: 11, fill: '#3a3d46', formatter: pct }}
+        />
       </BarChart>
     </ChartFrame>
   )
@@ -121,8 +140,21 @@ export function TimeToHireTrend({ data }) {
         <XAxis dataKey="month" {...AXIS_PROPS} />
         <YAxis {...AXIS_PROPS} unit="d" />
         <Tooltip content={<ChartTooltip formatter={(v) => `${v} days`} />} />
-        <ReferenceLine y={avg} stroke={CHART_COLORS.slate} strokeDasharray="4 4" label={{ value: `avg ${avg}d`, position: 'insideTopRight', fontSize: 10, fill: CHART_COLORS.axis }} />
-        <Line type="monotone" dataKey="timeToHire" name="Time to hire" stroke={CHART_COLORS.brand} strokeWidth={2} dot={{ r: 3, fill: CHART_COLORS.brand }} activeDot={{ r: 5 }} />
+        <ReferenceLine
+          y={avg}
+          stroke={CHART_COLORS.slate}
+          strokeDasharray="4 4"
+          label={{ value: `avg ${avg}d`, position: 'insideTopRight', fontSize: 10, fill: CHART_COLORS.axis }}
+        />
+        <Line
+          type="monotone"
+          dataKey="timeToHire"
+          name="Time to hire"
+          stroke={CHART_COLORS.brand}
+          strokeWidth={2}
+          dot={{ r: 3, fill: CHART_COLORS.brand }}
+          activeDot={{ r: 5 }}
+        />
       </LineChart>
     </ChartFrame>
   )
@@ -135,7 +167,15 @@ export function TimeToHireByDepartment({ data }) {
         <CartesianGrid stroke={CHART_COLORS.grid} vertical={false} />
         <XAxis dataKey="short" {...AXIS_PROPS} />
         <YAxis {...AXIS_PROPS} unit="d" />
-        <Tooltip content={<ChartTooltip labelFormatter={(l, p) => p?.[0]?.payload?.name ?? l} formatter={(v, n, p) => `${v} days${p.payload.source === 'historical' ? ' (historical)' : ` · ${p.payload.hires} hires`}`} />} cursor={{ fill: '#f3f3f6' }} />
+        <Tooltip
+          content={
+            <ChartTooltip
+              labelFormatter={(l, p) => p?.[0]?.payload?.name ?? l}
+              formatter={(v, n, p) => `${v} days${p.payload.source === 'historical' ? ' (historical)' : ` · ${p.payload.hires} hires`}`}
+            />
+          }
+          cursor={{ fill: '#f3f3f6' }}
+        />
         <Bar dataKey="days" name="Avg. time to hire" radius={[4, 4, 0, 0]} label={{ position: 'top', fontSize: 11, fill: '#3a3d46' }}>
           {data.map((d) => (
             <Cell key={d.departmentId} fill={d.source === 'live' ? CHART_COLORS.brand : CHART_COLORS.brandSoft} />
@@ -161,7 +201,7 @@ function Donut({ data, centerLabel, centerValue }) {
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-semibold tabular">{centerValue}</span>
+          <span className="tabular text-2xl font-semibold">{centerValue}</span>
           <span className="text-xxs text-muted">{centerLabel}</span>
         </div>
       </div>

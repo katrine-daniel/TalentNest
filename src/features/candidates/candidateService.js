@@ -22,7 +22,9 @@ function newApplication({ candidateId, jobId, source }) {
     rating: null,
     appliedAt: now,
     updatedAt: now,
-    history: [{ id: `${id}-h0`, kind: 'applied', fromStageId: null, toStageId: job.stages[0].id, at: now, byId: null, note: `Added via ${source || 'recruiter'}` }],
+    history: [
+      { id: `${id}-h0`, kind: 'applied', fromStageId: null, toStageId: job.stages[0].id, at: now, byId: null, note: `Added via ${source || 'recruiter'}` },
+    ],
   }
 }
 
@@ -64,7 +66,13 @@ export const candidateService = {
         const app = newApplication({ candidateId: id, jobId: values.jobId, source: candidate.source })
         mockDb.write('applications', (list) => [app, ...list])
       }
-      logActivity({ type: 'application', text: `${candidate.firstName} ${candidate.lastName} was added as a candidate`, actorId, candidateId: id, jobId: values.jobId || null })
+      logActivity({
+        type: 'application',
+        text: `${candidate.firstName} ${candidate.lastName} was added as a candidate`,
+        actorId,
+        candidateId: id,
+        jobId: values.jobId || null,
+      })
       return candidate
     })
   },
@@ -79,7 +87,12 @@ export const candidateService = {
       mockDb.write('candidates', (list) =>
         list.map((c) => {
           if (c.id !== id) return c
-          updated = { ...c, ...patch, experienceYears: Number(patch.experienceYears ?? c.experienceYears), expectedSalary: Number(patch.expectedSalary ?? c.expectedSalary) }
+          updated = {
+            ...c,
+            ...patch,
+            experienceYears: Number(patch.experienceYears ?? c.experienceYears),
+            expectedSalary: Number(patch.expectedSalary ?? c.expectedSalary),
+          }
           return updated
         }),
       )
@@ -90,12 +103,15 @@ export const candidateService = {
   },
 
   async addNote(candidateId, text, { actorId }) {
-    return mockRequest(() => {
-      const note = { id: createId('note'), authorId: actorId, text: text.trim(), at: new Date().toISOString() }
-      mockDb.write('candidates', (list) => list.map((c) => (c.id === candidateId ? { ...c, notes: [note, ...c.notes] } : c)))
-      logActivity({ type: 'note', text: 'Recruiter note added', actorId, candidateId })
-      return note
-    }, { latency: 200 })
+    return mockRequest(
+      () => {
+        const note = { id: createId('note'), authorId: actorId, text: text.trim(), at: new Date().toISOString() }
+        mockDb.write('candidates', (list) => list.map((c) => (c.id === candidateId ? { ...c, notes: [note, ...c.notes] } : c)))
+        logActivity({ type: 'note', text: 'Recruiter note added', actorId, candidateId })
+        return note
+      },
+      { latency: 200 },
+    )
   },
 
   /**
@@ -103,12 +119,15 @@ export const candidateService = {
    * to object storage via a signed URL and save the returned reference.
    */
   async attachResume(candidateId, file, { actorId }) {
-    return mockRequest(() => {
-      const resume = { fileName: file.name, size: file.size, uploadedAt: new Date().toISOString() }
-      mockDb.write('candidates', (list) => list.map((c) => (c.id === candidateId ? { ...c, resume } : c)))
-      logActivity({ type: 'candidate', text: `Resume uploaded (${file.name})`, actorId, candidateId })
-      return resume
-    }, { latency: 900 })
+    return mockRequest(
+      () => {
+        const resume = { fileName: file.name, size: file.size, uploadedAt: new Date().toISOString() }
+        mockDb.write('candidates', (list) => list.map((c) => (c.id === candidateId ? { ...c, resume } : c)))
+        logActivity({ type: 'candidate', text: `Resume uploaded (${file.name})`, actorId, candidateId })
+        return resume
+      },
+      { latency: 900 },
+    )
   },
 
   async addApplication(candidateId, jobId, { actorId }) {
@@ -117,7 +136,12 @@ export const candidateService = {
       mockDb.write('applications', (list) => [app, ...list])
       const job = mockDb.read('jobs').find((j) => j.id === jobId)
       logActivity({ type: 'application', text: `Added to vacancy ${job.title}`, actorId, candidateId, jobId })
-      pushNotification({ type: 'application', title: 'Candidate added to vacancy', body: `A candidate was added to ${job.title}.`, link: `/candidates/${candidateId}` })
+      pushNotification({
+        type: 'application',
+        title: 'Candidate added to vacancy',
+        body: `A candidate was added to ${job.title}.`,
+        link: `/candidates/${candidateId}`,
+      })
       return app
     })
   },

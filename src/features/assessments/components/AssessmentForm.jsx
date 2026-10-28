@@ -16,7 +16,14 @@ export default function AssessmentForm({ open, onClose, prefill }) {
   const appOptions = useApplicationOptions()
   const templates = useCollection('assessmentTemplates')
   const actions = useSchedulingActions()
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm({
     defaultValues: { applicationId: '', templateId: '', date: '', time: '18:00', notes: '' },
   })
 
@@ -40,7 +47,12 @@ export default function AssessmentForm({ open, onClose, prefill }) {
   const templateOptions = useMemo(() => templates.map((t) => ({ value: t.id, label: `${t.name} · ${t.type}` })), [templates])
 
   const onSubmit = async (values) => {
-    const res = await actions.assign.run({ applicationId: values.applicationId, templateId: values.templateId, deadline: combineDateTime(values.date, values.time), notes: values.notes })
+    const res = await actions.assign.run({
+      applicationId: values.applicationId,
+      templateId: values.templateId,
+      deadline: combineDateTime(values.date, values.time),
+      notes: values.notes,
+    })
     if (res.ok) onClose()
   }
 
@@ -63,23 +75,40 @@ export default function AssessmentForm({ open, onClose, prefill }) {
     >
       <form id="assessment-form" onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         <Field label="Candidate & vacancy" required error={errors.applicationId?.message}>
-          {(a) => <Select {...a} {...register('applicationId', rules.required('Candidate'))} options={appOptions} placeholder="Select an active application" invalid={!!errors.applicationId} data-autofocus />}
+          {(a) => (
+            <Select
+              {...a}
+              {...register('applicationId', rules.required('Candidate'))}
+              options={appOptions}
+              placeholder="Select an active application"
+              invalid={!!errors.applicationId}
+              data-autofocus
+            />
+          )}
         </Field>
         <Field label="Assessment" required error={errors.templateId?.message}>
-          {(a) => <Select {...a} {...register('templateId', rules.required('Assessment'))} options={templateOptions} placeholder="Select assessment template" invalid={!!errors.templateId} />}
+          {(a) => (
+            <Select
+              {...a}
+              {...register('templateId', rules.required('Assessment'))}
+              options={templateOptions}
+              placeholder="Select assessment template"
+              invalid={!!errors.templateId}
+            />
+          )}
         </Field>
         {template && (
-          <dl className="grid grid-cols-3 divide-x divide-line rounded-lg border border-line text-center">
+          <dl className="divide-line border-line grid grid-cols-3 divide-x rounded-lg border text-center">
             {[
               { icon: Clock, label: 'Duration', value: `${template.durationMin} min` },
               { icon: Gauge, label: 'Pass mark', value: `${template.passMark}%` },
               { icon: ListChecks, label: 'Questions', value: template.questionCount },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="px-2 py-2.5">
-                <dt className="flex items-center justify-center gap-1 text-xxs text-muted">
+                <dt className="text-xxs text-muted flex items-center justify-center gap-1">
                   <Icon size={12} aria-hidden /> {label}
                 </dt>
-                <dd className="mt-0.5 text-sm font-medium tabular">{value}</dd>
+                <dd className="tabular mt-0.5 text-sm font-medium">{value}</dd>
               </div>
             ))}
           </dl>

@@ -22,8 +22,12 @@ function RatingInput({ value, onChange, name, invalid }) {
           title={LABELS[n - 1]}
           onClick={() => onChange(n)}
           className={cn(
-            'h-9 w-9 rounded-md border text-sm font-medium transition-colors tabular',
-            value === n ? 'border-brand-600 bg-brand-600 text-white' : value && n < value ? 'border-brand-200 bg-brand-50 text-brand-700' : 'border-line-strong text-ink-soft hover:border-brand-300',
+            'tabular h-9 w-9 rounded-md border text-sm font-medium transition-colors',
+            value === n
+              ? 'border-brand-600 bg-brand-600 text-white'
+              : value && n < value
+                ? 'border-brand-200 bg-brand-50 text-brand-700'
+                : 'border-line-strong text-ink-soft hover:border-brand-300',
             invalid && !value && 'border-red-300',
           )}
         >
@@ -39,7 +43,14 @@ export default function InterviewFeedbackForm({ open, onClose, interview }) {
   const { scorecardsById, candidatesById } = useLookups()
   const actions = useSchedulingActions()
   const scorecard = interview ? scorecardsById.get(interview.scorecardId) : null
-  const { control, register, handleSubmit, reset, watch, formState: { errors } } = useForm()
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm()
 
   useEffect(() => {
     if (!open || !scorecard) return
@@ -69,7 +80,7 @@ export default function InterviewFeedbackForm({ open, onClose, interview }) {
       description={interview ? `${interview.stageName} · ${fullName(candidatesById.get(interview.candidateId))} · ${scorecard?.name ?? ''} scorecard` : ''}
       footer={
         <>
-          <span className="mr-auto hidden text-xs text-muted sm:block">
+          <span className="text-muted mr-auto hidden text-xs sm:block">
             Weighted score <strong className="text-ink tabular">{weighted.toFixed(1)}</strong> / 5
           </span>
           <Button variant="secondary" onClick={onClose}>
@@ -84,8 +95,8 @@ export default function InterviewFeedbackForm({ open, onClose, interview }) {
       {scorecard && (
         <form id="feedback-form" onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
           <fieldset>
-            <legend className="mb-3 text-xs font-semibold tracking-wide text-muted uppercase">Scorecard</legend>
-            <div className="divide-y divide-line rounded-lg border border-line">
+            <legend className="text-muted mb-3 text-xs font-semibold tracking-wide uppercase">Scorecard</legend>
+            <div className="divide-line border-line divide-y rounded-lg border">
               {scorecard.criteria.map((c) => (
                 <div key={c.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -152,7 +163,7 @@ export default function InterviewFeedbackForm({ open, onClose, interview }) {
           <Field label="Summary for the hiring team" optional>
             {(a) => <Textarea {...a} rows={2} {...register('summary')} />}
           </Field>
-          <p className="text-xs text-muted">Feedback informs the panel’s decision; it does not move the candidate automatically.</p>
+          <p className="text-muted text-xs">Feedback informs the panel’s decision; it does not move the candidate automatically.</p>
         </form>
       )}
     </Modal>

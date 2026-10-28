@@ -25,12 +25,14 @@ export default function RolePermissions({ readOnly }) {
 
   return (
     <div className="space-y-4">
-      <MockNotice>These permissions control which actions the interface offers. Real authorization must also be enforced by the backend for every request.</MockNotice>
-      <div className="overflow-x-auto rounded-2xl border border-line/80 bg-surface shadow-card scrollbar-thin">
+      <MockNotice>
+        These permissions control which actions the interface offers. Real authorization must also be enforced by the backend for every request.
+      </MockNotice>
+      <div className="border-line/80 bg-surface shadow-card scrollbar-thin overflow-x-auto rounded-2xl border">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="border-b border-line">
-              <th scope="col" className="px-5 py-3 text-left text-xxs font-medium tracking-wide text-muted uppercase">
+            <tr className="border-line border-b">
+              <th scope="col" className="text-xxs text-muted px-5 py-3 text-left font-medium tracking-wide uppercase">
                 Permission
               </th>
               {ROLES.map((r) => (
@@ -64,23 +66,23 @@ function FragmentRows({ group, matrix, toggle, readOnly }) {
   return (
     <>
       <tr className="bg-subtle/60">
-        <th colSpan={ROLES.length + 1} scope="colgroup" className="px-5 py-1.5 text-left text-xxs font-semibold tracking-wide text-muted uppercase">
+        <th colSpan={ROLES.length + 1} scope="colgroup" className="text-xxs text-muted px-5 py-1.5 text-left font-semibold tracking-wide uppercase">
           {group}
         </th>
       </tr>
       {perms.map((p) => (
-        <tr key={p.key} className="border-b border-line last:border-0">
-          <th scope="row" className="px-5 py-2.5 text-left font-normal text-ink">
+        <tr key={p.key} className="border-line border-b last:border-0">
+          <th scope="row" className="text-ink px-5 py-2.5 text-left font-normal">
             {p.label}
           </th>
           {ROLES.map((role) => (
             <td key={role} className="px-3 py-2.5 text-center">
               {role === 'Admin' ? (
-                <Lock size={14} className="mx-auto text-faint" aria-label="Admin always has this permission" />
+                <Lock size={14} className="text-faint mx-auto" aria-label="Admin always has this permission" />
               ) : (
                 <input
                   type="checkbox"
-                  className="h-4 w-4 cursor-pointer accent-brand-600 disabled:cursor-not-allowed"
+                  className="accent-brand-600 h-4 w-4 cursor-pointer disabled:cursor-not-allowed"
                   checked={Boolean(matrix[role]?.includes(p.key))}
                   disabled={readOnly}
                   onChange={() => toggle(role, p.key)}

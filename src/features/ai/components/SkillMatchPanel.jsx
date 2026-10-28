@@ -17,9 +17,18 @@ export default function SkillMatchPanel({ data }) {
         <div className="relative h-16 w-16 shrink-0">
           <svg viewBox="0 0 36 36" className="h-16 w-16 -rotate-90" aria-hidden>
             <circle cx="18" cy="18" r="15.5" fill="none" stroke="#ece4f8" strokeWidth="3.5" />
-            <circle cx="18" cy="18" r="15.5" fill="none" stroke="#592ca2" strokeWidth="3.5" strokeDasharray={`${(score / 100) * 97.4} 97.4`} strokeLinecap="round" />
+            <circle
+              cx="18"
+              cy="18"
+              r="15.5"
+              fill="none"
+              stroke="#592ca2"
+              strokeWidth="3.5"
+              strokeDasharray={`${(score / 100) * 97.4} 97.4`}
+              strokeLinecap="round"
+            />
           </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold tabular">{score}%</span>
+          <span className="tabular absolute inset-0 flex items-center justify-center text-sm font-semibold">{score}%</span>
         </div>
         <div className="min-w-0 text-sm">
           <p className="font-medium">Keyword coverage of required skills</p>
@@ -28,7 +37,7 @@ export default function SkillMatchPanel({ data }) {
           </p>
         </div>
       </div>
-      <ul className="divide-y divide-line rounded-lg border border-line">
+      <ul className="divide-line border-line divide-y rounded-lg border">
         {rows.map((r) => {
           const L = LEVELS[r.level]
           return (
@@ -36,13 +45,13 @@ export default function SkillMatchPanel({ data }) {
               <L.icon size={16} className={cn('mt-0.5 shrink-0', L.className)} aria-label={L.label} />
               <span className="min-w-0 flex-1">
                 <span className="font-medium">{r.skill}</span>
-                <span className="block text-xs text-muted">{r.evidence}</span>
+                <span className="text-muted block text-xs">{r.evidence}</span>
               </span>
             </li>
           )
         })}
       </ul>
-      {extraSkills.length > 0 && <p className="text-xs text-muted">Additional skills on profile: {extraSkills.join(', ')}</p>}
+      {extraSkills.length > 0 && <p className="text-muted text-xs">Additional skills on profile: {extraSkills.join(', ')}</p>}
     </div>
   )
 }

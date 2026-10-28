@@ -30,11 +30,11 @@ function useSearchResults(query) {
 
 function ResultList({ results, active, onPick, query }) {
   if (query.trim().length < 2) {
-    return <p className="px-3 py-4 text-xs text-muted">Search candidates by name, email, skill or ID (e.g. CND-1004), or vacancies by title.</p>
+    return <p className="text-muted px-3 py-4 text-xs">Search candidates by name, email, skill or ID (e.g. CND-1004), or vacancies by title.</p>
   }
-  if (!results.length) return <p className="px-3 py-4 text-xs text-muted">No matches for “{query}”.</p>
+  if (!results.length) return <p className="text-muted px-3 py-4 text-xs">No matches for “{query}”.</p>
   return (
-    <ul role="listbox" aria-label="Search results" className="max-h-80 overflow-y-auto py-1 scrollbar-thin">
+    <ul role="listbox" aria-label="Search results" className="max-h-80 scrollbar-thin overflow-y-auto py-1">
       {results.map((r, i) => (
         <li key={`${r.type}-${r.id}`} role="option" aria-selected={active === i}>
           <button
@@ -46,15 +46,15 @@ function ResultList({ results, active, onPick, query }) {
             {r.type === 'candidate' ? (
               <Avatar name={r.title} size="sm" />
             ) : (
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-subtle text-muted">
+              <span className="bg-subtle text-muted flex h-8 w-8 items-center justify-center rounded-full">
                 <BriefcaseBusiness size={15} />
               </span>
             )}
             <span className="min-w-0">
               <span className="block truncate text-sm font-medium">{r.title}</span>
-              <span className="block truncate text-xs text-muted">{r.subtitle}</span>
+              <span className="text-muted block truncate text-xs">{r.subtitle}</span>
             </span>
-            <span className="ml-auto text-[10px] text-faint uppercase">{r.type === 'candidate' ? 'Candidate' : 'Vacancy'}</span>
+            <span className="text-faint ml-auto text-[10px] uppercase">{r.type === 'candidate' ? 'Candidate' : 'Vacancy'}</span>
           </button>
         </li>
       ))}
@@ -132,7 +132,7 @@ export default function GlobalSearch() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.14 }}
-            className="absolute top-full right-0 left-0 z-40 mt-1.5 rounded-lg border border-line bg-surface p-1 shadow-pop"
+            className="border-line bg-surface shadow-pop absolute top-full right-0 left-0 z-40 mt-1.5 rounded-lg border p-1"
           >
             <ResultList results={results} active={active} onPick={pick} query={query} />
           </motion.div>

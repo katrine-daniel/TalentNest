@@ -31,10 +31,21 @@ export default function CandidateFilters({ filters, setFilter, reset, activeCoun
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <SearchInput value={filters.q} onChange={(v) => setFilter('q', v)} placeholder="Search name, email, skill or ID" label="Search candidates" className="flex-1 xl:max-w-sm" />
-        <Button icon={SlidersHorizontal} onClick={() => setSheetOpen(true)} className="xl:hidden" aria-label={`Filters${activeCount ? `, ${activeCount} active` : ''}`}>
+        <SearchInput
+          value={filters.q}
+          onChange={(v) => setFilter('q', v)}
+          placeholder="Search name, email, skill or ID"
+          label="Search candidates"
+          className="flex-1 xl:max-w-sm"
+        />
+        <Button
+          icon={SlidersHorizontal}
+          onClick={() => setSheetOpen(true)}
+          className="xl:hidden"
+          aria-label={`Filters${activeCount ? `, ${activeCount} active` : ''}`}
+        >
           <span className="hidden sm:inline">Filters</span>
-          {activeCount > 0 && <span className="rounded bg-brand-600 px-1.5 text-[10px] text-white">{activeCount}</span>}
+          {activeCount > 0 && <span className="bg-brand-600 rounded px-1.5 text-[10px] text-white">{activeCount}</span>}
         </Button>
         <div className="hidden flex-1 gap-2 xl:grid xl:grid-cols-5">{selects}</div>
         {activeCount > 0 && (

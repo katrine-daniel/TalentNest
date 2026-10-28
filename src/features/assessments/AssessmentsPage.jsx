@@ -47,7 +47,10 @@ export default function AssessmentsPage() {
 
   const allRows = useAssessmentRows({ department: filters.department, template: filters.template, q: filters.q })
   const rows = useMemo(
-    () => allRows.filter((r) => (filters.status === 'all' ? r.assessment.status !== 'cancelled' : filters.status === 'overdue' ? r.overdue : r.assessment.status === filters.status)),
+    () =>
+      allRows.filter((r) =>
+        filters.status === 'all' ? r.assessment.status !== 'cancelled' : filters.status === 'overdue' ? r.overdue : r.assessment.status === filters.status,
+      ),
     [allRows, filters.status],
   )
   const table = useTableState(rows, { initialSort: { key: 'deadline', dir: 'asc' }, pageSize: 12, getValue: sortValue })
@@ -82,7 +85,7 @@ export default function AssessmentsPage() {
           <Avatar name={r.candidateName} size="sm" />
           <div className="min-w-0">
             <p className="truncate font-medium">{r.candidateName}</p>
-            <p className="truncate text-xs text-muted">{r.job.title}</p>
+            <p className="text-muted truncate text-xs">{r.job.title}</p>
           </div>
         </div>
       ),
@@ -94,7 +97,7 @@ export default function AssessmentsPage() {
       render: (r) => (
         <div>
           <p className="text-sm">{r.template?.name}</p>
-          <p className="text-xs text-muted">
+          <p className="text-muted text-xs">
             {r.template?.type} · {r.template?.durationMin} min
           </p>
         </div>
@@ -108,11 +111,15 @@ export default function AssessmentsPage() {
       render: (r) => (
         <span className={r.overdue ? 'font-medium text-red-600' : 'text-ink-soft'}>
           {formatRelative(r.assessment.deadline)}
-          {r.assessment.reminderSentAt && <BellRing size={12} className="ml-1.5 inline text-brand-500" aria-label="Reminder sent" />}
+          {r.assessment.reminderSentAt && <BellRing size={12} className="text-brand-500 ml-1.5 inline" aria-label="Reminder sent" />}
         </span>
       ),
     },
-    { key: 'status', header: 'Status', render: (r) => (r.overdue ? <StatusBadge tone="red">Overdue</StatusBadge> : <StatusBadge kind="assessment" value={r.assessment.status} />) },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (r) => (r.overdue ? <StatusBadge tone="red">Overdue</StatusBadge> : <StatusBadge kind="assessment" value={r.assessment.status} />),
+    },
     {
       key: 'score',
       header: 'Score',
@@ -121,7 +128,7 @@ export default function AssessmentsPage() {
       hideBelow: 'md',
       render: (r) =>
         r.assessment.score != null ? (
-          <span className={`font-semibold tabular ${r.passed ? 'text-emerald-700' : 'text-red-600'}`}>{r.assessment.score}%</span>
+          <span className={`tabular font-semibold ${r.passed ? 'text-emerald-700' : 'text-red-600'}`}>{r.assessment.score}%</span>
         ) : (
           <span className="text-faint">—</span>
         ),
@@ -137,14 +144,31 @@ export default function AssessmentsPage() {
             <Dropdown
               menuLabel={`Actions for ${r.candidateName}`}
               items={[
-                { label: 'Record score', icon: PenLine, disabled: !canManage || !['submitted', 'evaluated', 'in-progress'].includes(r.assessment.status), onSelect: () => setScoring(r) },
-                { label: 'Send reminder', icon: BellRing, disabled: !canManage || !['pending', 'in-progress'].includes(r.assessment.status), onSelect: () => actions.remindAssessment.run(r.id) },
-                { label: 'Extend deadline by 2 days', icon: CalendarPlus2, disabled: !canManage || !['pending', 'in-progress'].includes(r.assessment.status), onSelect: () => extend(r) },
+                {
+                  label: 'Record score',
+                  icon: PenLine,
+                  disabled: !canManage || !['submitted', 'evaluated', 'in-progress'].includes(r.assessment.status),
+                  onSelect: () => setScoring(r),
+                },
+                {
+                  label: 'Send reminder',
+                  icon: BellRing,
+                  disabled: !canManage || !['pending', 'in-progress'].includes(r.assessment.status),
+                  onSelect: () => actions.remindAssessment.run(r.id),
+                },
+                {
+                  label: 'Extend deadline by 2 days',
+                  icon: CalendarPlus2,
+                  disabled: !canManage || !['pending', 'in-progress'].includes(r.assessment.status),
+                  onSelect: () => extend(r),
+                },
                 { label: 'View candidate', icon: ClipboardList, onSelect: () => navigate(`/candidates/${r.candidate.id}`) },
                 { divider: true },
                 { label: 'Cancel assessment', icon: CircleSlash, danger: true, disabled: !canManage || !open, onSelect: () => setCancelling(r) },
               ]}
-              renderTrigger={(props) => <Button {...props} size="sm" variant="ghost" iconOnly icon={MoreHorizontal} aria-label={`Actions for ${r.candidateName}`} />}
+              renderTrigger={(props) => (
+                <Button {...props} size="sm" variant="ghost" iconOnly icon={MoreHorizontal} aria-label={`Actions for ${r.candidateName}`} />
+              )}
             />
           </CellActions>
         )
@@ -168,11 +192,17 @@ export default function AssessmentsPage() {
         <MetricCard label="Not started" icon={Hourglass} value={counts.pending} />
         <MetricCard label="In progress" icon={Timer} value={counts['in-progress']} />
         <MetricCard label="Awaiting review" icon={PenLine} value={counts.submitted} detail="Submitted by candidates" emphasis={counts.submitted > 0} />
-        <MetricCard label="Overdue" icon={BellRing} value={counts.overdue} detail={counts.overdue ? 'Send a reminder or extend' : 'All on time'} detailTone={counts.overdue ? 'danger' : 'muted'} />
+        <MetricCard
+          label="Overdue"
+          icon={BellRing}
+          value={counts.overdue}
+          detail={counts.overdue ? 'Send a reminder or extend' : 'All on time'}
+          detailTone={counts.overdue ? 'danger' : 'muted'}
+        />
         <MetricCard label="Pass rate" icon={Gauge} value={passRate} detail={`% across ${evaluated.length} evaluated`} />
       </MetricStrip>
 
-      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
+      <div className="border-line/80 bg-surface shadow-card rounded-2xl border">
         <div className="px-4 pt-2">
           <Tabs
             value={filters.status}
@@ -188,10 +218,15 @@ export default function AssessmentsPage() {
             ]}
           />
         </div>
-        <div className="grid gap-2 border-b border-line p-4 sm:grid-cols-3">
+        <div className="border-line grid gap-2 border-b p-4 sm:grid-cols-3">
           <SearchInput value={filters.q} onChange={(v) => setFilter('q', v)} placeholder="Search candidate or vacancy" label="Search assessments" />
           <FilterSelect label="Department" value={filters.department} onChange={(v) => setFilter('department', v)} options={options.departments} />
-          <FilterSelect label="Assessment" value={filters.template} onChange={(v) => setFilter('template', v)} options={templates.map((t) => ({ value: t.id, label: t.name }))} />
+          <FilterSelect
+            label="Assessment"
+            value={filters.template}
+            onChange={(v) => setFilter('template', v)}
+            options={templates.map((t) => ({ value: t.id, label: t.name }))}
+          />
         </div>
         <DataTable
           columns={columns}
@@ -204,10 +239,16 @@ export default function AssessmentsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <p className="truncate font-medium">{r.candidateName}</p>
-                  {r.assessment.score != null ? <span className={`text-sm font-semibold ${r.passed ? 'text-emerald-700' : 'text-red-600'}`}>{r.assessment.score}%</span> : r.overdue ? <StatusBadge tone="red">Overdue</StatusBadge> : <StatusBadge kind="assessment" value={r.assessment.status} />}
+                  {r.assessment.score != null ? (
+                    <span className={`text-sm font-semibold ${r.passed ? 'text-emerald-700' : 'text-red-600'}`}>{r.assessment.score}%</span>
+                  ) : r.overdue ? (
+                    <StatusBadge tone="red">Overdue</StatusBadge>
+                  ) : (
+                    <StatusBadge kind="assessment" value={r.assessment.status} />
+                  )}
                 </div>
-                <p className="truncate text-xs text-muted">{r.template?.name}</p>
-                <p className="mt-1 text-xs text-ink-soft">Due {formatRelative(r.assessment.deadline)}</p>
+                <p className="text-muted truncate text-xs">{r.template?.name}</p>
+                <p className="text-ink-soft mt-1 text-xs">Due {formatRelative(r.assessment.deadline)}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {r.assessment.status === 'submitted' && (
                     <Button size="xs" variant="primary" onClick={() => setScoring(r)} disabled={!canManage}>

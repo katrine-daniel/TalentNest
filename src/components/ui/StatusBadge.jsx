@@ -31,7 +31,9 @@ export default function StatusBadge({ kind, value, tone, children, dot = true, c
   const meta = kind ? getStatusMeta(kind, value) : { label: children, tone: tone ?? 'neutral' }
   const t = tone ?? meta.tone
   return (
-    <span className={cn('inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xxs font-medium whitespace-nowrap ring-1 ring-inset', TONES[t], className)}>
+    <span
+      className={cn('text-xxs inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-medium whitespace-nowrap ring-1 ring-inset', TONES[t], className)}
+    >
       {dot && <span className={cn('h-1.5 w-1.5 rounded-full', DOTS[t])} aria-hidden />}
       {children ?? meta.label}
     </span>

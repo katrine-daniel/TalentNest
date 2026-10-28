@@ -31,14 +31,19 @@ export default function TagInput({ value = [], onChange, suggestions = [], place
     <div>
       <div
         className={cn(
-          'flex min-h-10 flex-wrap items-center gap-1.5 rounded-lg border bg-surface px-2 py-1.5 transition-colors focus-within:border-brand-500 focus-within:ring-3 focus-within:ring-brand-100',
+          'bg-surface focus-within:border-brand-500 focus-within:ring-brand-100 flex min-h-10 flex-wrap items-center gap-1.5 rounded-lg border px-2 py-1.5 transition-colors focus-within:ring-3',
           invalid ? 'border-red-400' : 'border-line-strong',
         )}
       >
         {value.map((tag) => (
-          <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-brand-50 py-0.5 pr-1 pl-2 text-xs font-medium text-brand-800">
+          <span key={tag} className="bg-brand-50 text-brand-800 inline-flex items-center gap-1 rounded-md py-0.5 pr-1 pl-2 text-xs font-medium">
             {tag}
-            <button type="button" onClick={() => remove(tag)} className="rounded p-0.5 text-brand-500 hover:bg-brand-100 hover:text-brand-800" aria-label={`Remove ${tag}`}>
+            <button
+              type="button"
+              onClick={() => remove(tag)}
+              className="text-brand-500 hover:bg-brand-100 hover:text-brand-800 rounded p-0.5"
+              aria-label={`Remove ${tag}`}
+            >
               <X size={12} />
             </button>
           </span>
@@ -50,14 +55,19 @@ export default function TagInput({ value = [], onChange, suggestions = [], place
           onKeyDown={onKeyDown}
           onBlur={() => draft && add(draft)}
           placeholder={value.length ? '' : placeholder}
-          className="min-w-[8rem] flex-1 bg-transparent px-1 py-0.5 text-sm outline-none placeholder:text-faint"
+          className="placeholder:text-faint min-w-[8rem] flex-1 bg-transparent px-1 py-0.5 text-sm outline-none"
           {...a11y}
         />
       </div>
       {open.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Suggestions">
           {open.map((s) => (
-            <button key={s} type="button" onClick={() => add(s)} className="rounded-md border border-dashed border-line-strong px-2 py-0.5 text-xs text-muted hover:border-brand-300 hover:text-brand-700">
+            <button
+              key={s}
+              type="button"
+              onClick={() => add(s)}
+              className="border-line-strong text-muted hover:border-brand-300 hover:text-brand-700 rounded-md border border-dashed px-2 py-0.5 text-xs"
+            >
               + {s}
             </button>
           ))}

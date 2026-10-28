@@ -1,15 +1,4 @@
-import {
-  LayoutDashboard,
-  Users,
-  BriefcaseBusiness,
-  Columns3,
-  ClipboardCheck,
-  CalendarDays,
-  FileSignature,
-  BarChart3,
-  Sparkles,
-  Settings,
-} from 'lucide-react'
+import { LayoutDashboard, Users, BriefcaseBusiness, Columns3, ClipboardCheck, CalendarDays, FileSignature, BarChart3, Sparkles, Settings } from 'lucide-react'
 
 export const NAV_SECTIONS = [
   {

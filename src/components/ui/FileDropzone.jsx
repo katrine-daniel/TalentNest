@@ -4,7 +4,15 @@ import { cn } from '@/utils/cn'
 import { formatFileSize, validateResumeFile, RESUME_ACCEPT } from '@/utils/validation'
 
 /** Drag-and-drop or click-to-browse file picker with validation. */
-export default function FileDropzone({ file, onFile, onClear, accept = RESUME_ACCEPT, validate = validateResumeFile, hint = 'PDF or Word, up to 5 MB', disabled }) {
+export default function FileDropzone({
+  file,
+  onFile,
+  onClear,
+  accept = RESUME_ACCEPT,
+  validate = validateResumeFile,
+  hint = 'PDF or Word, up to 5 MB',
+  disabled,
+}) {
   const inputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState(null)
@@ -17,16 +25,22 @@ export default function FileDropzone({ file, onFile, onClear, accept = RESUME_AC
 
   if (file) {
     return (
-      <div className="flex items-center gap-3 rounded-lg border border-line bg-subtle/60 px-3 py-2.5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+      <div className="border-line bg-subtle/60 flex items-center gap-3 rounded-lg border px-3 py-2.5">
+        <span className="bg-brand-50 text-brand-600 flex h-9 w-9 items-center justify-center rounded-md">
           <FileText size={18} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{file.name ?? file.fileName}</p>
-          <p className="text-xs text-muted">{formatFileSize(file.size)}</p>
+          <p className="text-muted text-xs">{formatFileSize(file.size)}</p>
         </div>
         {onClear && (
-          <button type="button" onClick={onClear} disabled={disabled} className="rounded-md p-1.5 text-muted hover:bg-white hover:text-ink" aria-label="Remove file">
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={disabled}
+            className="text-muted hover:text-ink rounded-md p-1.5 hover:bg-white"
+            aria-label="Remove file"
+          >
             <X size={16} />
           </button>
         )}
@@ -59,9 +73,9 @@ export default function FileDropzone({ file, onFile, onClear, accept = RESUME_AC
       >
         <UploadCloud size={20} className={dragging ? 'text-brand-600' : 'text-faint'} aria-hidden />
         <span className="text-sm">
-          <span className="font-medium text-brand-600">Choose a file</span> or drag it here
+          <span className="text-brand-600 font-medium">Choose a file</span> or drag it here
         </span>
-        <span className="text-xs text-muted">{hint}</span>
+        <span className="text-muted text-xs">{hint}</span>
       </button>
       <input
         ref={inputRef}

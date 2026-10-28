@@ -64,8 +64,7 @@ export const mockJobs = [
     salaryMin: 360000,
     salaryMax: 480000,
     skills: ['English Fluency', 'Customer Handling', 'CRM Tools', 'Night Shifts', 'Problem Solving'],
-    description:
-      'Handle inbound calls from US and UK travellers on bookings, changes and refunds. Rotational night shifts with cab facility.',
+    description: 'Handle inbound calls from US and UK travellers on bookings, changes and refunds. Rotational night shifts with cab facility.',
     createdAt: relativeDate(-40),
   },
   {

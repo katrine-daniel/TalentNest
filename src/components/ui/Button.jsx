@@ -31,7 +31,20 @@ const ICON_SIZES = {
  * Icon-only buttons must pass an `aria-label`.
  */
 const Button = forwardRef(function Button(
-  { variant = 'secondary', size = 'md', icon: Icon, iconRight: IconRight, iconOnly = false, loading = false, to, className, children, disabled, type = 'button', ...props },
+  {
+    variant = 'secondary',
+    size = 'md',
+    icon: Icon,
+    iconRight: IconRight,
+    iconOnly = false,
+    loading = false,
+    to,
+    className,
+    children,
+    disabled,
+    type = 'button',
+    ...props
+  },
   ref,
 ) {
   const classes = cn(

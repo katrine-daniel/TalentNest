@@ -20,7 +20,12 @@ const TOOL_ICONS = {
   funnel: BarChart3,
 }
 
-const SUGGESTIONS = ['Where is our hiring funnel losing candidates?', 'Summarise interview feedback for this candidate', 'Draft an interview invitation email', 'Suggest interview questions for this role']
+const SUGGESTIONS = [
+  'Where is our hiring funnel losing candidates?',
+  'Summarise interview feedback for this candidate',
+  'Draft an interview invitation email',
+  'Suggest interview questions for this role',
+]
 
 /** AI-assisted recruiting workspace: context selection, task shortcuts and a chat thread. */
 export default function AIAssistant({ initialCandidateId = '', initialJobId = '' }) {
@@ -44,11 +49,16 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
     if (initialJobId) setJobId(initialJobId)
   }, [initialJobId])
 
-  const candidateOptions = useMemo(() => [...candidates].sort((a, b) => fullName(a).localeCompare(fullName(b))).map((c) => ({ value: c.id, label: `${fullName(c)} · ${c.ref}` })), [candidates])
+  const candidateOptions = useMemo(
+    () => [...candidates].sort((a, b) => fullName(a).localeCompare(fullName(b))).map((c) => ({ value: c.id, label: `${fullName(c)} · ${c.ref}` })),
+    [candidates],
+  )
   // When a candidate is selected, list their vacancies first.
   const jobOptions = useMemo(() => {
     const applied = new Set(applications.filter((a) => a.candidateId === candidateId).map((a) => a.jobId))
-    return [...jobs].sort((a, b) => Number(applied.has(b.id)) - Number(applied.has(a.id))).map((j) => ({ value: j.id, label: `${applied.has(j.id) ? '● ' : ''}${j.title}` }))
+    return [...jobs]
+      .sort((a, b) => Number(applied.has(b.id)) - Number(applied.has(a.id)))
+      .map((j) => ({ value: j.id, label: `${applied.has(j.id) ? '● ' : ''}${j.title}` }))
   }, [jobs, applications, candidateId])
   const job = jobs.find((j) => j.id === jobId)
   const stageOptions = job ? job.stages.filter((s) => s.type === 'interview').map((s) => ({ value: s.name, label: s.name })) : []
@@ -83,17 +93,32 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[18rem_minmax(0,1fr)] xl:grid-cols-[20rem_minmax(0,1fr)]">
-      <aside className="space-y-5 rounded-2xl border border-line/80 bg-surface shadow-card p-4 lg:self-start">
+      <aside className="border-line/80 bg-surface shadow-card space-y-5 rounded-2xl border p-4 lg:self-start">
         <div>
           <h2 className="text-sm font-semibold">Context</h2>
-          <p className="text-xs text-muted">Responses use only the records you select.</p>
+          <p className="text-muted text-xs">Responses use only the records you select.</p>
         </div>
-        <Field label="Candidate">{(a) => <Select {...a} value={candidateId} onChange={(e) => setCandidateId(e.target.value)} options={candidateOptions} placeholder="Select candidate" />}</Field>
+        <Field label="Candidate">
+          {(a) => (
+            <Select {...a} value={candidateId} onChange={(e) => setCandidateId(e.target.value)} options={candidateOptions} placeholder="Select candidate" />
+          )}
+        </Field>
         <Field label="Vacancy" hint={candidateId ? '● marks vacancies this candidate applied to' : undefined}>
           {(a) => <Select {...a} value={jobId} onChange={(e) => setJobId(e.target.value)} options={jobOptions} placeholder="Select vacancy" />}
         </Field>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
-          <Field label="Interview round">{(a) => <Select {...a} value={stageName} onChange={(e) => setStageName(e.target.value)} options={stageOptions} placeholder={job ? 'No interview stages' : 'Select vacancy'} disabled={!stageOptions.length} />}</Field>
+          <Field label="Interview round">
+            {(a) => (
+              <Select
+                {...a}
+                value={stageName}
+                onChange={(e) => setStageName(e.target.value)}
+                options={stageOptions}
+                placeholder={job ? 'No interview stages' : 'Select vacancy'}
+                disabled={!stageOptions.length}
+              />
+            )}
+          </Field>
           <Field label="Email type">{(a) => <Select {...a} value={purpose} onChange={(e) => setPurpose(e.target.value)} options={EMAIL_PURPOSES} />}</Field>
         </div>
 
@@ -110,24 +135,24 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
                     disabled={ai.busy || needs.length > 0}
                     onClick={() => ai.runTool(tool.id, context)}
                     title={needs.length ? `Select a ${needs.join(' and ')} first` : undefined}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-45"
+                    className="hover:bg-subtle flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-45"
                   >
-                    <Icon size={15} className="shrink-0 text-brand-600" aria-hidden />
+                    <Icon size={15} className="text-brand-600 shrink-0" aria-hidden />
                     <span className="flex-1">{tool.label}</span>
-                    {needs.length > 0 && <span className="text-[10px] text-faint">needs {needs.join(' + ')}</span>}
+                    {needs.length > 0 && <span className="text-faint text-[10px]">needs {needs.join(' + ')}</span>}
                   </button>
                 </li>
               )
             })}
           </ul>
         </div>
-        <p className="rounded-lg bg-subtle px-3 py-2 text-xs leading-relaxed text-muted">
+        <p className="bg-subtle text-muted rounded-lg px-3 py-2 text-xs leading-relaxed">
           The assistant suggests and summarises. It never rejects candidates, changes stages or makes hiring decisions.
         </p>
       </aside>
 
-      <section className="flex min-h-[70dvh] flex-col rounded-2xl border border-line/80 bg-surface shadow-card" aria-label="Assistant conversation">
-        <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+      <section className="border-line/80 bg-surface shadow-card flex min-h-[70dvh] flex-col rounded-2xl border" aria-label="Assistant conversation">
+        <header className="border-line flex items-center justify-between gap-3 border-b px-4 py-3">
           <div className="flex items-center gap-2">
             <Sparkles size={16} className="text-brand-600" aria-hidden />
             <h2 className="text-sm font-semibold">Assistant</h2>
@@ -137,7 +162,7 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
           </Button>
         </header>
 
-        <div ref={threadRef} className="flex-1 space-y-5 overflow-y-auto p-4 scrollbar-thin" style={{ maxHeight: '62dvh' }}>
+        <div ref={threadRef} className="flex-1 scrollbar-thin space-y-5 overflow-y-auto p-4" style={{ maxHeight: '62dvh' }}>
           {ai.messages.length === 0 ? (
             <EmptyState
               icon={Sparkles}
@@ -146,7 +171,12 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
               action={
                 <div className="flex max-w-xl flex-wrap justify-center gap-2">
                   {SUGGESTIONS.map((s) => (
-                    <button key={s} type="button" onClick={() => ai.sendMessage(s, context)} className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-soft hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800">
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => ai.sendMessage(s, context)}
+                      className="border-line text-ink-soft hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800 rounded-lg border px-3 py-1.5 text-xs"
+                    >
                       {s}
                     </button>
                   ))}
@@ -158,8 +188,13 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
           )}
         </div>
 
-        <form onSubmit={send} className="border-t border-line p-3">
-          <div className={cn('flex items-end gap-2 rounded-xl border bg-surface p-2 transition-colors focus-within:border-brand-500 focus-within:ring-3 focus-within:ring-brand-100', 'border-line-strong')}>
+        <form onSubmit={send} className="border-line border-t p-3">
+          <div
+            className={cn(
+              'bg-surface focus-within:border-brand-500 focus-within:ring-brand-100 flex items-end gap-2 rounded-xl border p-2 transition-colors focus-within:ring-3',
+              'border-line-strong',
+            )}
+          >
             <label htmlFor="ai-input" className="sr-only">
               Message the assistant
             </label>
@@ -176,7 +211,7 @@ export default function AIAssistant({ initialCandidateId = '', initialJobId = ''
             />
             <Button type="submit" variant="primary" iconOnly icon={SendHorizonal} aria-label="Send" disabled={!text.trim() || ai.busy} loading={ai.busy} />
           </div>
-          <p className="mt-1.5 px-1 text-[11px] text-faint">Simulated mode: responses are generated locally from demo data — no AI model is connected.</p>
+          <p className="text-faint mt-1.5 px-1 text-[11px]">Simulated mode: responses are generated locally from demo data — no AI model is connected.</p>
         </form>
       </section>
     </div>

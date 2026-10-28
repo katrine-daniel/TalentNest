@@ -11,11 +11,31 @@ export default function QuickCreateMenu() {
 
   const items = [
     { heading: 'Create' },
-    { label: 'Candidate', description: 'Add a profile and resume', icon: UserPlus, onSelect: () => actions.openCandidateForm(), disabled: !can('candidates.manage'), disabledReason: denied },
-    { label: 'Vacancy', description: 'Publish a new job opening', icon: BriefcaseBusiness, onSelect: () => actions.openJobForm(), disabled: !can('jobs.manage'), disabledReason: denied },
+    {
+      label: 'Candidate',
+      description: 'Add a profile and resume',
+      icon: UserPlus,
+      onSelect: () => actions.openCandidateForm(),
+      disabled: !can('candidates.manage'),
+      disabledReason: denied,
+    },
+    {
+      label: 'Vacancy',
+      description: 'Publish a new job opening',
+      icon: BriefcaseBusiness,
+      onSelect: () => actions.openJobForm(),
+      disabled: !can('jobs.manage'),
+      disabledReason: denied,
+    },
     { divider: true },
     { label: 'Schedule interview', icon: CalendarPlus, onSelect: () => actions.openSchedule(), disabled: !can('interviews.schedule'), disabledReason: denied },
-    { label: 'Assign assessment', icon: ClipboardCheck, onSelect: () => actions.openAssessment(), disabled: !can('interviews.schedule'), disabledReason: denied },
+    {
+      label: 'Assign assessment',
+      icon: ClipboardCheck,
+      onSelect: () => actions.openAssessment(),
+      disabled: !can('interviews.schedule'),
+      disabledReason: denied,
+    },
     { label: 'Create offer', icon: FileSignature, onSelect: () => actions.openOffer(), disabled: !can('offers.manage'), disabledReason: denied },
   ]
 

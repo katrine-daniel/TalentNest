@@ -27,7 +27,11 @@ function EventChip({ event, onSelect, compact = false }) {
       )}
       title={`${event.title} — ${event.candidateName}`}
     >
-      {event.kind === 'assessment' ? <ClipboardCheck size={10} className="shrink-0" aria-hidden /> : !compact && <span className="shrink-0 font-medium tabular">{formatTime(event.start).replace(':00', '')}</span>}
+      {event.kind === 'assessment' ? (
+        <ClipboardCheck size={10} className="shrink-0" aria-hidden />
+      ) : (
+        !compact && <span className="tabular shrink-0 font-medium">{formatTime(event.start).replace(':00', '')}</span>
+      )}
       <span className="truncate">{event.candidateName}</span>
     </button>
   )
@@ -66,20 +70,27 @@ function TimeGrid({ days, events, onSelectEvent, onSelectSlot }) {
 
   return (
     <div>
-      <div className="grid border-b border-line" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))` }}>
+      <div className="border-line grid border-b" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))` }}>
         <div />
         {days.map((d) => (
-          <div key={d.toISOString()} className="border-l border-line px-2 py-2 text-center">
+          <div key={d.toISOString()} className="border-line border-l px-2 py-2 text-center">
             <p className="text-xxs text-muted uppercase">{formatWeekday(d)}</p>
-            <p className={cn('mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium tabular', isToday(d) ? 'bg-brand-600 text-white' : 'text-ink')}>{d.getDate()}</p>
+            <p
+              className={cn(
+                'tabular mx-auto mt-0.5 flex h-7 w-7 items-center justify-center rounded-full text-sm font-medium',
+                isToday(d) ? 'bg-brand-600 text-white' : 'text-ink',
+              )}
+            >
+              {d.getDate()}
+            </p>
           </div>
         ))}
       </div>
-      <div ref={scrollRef} className="max-h-[620px] overflow-y-auto scrollbar-thin">
+      <div ref={scrollRef} className="max-h-[620px] scrollbar-thin overflow-y-auto">
         <div className="relative grid" style={{ gridTemplateColumns: `3.5rem repeat(${days.length}, minmax(0, 1fr))`, height: hours.length * HOUR_PX }}>
           <div className="relative">
             {hours.map((h) => (
-              <span key={h} className="absolute right-2 -translate-y-1/2 text-[10px] text-faint tabular" style={{ top: (h - START_HOUR) * HOUR_PX }}>
+              <span key={h} className="text-faint tabular absolute right-2 -translate-y-1/2 text-[10px]" style={{ top: (h - START_HOUR) * HOUR_PX }}>
                 {h === START_HOUR ? '' : `${((h + 11) % 12) + 1} ${h < 12 ? 'AM' : 'PM'}`}
               </span>
             ))}
@@ -88,13 +99,13 @@ function TimeGrid({ days, events, onSelectEvent, onSelectSlot }) {
             const dayEvents = events.filter((e) => isSameDay(e.start, day))
             const laidOut = layoutDay(dayEvents)
             return (
-              <div key={day.toISOString()} className="relative border-l border-line">
+              <div key={day.toISOString()} className="border-line relative border-l">
                 {hours.map((h) => (
                   <button
                     key={h}
                     type="button"
                     onClick={() => onSelectSlot(toInputDate(day), `${String(h).padStart(2, '0')}:00`)}
-                    className="block w-full border-b border-line/70 hover:bg-brand-50/40 focus-visible:bg-brand-50"
+                    className="border-line/70 hover:bg-brand-50/40 focus-visible:bg-brand-50 block w-full border-b"
                     style={{ height: HOUR_PX }}
                     aria-label={`Schedule on ${formatShortDate(day)} at ${h}:00`}
                   />
@@ -118,7 +129,10 @@ function TimeGrid({ days, events, onSelectEvent, onSelectSlot }) {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: cancelled ? 0.5 : 1 }}
                       onClick={() => onSelectEvent(ev)}
-                      className={cn('absolute z-[5] overflow-hidden rounded-md border-l-[3px] px-1.5 py-1 text-left text-[11px] leading-tight shadow-xs hover:z-20 hover:shadow-pop', accent.className)}
+                      className={cn(
+                        'hover:shadow-pop absolute z-[5] overflow-hidden rounded-md border-l-[3px] px-1.5 py-1 text-left text-[11px] leading-tight shadow-xs hover:z-20',
+                        accent.className,
+                      )}
                       style={{ top: top + 1, height, left: `calc(${(lane / lanes) * 100}% + 2px)`, width: `calc(${100 / lanes}% - 4px)` }}
                     >
                       <span className={cn('block truncate font-medium', cancelled && 'line-through')}>{ev.candidateName}</span>
@@ -141,9 +155,9 @@ function MonthView({ cursor, events, onSelectEvent, onDrillDay }) {
   const month = cursor.getMonth()
   return (
     <div>
-      <div className="grid grid-cols-7 border-b border-line">
+      <div className="border-line grid grid-cols-7 border-b">
         {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
-          <div key={d} className="py-2 text-center text-xxs font-medium text-muted uppercase">
+          <div key={d} className="text-xxs text-muted py-2 text-center font-medium uppercase">
             {d}
           </div>
         ))}
@@ -155,14 +169,14 @@ function MonthView({ cursor, events, onSelectEvent, onDrillDay }) {
           return (
             <div
               key={day.toISOString()}
-              className={cn('group min-h-16 border-r border-b border-line p-1 sm:min-h-28 sm:p-1.5 [&:nth-child(7n)]:border-r-0', outside && 'bg-subtle/50')}
+              className={cn('group border-line min-h-16 border-r border-b p-1 sm:min-h-28 sm:p-1.5 [&:nth-child(7n)]:border-r-0', outside && 'bg-subtle/50')}
             >
               <button
                 type="button"
                 onClick={() => onDrillDay(day)}
                 className={cn(
-                  'mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs tabular hover:bg-subtle',
-                  isToday(day) ? 'bg-brand-600 font-medium text-white hover:bg-brand-700' : outside ? 'text-faint' : 'text-ink',
+                  'tabular hover:bg-subtle mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs',
+                  isToday(day) ? 'bg-brand-600 hover:bg-brand-700 font-medium text-white' : outside ? 'text-faint' : 'text-ink',
                 )}
                 aria-label={`View ${formatShortDate(day)}${dayEvents.length ? `, ${dayEvents.length} events` : ''}`}
               >
@@ -173,7 +187,7 @@ function MonthView({ cursor, events, onSelectEvent, onDrillDay }) {
                   <EventChip key={ev.id} event={ev} onSelect={onSelectEvent} />
                 ))}
                 {dayEvents.length > 3 && (
-                  <button type="button" onClick={() => onDrillDay(day)} className="px-1.5 text-[11px] font-medium text-muted hover:text-brand-700">
+                  <button type="button" onClick={() => onDrillDay(day)} className="text-muted hover:text-brand-700 px-1.5 text-[11px] font-medium">
                     +{dayEvents.length - 3} more
                   </button>
                 )}
@@ -194,10 +208,12 @@ function MonthView({ cursor, events, onSelectEvent, onDrillDay }) {
 }
 
 function AgendaView({ days, events, onSelectEvent }) {
-  const groups = days.map((d) => ({ day: d, items: events.filter((e) => isSameDay(e.start, d)).sort((a, b) => new Date(a.start) - new Date(b.start)) })).filter((g) => g.items.length)
+  const groups = days
+    .map((d) => ({ day: d, items: events.filter((e) => isSameDay(e.start, d)).sort((a, b) => new Date(a.start) - new Date(b.start)) }))
+    .filter((g) => g.items.length)
   if (!groups.length) return <EmptyState compact title="Nothing scheduled" description="No interviews or deadlines in this period." />
   return (
-    <div className="divide-y divide-line">
+    <div className="divide-line divide-y">
       {groups.map((g) => (
         <section key={g.day.toISOString()} className="px-4 py-3">
           <h3 className={cn('mb-2 text-xs font-semibold', isToday(g.day) ? 'text-brand-700' : 'text-muted')}>
@@ -206,8 +222,12 @@ function AgendaView({ days, events, onSelectEvent }) {
           <ul className="space-y-1.5">
             {g.items.map((ev) => (
               <li key={ev.id}>
-                <button type="button" onClick={() => onSelectEvent(ev)} className={cn('flex w-full items-center gap-3 rounded-lg border-l-[3px] px-3 py-2 text-left', EVENT_ACCENTS[ev.accent].className)}>
-                  <span className="w-14 shrink-0 text-xs font-medium tabular">{ev.kind === 'assessment' ? 'Due' : formatTime(ev.start)}</span>
+                <button
+                  type="button"
+                  onClick={() => onSelectEvent(ev)}
+                  className={cn('flex w-full items-center gap-3 rounded-lg border-l-[3px] px-3 py-2 text-left', EVENT_ACCENTS[ev.accent].className)}
+                >
+                  <span className="tabular w-14 shrink-0 text-xs font-medium">{ev.kind === 'assessment' ? 'Due' : formatTime(ev.start)}</span>
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium">{ev.candidateName}</span>
                     <span className="block truncate text-xs opacity-80">

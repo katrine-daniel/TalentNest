@@ -53,11 +53,11 @@ export default function JobsPage() {
           </Button>
         }
       />
-      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
+      <div className="border-line/80 bg-surface shadow-card rounded-2xl border">
         <div className="px-4 pt-2">
           <Tabs tabs={tabs} value={filters.status} onChange={(v) => setFilter('status', v)} label="Vacancy status" />
         </div>
-        <div className="grid gap-2 border-b border-line p-4 sm:grid-cols-3">
+        <div className="border-line grid gap-2 border-b p-4 sm:grid-cols-3">
           <SearchInput value={filters.q} onChange={(v) => setFilter('q', v)} placeholder="Search title, skill or location" label="Search vacancies" />
           <FilterSelect label="Department" value={filters.department} onChange={(v) => setFilter('department', v)} options={options.departments} />
           <FilterSelect label="Recruiter" value={filters.recruiter} onChange={(v) => setFilter('recruiter', v)} options={options.recruiters} />
@@ -74,7 +74,12 @@ export default function JobsPage() {
             statusCounts.all === 0 ? (
               <EmptyState icon={BriefcaseBusiness} title="No vacancies yet" description="Create your first vacancy to start receiving applications." />
             ) : (
-              <EmptyState icon={SearchX} title="No vacancies match" description="Adjust the search or filters." action={<Button onClick={reset}>Clear filters</Button>} />
+              <EmptyState
+                icon={SearchX}
+                title="No vacancies match"
+                description="Adjust the search or filters."
+                action={<Button onClick={reset}>Clear filters</Button>}
+              />
             )
           }
         />

@@ -16,23 +16,26 @@ export default function ResumeInsights({ data }) {
     <div className="space-y-4">
       <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {fields.map(([k, v]) => (
-          <div key={k} className="flex justify-between gap-3 border-b border-line/70 pb-1.5">
+          <div key={k} className="border-line/70 flex justify-between gap-3 border-b pb-1.5">
             <dt className="text-muted">{k}</dt>
-            <dd className="truncate text-right text-ink">{v || '—'}</dd>
+            <dd className="text-ink truncate text-right">{v || '—'}</dd>
           </div>
         ))}
       </dl>
       <div>
-        <p className="mb-1.5 text-xxs font-semibold tracking-wide text-muted uppercase">Skills</p>
+        <p className="text-xxs text-muted mb-1.5 font-semibold tracking-wide uppercase">Skills</p>
         <SkillsList skills={data.skills} />
       </div>
       {data.experience.length > 0 && (
         <div>
-          <p className="mb-1.5 text-xxs font-semibold tracking-wide text-muted uppercase">Work history</p>
+          <p className="text-xxs text-muted mb-1.5 font-semibold tracking-wide uppercase">Work history</p>
           <ul className="space-y-1 text-sm">
             {data.experience.map((e) => (
               <li key={e.id}>
-                <span className="font-medium">{e.title}</span>, {e.company} <span className="text-muted">({e.start} – {e.end})</span>
+                <span className="font-medium">{e.title}</span>, {e.company}{' '}
+                <span className="text-muted">
+                  ({e.start} – {e.end})
+                </span>
               </li>
             ))}
           </ul>
@@ -40,7 +43,7 @@ export default function ResumeInsights({ data }) {
       )}
       {data.education.length > 0 && (
         <p className="text-sm">
-          <span className="text-xxs font-semibold tracking-wide text-muted uppercase">Education </span>
+          <span className="text-xxs text-muted font-semibold tracking-wide uppercase">Education </span>
           {data.education.map((e) => [e.degree, e.institution, e.year].filter(Boolean).join(', ')).join('; ')}
         </p>
       )}

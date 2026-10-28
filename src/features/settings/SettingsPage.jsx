@@ -22,9 +22,10 @@ function DemoDataSettings() {
   const [open, setOpen] = useState(false)
   const reset = useAsyncAction(settingsService.resetDemoData, { success: 'Demo data restored' })
   return (
-    <div className="space-y-4 rounded-2xl border border-line/80 bg-surface shadow-card p-5">
-      <p className="text-sm text-ink-soft">
-        This frontend runs on a mock data layer. Changes you make are saved in this browser’s local storage (key <code className="rounded bg-subtle px-1 text-xs">{DEMO_STORAGE_KEY}</code>) so the demo survives a refresh. Nothing is sent to a server.
+    <div className="border-line/80 bg-surface shadow-card space-y-4 rounded-2xl border p-5">
+      <p className="text-ink-soft text-sm">
+        This frontend runs on a mock data layer. Changes you make are saved in this browser’s local storage (key{' '}
+        <code className="bg-subtle rounded px-1 text-xs">{DEMO_STORAGE_KEY}</code>) so the demo survives a refresh. Nothing is sent to a server.
       </p>
       <MockNotice>Connect the services in src/services to a real API (VITE_API_BASE_URL) to replace demo persistence with production storage.</MockNotice>
       <Button variant="danger" icon={RotateCcw} onClick={() => setOpen(true)}>
@@ -77,7 +78,7 @@ export default function SettingsPage() {
             <h2 id="settings-section-title" className="text-base font-semibold">
               {meta.label}
             </h2>
-            <p className="text-sm text-muted">{meta.description}</p>
+            <p className="text-muted text-sm">{meta.description}</p>
           </div>
           {readOnly && (
             <p className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">

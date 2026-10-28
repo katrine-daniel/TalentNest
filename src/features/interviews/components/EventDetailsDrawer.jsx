@@ -20,7 +20,7 @@ import { combineDateTime } from '@/utils/formatDate'
 function Row({ icon: Icon, label, children }) {
   return (
     <div className="flex gap-3">
-      <Icon size={16} className="mt-0.5 shrink-0 text-faint" aria-hidden />
+      <Icon size={16} className="text-faint mt-0.5 shrink-0" aria-hidden />
       <div className="min-w-0 text-sm">
         <p className="text-xxs text-faint">{label}</p>
         <div className="text-ink-soft">{children}</div>
@@ -47,7 +47,14 @@ export default function EventDetailsDrawer({ event, onClose }) {
         onClose={onClose}
         size="md"
         title={event?.title ?? ''}
-        subtitle={event && <span className="inline-flex items-center gap-1.5"><span className={`h-2 w-2 rounded-full ${EVENT_ACCENTS[event.accent].dot}`} />{EVENT_ACCENTS[event.accent].label}</span>}
+        subtitle={
+          event && (
+            <span className="inline-flex items-center gap-1.5">
+              <span className={`h-2 w-2 rounded-full ${EVENT_ACCENTS[event.accent].dot}`} />
+              {EVENT_ACCENTS[event.accent].label}
+            </span>
+          )
+        }
         footer={
           interview && interview.status === 'scheduled' ? (
             <>
@@ -75,11 +82,15 @@ export default function EventDetailsDrawer({ event, onClose }) {
       >
         {event && (
           <div className="space-y-6 p-5">
-            <Link to={`/candidates/${event.candidate?.id}`} onClick={onClose} className="flex items-center gap-3 rounded-lg border border-line p-3 hover:bg-subtle">
+            <Link
+              to={`/candidates/${event.candidate?.id}`}
+              onClick={onClose}
+              className="border-line hover:bg-subtle flex items-center gap-3 rounded-lg border p-3"
+            >
               <Avatar name={event.candidateName} size="md" />
               <div className="min-w-0">
                 <p className="truncate font-medium">{event.candidateName}</p>
-                <p className="truncate text-xs text-muted">{event.job?.title}</p>
+                <p className="text-muted truncate text-xs">{event.job?.title}</p>
               </div>
             </Link>
 
@@ -107,41 +118,57 @@ export default function EventDetailsDrawer({ event, onClose }) {
                         <li key={u.id} className="flex items-center gap-2">
                           <Avatar name={u.name} size="xs" />
                           <span>{u.name}</span>
-                          <span className="text-xs text-faint">{u.title}</span>
+                          <span className="text-faint text-xs">{u.title}</span>
                         </li>
                       ))}
                     </ul>
                   </Row>
                 </div>
-                {interview.notes && <p className="rounded-lg bg-subtle px-3 py-2 text-sm text-ink-soft">{interview.notes}</p>}
-                {interview.cancelReason && <p className="text-sm text-muted">Cancelled: {interview.cancelReason}</p>}
+                {interview.notes && <p className="bg-subtle text-ink-soft rounded-lg px-3 py-2 text-sm">{interview.notes}</p>}
+                {interview.cancelReason && <p className="text-muted text-sm">Cancelled: {interview.cancelReason}</p>}
 
                 {interview.status !== 'cancelled' && (
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <label htmlFor="attendance" className="mb-1.5 block text-xs font-medium text-ink-soft">
+                      <label htmlFor="attendance" className="text-ink-soft mb-1.5 block text-xs font-medium">
                         Candidate attendance
                       </label>
-                      <Select id="attendance" value={interview.attendance} disabled={!canSchedule || actions.setAttendance.pending} onChange={(e) => actions.setAttendance.run(interview.id, e.target.value)} options={toOptions('attendance')} />
+                      <Select
+                        id="attendance"
+                        value={interview.attendance}
+                        disabled={!canSchedule || actions.setAttendance.pending}
+                        onChange={(e) => actions.setAttendance.run(interview.id, e.target.value)}
+                        options={toOptions('attendance')}
+                      />
                     </div>
                     {interview.status === 'scheduled' && (
                       <div className="flex items-end">
-                        <Button className="w-full" icon={BellRing} loading={actions.sendReminder.pending} disabled={!canSchedule} onClick={() => actions.sendReminder.run(interview.id)}>
+                        <Button
+                          className="w-full"
+                          icon={BellRing}
+                          loading={actions.sendReminder.pending}
+                          disabled={!canSchedule}
+                          onClick={() => actions.sendReminder.run(interview.id)}
+                        >
                           {interview.reminderSentAt ? 'Send again' : 'Send reminder'}
                         </Button>
                       </div>
                     )}
                   </div>
                 )}
-                {interview.status === 'scheduled' && <MockNotice>Reminders and calendar updates are recorded but not delivered until email/calendar integrations are connected.</MockNotice>}
+                {interview.status === 'scheduled' && (
+                  <MockNotice>Reminders and calendar updates are recorded but not delivered until email/calendar integrations are connected.</MockNotice>
+                )}
 
                 {interview.feedback && (
                   <section>
-                    <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">Feedback</h3>
+                    <h3 className="text-muted mb-2 text-xs font-semibold tracking-wide uppercase">Feedback</h3>
                     <FeedbackSummary interview={interview} />
                   </section>
                 )}
-                {interview.status === 'completed' && !interview.feedback && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Feedback is pending for this interview.</p>}
+                {interview.status === 'completed' && !interview.feedback && (
+                  <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">Feedback is pending for this interview.</p>
+                )}
               </>
             )}
 
@@ -154,13 +181,23 @@ export default function EventDetailsDrawer({ event, onClose }) {
                   {formatDateTime(assessment.deadline)} ({formatRelative(assessment.deadline)})
                 </Row>
                 <div className="flex flex-wrap gap-2">
-                  <Button icon={BellRing} loading={actions.remindAssessment.pending} disabled={!canSchedule} onClick={() => actions.remindAssessment.run(assessment.id)}>
+                  <Button
+                    icon={BellRing}
+                    loading={actions.remindAssessment.pending}
+                    disabled={!canSchedule}
+                    onClick={() => actions.remindAssessment.run(assessment.id)}
+                  >
                     Send reminder
                   </Button>
                   <Button
                     disabled={!canSchedule}
                     loading={actions.extendDeadline.pending}
-                    onClick={() => actions.extendDeadline.run(assessment.id, combineDateTime(toInputDate(addDays(new Date(Math.max(Date.now(), new Date(assessment.deadline).getTime())), 2)), '18:00'))}
+                    onClick={() =>
+                      actions.extendDeadline.run(
+                        assessment.id,
+                        combineDateTime(toInputDate(addDays(new Date(Math.max(Date.now(), new Date(assessment.deadline).getTime())), 2)), '18:00'),
+                      )
+                    }
                   >
                     Extend by 2 days
                   </Button>

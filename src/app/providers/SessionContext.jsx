@@ -28,10 +28,7 @@ export function SessionProvider({ children }) {
 
   const can = useCallback((permission) => hasPermission(matrix, role, permission), [matrix, role])
 
-  const value = useMemo(
-    () => ({ user, role, actualRole: user.role, viewAsRole, setViewAsRole, can, actorId: user.id }),
-    [user, role, viewAsRole, can],
-  )
+  const value = useMemo(() => ({ user, role, actualRole: user.role, viewAsRole, setViewAsRole, can, actorId: user.id }), [user, role, viewAsRole, can])
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }

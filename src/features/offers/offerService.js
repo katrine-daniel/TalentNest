@@ -14,40 +14,55 @@ function patchOffer(id, updater) {
 
 export const offerService = {
   async create(values, { actorId }) {
-    return mockRequest(() => {
-      const app = mockDb.read('applications').find((a) => a.id === values.applicationId)
-      if (!app) throw new ServiceError('Select a candidate application')
-      const open = mockDb.read('offers').some((o) => o.applicationId === app.id && ['draft', 'sent', 'negotiating', 'accepted'].includes(o.status))
-      if (open) throw new ServiceError('This application already has an active offer')
-      const id = createId('off')
-      const now = new Date().toISOString()
-      const offer = {
-        id,
-        applicationId: app.id,
-        candidateId: app.candidateId,
-        jobId: app.jobId,
-        salary: Number(values.salary),
-        joiningBonus: Number(values.joiningBonus) || 0,
-        startDate: values.startDate,
-        expiresAt: values.expiresAt,
-        status: values.send ? 'sent' : 'draft',
-        sentAt: values.send ? now : null,
-        respondedAt: null,
-        notes: values.notes ?? '',
-        createdAt: now,
-        createdById: actorId,
-        onboarding: onboardingChecklist(id, 0),
-      }
-      mockDb.write('offers', (list) => [offer, ...list])
-      logActivity({ type: 'offer', text: values.send ? `Offer sent to ${candidateName(app.candidateId)}` : `Offer drafted for ${candidateName(app.candidateId)}`, actorId, candidateId: app.candidateId, jobId: app.jobId })
-      return offer
-    }, { latency: 450 })
+    return mockRequest(
+      () => {
+        const app = mockDb.read('applications').find((a) => a.id === values.applicationId)
+        if (!app) throw new ServiceError('Select a candidate application')
+        const open = mockDb.read('offers').some((o) => o.applicationId === app.id && ['draft', 'sent', 'negotiating', 'accepted'].includes(o.status))
+        if (open) throw new ServiceError('This application already has an active offer')
+        const id = createId('off')
+        const now = new Date().toISOString()
+        const offer = {
+          id,
+          applicationId: app.id,
+          candidateId: app.candidateId,
+          jobId: app.jobId,
+          salary: Number(values.salary),
+          joiningBonus: Number(values.joiningBonus) || 0,
+          startDate: values.startDate,
+          expiresAt: values.expiresAt,
+          status: values.send ? 'sent' : 'draft',
+          sentAt: values.send ? now : null,
+          respondedAt: null,
+          notes: values.notes ?? '',
+          createdAt: now,
+          createdById: actorId,
+          onboarding: onboardingChecklist(id, 0),
+        }
+        mockDb.write('offers', (list) => [offer, ...list])
+        logActivity({
+          type: 'offer',
+          text: values.send ? `Offer sent to ${candidateName(app.candidateId)}` : `Offer drafted for ${candidateName(app.candidateId)}`,
+          actorId,
+          candidateId: app.candidateId,
+          jobId: app.jobId,
+        })
+        return offer
+      },
+      { latency: 450 },
+    )
   },
 
   async update(id, patch, { actorId }) {
     return mockRequest(() => {
       const updated = patchOffer(id, (o) => ({ ...o, ...patch, salary: Number(patch.salary ?? o.salary) }))
-      logActivity({ type: 'offer', text: `Offer revised for ${candidateName(updated.candidateId)}`, actorId, candidateId: updated.candidateId, jobId: updated.jobId })
+      logActivity({
+        type: 'offer',
+        text: `Offer revised for ${candidateName(updated.candidateId)}`,
+        actorId,
+        candidateId: updated.candidateId,
+        jobId: updated.jobId,
+      })
       return updated
     })
   },
@@ -61,11 +76,17 @@ export const offerService = {
       patchOffer(id, (o) => ({
         ...o,
         status,
-        sentAt: status === 'sent' ? o.sentAt ?? new Date().toISOString() : o.sentAt,
+        sentAt: status === 'sent' ? (o.sentAt ?? new Date().toISOString()) : o.sentAt,
         respondedAt: ['accepted', 'declined'].includes(status) ? new Date().toISOString() : o.respondedAt,
       })),
     )
-    logActivity({ type: 'offer', text: `Offer ${status === 'sent' ? 'sent to' : `${status} by`} ${candidateName(updated.candidateId)}`, actorId, candidateId: updated.candidateId, jobId: updated.jobId })
+    logActivity({
+      type: 'offer',
+      text: `Offer ${status === 'sent' ? 'sent to' : `${status} by`} ${candidateName(updated.candidateId)}`,
+      actorId,
+      candidateId: updated.candidateId,
+      jobId: updated.jobId,
+    })
 
     if (status === 'accepted') {
       const job = mockDb.read('jobs').find((j) => j.id === updated.jobId)
@@ -83,9 +104,8 @@ export const offerService = {
   },
 
   async toggleOnboardingTask(offerId, taskId) {
-    return mockRequest(
-      () => patchOffer(offerId, (o) => ({ ...o, onboarding: o.onboarding.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) })),
-      { latency: 120 },
-    )
+    return mockRequest(() => patchOffer(offerId, (o) => ({ ...o, onboarding: o.onboarding.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) })), {
+      latency: 120,
+    })
   },
 }

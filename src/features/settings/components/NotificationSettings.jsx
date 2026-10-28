@@ -17,17 +17,17 @@ export default function NotificationSettings({ readOnly }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
-        <div className="flex items-center justify-end gap-6 border-b border-line px-5 py-2.5 text-xxs font-medium tracking-wide text-muted uppercase">
+      <div className="border-line/80 bg-surface shadow-card rounded-2xl border">
+        <div className="border-line text-xxs text-muted flex items-center justify-end gap-6 border-b px-5 py-2.5 font-medium tracking-wide uppercase">
           <span className="w-11 text-center">Email</span>
           <span className="w-11 text-center">In-app</span>
         </div>
-        <ul className="divide-y divide-line">
+        <ul className="divide-line divide-y">
           {prefs.map((p) => (
             <li key={p.key} className="flex items-center gap-4 px-5 py-3.5">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium">{p.label}</p>
-                <p className="text-xs text-muted">{p.description}</p>
+                <p className="text-muted text-xs">{p.description}</p>
               </div>
               <Toggle checked={p.email} onChange={(v) => set(p.key, 'email', v)} label={`${p.label} by email`} disabled={readOnly} />
               <Toggle checked={p.inApp} onChange={(v) => set(p.key, 'inApp', v)} label={`${p.label} in app`} disabled={readOnly} />

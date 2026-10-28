@@ -21,10 +21,10 @@ export default function HiringActivityChart({ weekly, monthly, height = 260 }) {
       <div className="flex flex-wrap items-center justify-between gap-3 px-5">
         <ul className="flex flex-wrap gap-x-5 gap-y-1">
           {totals.map((s) => (
-            <li key={s.key} className="flex items-center gap-2 text-xs text-muted">
+            <li key={s.key} className="text-muted flex items-center gap-2 text-xs">
               <span className="h-2 w-2 rounded-sm" style={{ background: s.color }} aria-hidden />
               {s.label}
-              <span className="font-semibold text-ink tabular">{s.total.toLocaleString('en-IN')}</span>
+              <span className="text-ink tabular font-semibold">{s.total.toLocaleString('en-IN')}</span>
             </li>
           ))}
         </ul>
@@ -52,13 +52,21 @@ export default function HiringActivityChart({ weekly, monthly, height = 260 }) {
             <XAxis dataKey={xKey} {...AXIS_PROPS} interval="preserveStartEnd" minTickGap={12} />
             <YAxis {...AXIS_PROPS} width={44} allowDecimals={false} />
             <Tooltip content={<ChartTooltip />} cursor={{ stroke: CHART_COLORS.brandSoft, strokeDasharray: '3 3' }} />
-            <Area type="monotone" dataKey="applications" name="Applications" stroke={CHART_COLORS.brand} strokeWidth={2} fill="url(#fillApplications)" animationDuration={500} />
+            <Area
+              type="monotone"
+              dataKey="applications"
+              name="Applications"
+              stroke={CHART_COLORS.brand}
+              strokeWidth={2}
+              fill="url(#fillApplications)"
+              animationDuration={500}
+            />
             <Line type="monotone" dataKey="interviews" name="Interviews" stroke={CHART_COLORS.sky} strokeWidth={2} dot={false} animationDuration={500} />
             <Line type="monotone" dataKey="hires" name="Hires" stroke={CHART_COLORS.teal} strokeWidth={2} dot={false} animationDuration={500} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-      <p className="px-5 pt-1 text-xxs text-faint">Historical series from reporting data (demo).</p>
+      <p className="text-xxs text-faint px-5 pt-1">Historical series from reporting data (demo).</p>
     </div>
   )
 }

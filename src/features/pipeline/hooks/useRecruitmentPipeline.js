@@ -31,7 +31,9 @@ export function useRecruitmentPipeline(jobId, { query = '', recruiterId = 'all',
         const stageId = overrides[app.id] ?? app.stageId
         const enteredAt = [...app.history].reverse().find((h) => h.toStageId === app.stageId && h.kind !== 'rejected')?.at ?? app.appliedAt
         const appInterviews = interviews.filter((i) => i.applicationId === app.id)
-        const next = appInterviews.filter((i) => i.status === 'scheduled' && new Date(i.start).getTime() > now).sort((a, b) => new Date(a.start) - new Date(b.start))[0]
+        const next = appInterviews
+          .filter((i) => i.status === 'scheduled' && new Date(i.start).getTime() > now)
+          .sort((a, b) => new Date(a.start) - new Date(b.start))[0]
         return {
           id: app.id,
           app,
@@ -51,7 +53,11 @@ export function useRecruitmentPipeline(jobId, { query = '', recruiterId = 'all',
   const columns = useMemo(() => {
     if (!job) return []
     const sorter =
-      sortBy === 'name' ? (a, b) => a.name.localeCompare(b.name) : sortBy === 'rating' ? (a, b) => (b.app.rating ?? 0) - (a.app.rating ?? 0) : (a, b) => b.daysInStage - a.daysInStage
+      sortBy === 'name'
+        ? (a, b) => a.name.localeCompare(b.name)
+        : sortBy === 'rating'
+          ? (a, b) => (b.app.rating ?? 0) - (a.app.rating ?? 0)
+          : (a, b) => b.daysInStage - a.daysInStage
     return job.stages.map((stage) => {
       const list = cards.filter((c) => c.stageId === stage.id).sort(sorter)
       return { stage, cards: list, count: list.length }
@@ -66,7 +72,13 @@ export function useRecruitmentPipeline(jobId, { query = '', recruiterId = 'all',
       .flatMap((a) =>
         a.history
           .filter((h) => h.kind !== 'applied')
-          .map((h) => ({ ...h, candidate: candidatesById.get(a.candidateId), from: h.fromStageId ? stageName(h.fromStageId) : null, to: stageName(h.toStageId), by: usersById.get(h.byId) })),
+          .map((h) => ({
+            ...h,
+            candidate: candidatesById.get(a.candidateId),
+            from: h.fromStageId ? stageName(h.fromStageId) : null,
+            to: stageName(h.toStageId),
+            by: usersById.get(h.byId),
+          })),
       )
       .sort((a, b) => new Date(b.at) - new Date(a.at))
   }, [job, jobId, applications, candidatesById, usersById])
@@ -74,7 +86,9 @@ export function useRecruitmentPipeline(jobId, { query = '', recruiterId = 'all',
   const moveAction = useAsyncAction((appId, stageId, note) => pipelineService.moveStage(appId, stageId, { actorId, note }), {
     success: (app) => `Moved to ${job?.stages.find((s) => s.id === app.stageId)?.name}`,
   })
-  const rejectAction = useAsyncAction((appId, reason) => pipelineService.reject(appId, { actorId, reason }), { success: 'Application marked as not progressed' })
+  const rejectAction = useAsyncAction((appId, reason) => pipelineService.reject(appId, { actorId, reason }), {
+    success: 'Application marked as not progressed',
+  })
   const restoreAction = useAsyncAction((appId) => pipelineService.restore(appId, { actorId }), { success: 'Application restored' })
 
   const runMove = moveAction.run

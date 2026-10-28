@@ -93,7 +93,7 @@ export default function Dropdown({ renderTrigger, items, children, align = 'end'
             exit={{ opacity: 0, y: side === 'bottom' ? -4 : 4, scale: 0.98 }}
             transition={{ duration: 0.14 }}
             className={cn(
-              'absolute z-40 min-w-48 rounded-lg border border-line bg-surface p-1 shadow-pop',
+              'border-line bg-surface shadow-pop absolute z-40 min-w-48 rounded-lg border p-1',
               side === 'bottom' ? 'top-full mt-1.5' : 'bottom-full mb-1.5',
               align === 'end' ? 'right-0 origin-top-right' : 'left-0 origin-top-left',
               className,
@@ -101,10 +101,10 @@ export default function Dropdown({ renderTrigger, items, children, align = 'end'
           >
             {items
               ? items.map((item, i) => {
-                  if (item.divider) return <div key={`d-${i}`} className="my-1 h-px bg-line" role="separator" />
+                  if (item.divider) return <div key={`d-${i}`} className="bg-line my-1 h-px" role="separator" />
                   if (item.heading) {
                     return (
-                      <div key={`h-${i}`} className="px-2.5 pt-2 pb-1 text-xxs font-medium tracking-wide text-faint uppercase">
+                      <div key={`h-${i}`} className="text-xxs text-faint px-2.5 pt-2 pb-1 font-medium tracking-wide uppercase">
                         {item.heading}
                       </div>
                     )
@@ -136,7 +136,7 @@ export default function Dropdown({ renderTrigger, items, children, align = 'end'
                       {Icon && <Icon size={15} className={item.danger ? 'text-red-500' : 'text-muted'} aria-hidden />}
                       <span className="min-w-0 flex-1">
                         <span className="block truncate">{item.label}</span>
-                        {item.description && <span className="block truncate text-xxs text-muted">{item.description}</span>}
+                        {item.description && <span className="text-xxs text-muted block truncate">{item.description}</span>}
                       </span>
                       {item.checked && <Check size={15} className="text-brand-600" aria-hidden />}
                     </button>

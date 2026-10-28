@@ -11,17 +11,23 @@ export function CandidateCardBody({ card, overlay = false }) {
   const { candidate, app } = card
   const rejected = app.status === 'rejected'
   return (
-    <div className={cn('rounded-lg border bg-surface p-3 text-left', overlay ? 'rotate-[1.5deg] border-brand-300 shadow-lift' : 'border-line shadow-xs', rejected && 'opacity-60')}>
+    <div
+      className={cn(
+        'bg-surface rounded-lg border p-3 text-left',
+        overlay ? 'border-brand-300 shadow-lift rotate-[1.5deg]' : 'border-line shadow-xs',
+        rejected && 'opacity-60',
+      )}
+    >
       <div className="flex items-start gap-2.5">
         <Avatar name={card.name} size="sm" />
         <div className="min-w-0 flex-1">
           <p className={cn('truncate text-sm font-medium', rejected && 'line-through')}>{card.name}</p>
-          <p className="truncate text-xs text-muted">
+          <p className="text-muted truncate text-xs">
             {candidate.currentTitle} · {candidate.experienceYears}y
           </p>
         </div>
       </div>
-      <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted">
+      <div className="text-muted mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
         <span className={cn('tabular', card.daysInStage > 7 && !rejected && 'font-medium text-amber-700')} title="Days in current stage">
           {card.daysInStage}d in stage
         </span>
@@ -32,7 +38,7 @@ export function CandidateCardBody({ card, overlay = false }) {
           </span>
         )}
         {card.nextInterview && (
-          <span className="flex items-center gap-1 text-brand-700" title="Next interview">
+          <span className="text-brand-700 flex items-center gap-1" title="Next interview">
             <CalendarClock size={11} aria-hidden />
             {formatShortDate(card.nextInterview.start)} {formatTime(card.nextInterview.start)}
           </span>
@@ -69,7 +75,14 @@ function CandidateCard({ card, stages, onOpen, onMove, onReject, onRestore, canM
       ? [
           { divider: true },
           { heading: 'Move to' },
-          ...stages.map((s) => ({ key: s.id, label: s.name, icon: MoveRight, checked: s.id === card.stageId, disabled: s.id === card.stageId || !canMove, onSelect: () => onMove(card, s.id) })),
+          ...stages.map((s) => ({
+            key: s.id,
+            label: s.name,
+            icon: MoveRight,
+            checked: s.id === card.stageId,
+            disabled: s.id === card.stageId || !canMove,
+            onSelect: () => onMove(card, s.id),
+          })),
           { divider: true },
           { label: 'Not progressing…', icon: CircleSlash, danger: true, disabled: !canMove, onSelect: () => onReject(card) },
         ]
@@ -94,7 +107,10 @@ function CandidateCard({ card, stages, onOpen, onMove, onReject, onRestore, canM
           }
           listeners?.onKeyDown?.(e)
         }}
-        className={cn('block rounded-lg outline-none transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-brand-500', !disabled && 'cursor-grab active:cursor-grabbing hover:-translate-y-px')}
+        className={cn(
+          'focus-visible:ring-brand-500 block rounded-lg transition-transform duration-150 outline-none focus-visible:ring-2',
+          !disabled && 'cursor-grab hover:-translate-y-px active:cursor-grabbing',
+        )}
       >
         <CandidateCardBody card={card} />
       </div>
@@ -104,7 +120,12 @@ function CandidateCard({ card, stages, onOpen, onMove, onReject, onRestore, canM
           className="w-56"
           menuLabel={`Actions for ${card.name}`}
           renderTrigger={(props) => (
-            <button {...props} type="button" className="rounded-md bg-surface p-1 text-muted shadow-xs ring-1 ring-line hover:text-ink" aria-label={`Actions for ${card.name}`}>
+            <button
+              {...props}
+              type="button"
+              className="bg-surface text-muted ring-line hover:text-ink rounded-md p-1 shadow-xs ring-1"
+              aria-label={`Actions for ${card.name}`}
+            >
               <MoreHorizontal size={14} />
             </button>
           )}

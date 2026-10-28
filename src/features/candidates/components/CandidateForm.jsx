@@ -33,12 +33,26 @@ const EMPTY = {
   note: '',
 }
 
-const EDITABLE_FIELDS = ['firstName', 'lastName', 'email', 'phone', 'location', 'currentTitle', 'currentCompany', 'experienceYears', 'noticePeriod', 'expectedSalary', 'source', 'recruiterId', 'skills']
+const EDITABLE_FIELDS = [
+  'firstName',
+  'lastName',
+  'email',
+  'phone',
+  'location',
+  'currentTitle',
+  'currentCompany',
+  'experienceYears',
+  'noticePeriod',
+  'expectedSalary',
+  'source',
+  'recruiterId',
+  'skills',
+]
 
 function Section({ title, children }) {
   return (
     <fieldset className="space-y-4">
-      <legend className="mb-3 text-xs font-semibold tracking-wide text-muted uppercase">{title}</legend>
+      <legend className="text-muted mb-3 text-xs font-semibold tracking-wide uppercase">{title}</legend>
       {children}
     </fieldset>
   )
@@ -69,9 +83,7 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
     if (!open) return
     setResume(null)
     reset(
-      candidate
-        ? { ...EMPTY, ...candidate, expectedSalary: candidate.expectedSalary || '' }
-        : { ...EMPTY, recruiterId: actorId, jobId: defaultJobId ?? '' },
+      candidate ? { ...EMPTY, ...candidate, expectedSalary: candidate.expectedSalary || '' } : { ...EMPTY, recruiterId: actorId, jobId: defaultJobId ?? '' },
     )
   }, [open, candidate, defaultJobId, actorId, reset])
 
@@ -103,7 +115,11 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
       onClose={onClose}
       size="lg"
       title={isEdit ? `Edit ${candidate.firstName} ${candidate.lastName}` : 'Add candidate'}
-      description={isEdit ? 'Update profile details. Application stages are managed from the pipeline.' : 'Create a candidate profile and optionally add them to a vacancy.'}
+      description={
+        isEdit
+          ? 'Update profile details. Application stages are managed from the pipeline.'
+          : 'Create a candidate profile and optionally add them to a vacancy.'
+      }
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={pending}>
@@ -145,7 +161,17 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
               {(a) => <Input {...a} {...register('currentCompany')} />}
             </Field>
             <Field label="Total experience (years)" required error={errors.experienceYears?.message}>
-              {(a) => <Input {...a} type="number" min={0} max={45} step={1} {...register('experienceYears', rules.positiveInt('Experience', { min: 0, max: 45 }))} invalid={!!errors.experienceYears} />}
+              {(a) => (
+                <Input
+                  {...a}
+                  type="number"
+                  min={0}
+                  max={45}
+                  step={1}
+                  {...register('experienceYears', rules.positiveInt('Experience', { min: 0, max: 45 }))}
+                  invalid={!!errors.experienceYears}
+                />
+              )}
             </Field>
             <Field label="Notice period">
               {(a) => <Select {...a} {...register('noticePeriod')} options={NOTICE_PERIODS.map((n) => ({ value: n, label: n }))} />}
@@ -164,7 +190,9 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
                   name="skills"
                   control={control}
                   rules={{ validate: (v) => v.length > 0 || 'Add at least one skill' }}
-                  render={({ field }) => <TagInput {...a} value={field.value} onChange={field.onChange} suggestions={skillSuggestions} invalid={!!errors.skills} />}
+                  render={({ field }) => (
+                    <TagInput {...a} value={field.value} onChange={field.onChange} suggestions={skillSuggestions} invalid={!!errors.skills} />
+                  )}
                 />
               )}
             </Field>
@@ -177,7 +205,15 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
               {(a) => <Select {...a} {...register('source')} options={[...CANDIDATE_SOURCES, 'Recruiter sourced'].map((s) => ({ value: s, label: s }))} />}
             </Field>
             <Field label="Recruiter" required error={errors.recruiterId?.message}>
-              {(a) => <Select {...a} {...register('recruiterId', rules.required('Recruiter'))} options={options.recruiters} placeholder="Select recruiter" invalid={!!errors.recruiterId} />}
+              {(a) => (
+                <Select
+                  {...a}
+                  {...register('recruiterId', rules.required('Recruiter'))}
+                  options={options.recruiters}
+                  placeholder="Select recruiter"
+                  invalid={!!errors.recruiterId}
+                />
+              )}
             </Field>
             {!isEdit && (
               <>
@@ -185,9 +221,11 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
                   {(a) => <Select {...a} {...register('jobId')} options={options.openJobs} placeholder="Don't add to a vacancy yet" />}
                 </Field>
                 <div className="sm:col-span-2">
-                  <p className="mb-1.5 text-xs font-medium text-ink-soft">Resume</p>
+                  <p className="text-ink-soft mb-1.5 text-xs font-medium">Resume</p>
                   <FileDropzone file={resume} onFile={setResume} onClear={() => setResume(null)} />
-                  <MockNotice className="mt-2">Demo mode stores only the file name and size in this browser. Connect object storage to keep the actual document.</MockNotice>
+                  <MockNotice className="mt-2">
+                    Demo mode stores only the file name and size in this browser. Connect object storage to keep the actual document.
+                  </MockNotice>
                 </div>
                 <Field label="Recruiter note" optional className="sm:col-span-2">
                   {(a) => <Textarea {...a} {...register('note')} rows={2} placeholder="Context from the first conversation…" />}

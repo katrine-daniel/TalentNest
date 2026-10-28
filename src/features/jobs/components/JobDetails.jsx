@@ -33,9 +33,9 @@ export function JobOverview({ row }) {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <Panel title="About the role" className="lg:col-span-2" bodyClassName="px-5 pb-5 space-y-5">
-        <p className="text-sm leading-relaxed whitespace-pre-line text-ink-soft">{job.description}</p>
+        <p className="text-ink-soft text-sm leading-relaxed whitespace-pre-line">{job.description}</p>
         <div>
-          <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">Required skills</h3>
+          <h3 className="text-muted mb-2 text-xs font-semibold tracking-wide uppercase">Required skills</h3>
           <SkillsList skills={job.skills} highlight={job.skills} />
         </div>
       </Panel>
@@ -44,7 +44,7 @@ export function JobOverview({ row }) {
           {facts.map(([k, v]) => (
             <div key={k} className="flex justify-between gap-4">
               <dt className="text-muted">{k}</dt>
-              <dd className="text-right text-ink">{v ?? '—'}</dd>
+              <dd className="text-ink text-right">{v ?? '—'}</dd>
             </div>
           ))}
         </dl>
@@ -64,7 +64,16 @@ export function JobApplicants({ job }) {
         .map((app) => {
           const candidate = candidatesById.get(app.candidateId)
           const stage = job.stages.find((s) => s.id === app.stageId)
-          return { id: app.id, app, candidate, stage, name: fullName(candidate), appliedAt: new Date(app.appliedAt).getTime(), stageIdx: job.stages.indexOf(stage), rating: app.rating ?? 0 }
+          return {
+            id: app.id,
+            app,
+            candidate,
+            stage,
+            name: fullName(candidate),
+            appliedAt: new Date(app.appliedAt).getTime(),
+            stageIdx: job.stages.indexOf(stage),
+            rating: app.rating ?? 0,
+          }
         })
         .filter((r) => r.candidate),
     [applications, candidatesById, job],
@@ -90,7 +99,7 @@ export function JobApplicants({ job }) {
                 <Avatar name={r.name} size="sm" />
                 <div className="min-w-0">
                   <p className="truncate font-medium">{r.name}</p>
-                  <p className="truncate text-xs text-muted">{r.candidate.currentTitle}</p>
+                  <p className="text-muted truncate text-xs">{r.candidate.currentTitle}</p>
                 </div>
               </div>
             ),
@@ -105,7 +114,7 @@ export function JobApplicants({ job }) {
             <Avatar name={r.name} size="sm" />
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{r.name}</p>
-              <p className="text-xs text-muted">{formatRelative(r.app.appliedAt)}</p>
+              <p className="text-muted text-xs">{formatRelative(r.app.appliedAt)}</p>
             </div>
             <StageBadge app={r.app} stage={r.stage} />
           </div>
@@ -121,18 +130,22 @@ export function JobWorkflow({ row }) {
   const counts = Object.fromEntries(row.byStage.map((s) => [s.id, s.count]))
   return (
     <div className="space-y-6">
-      <Panel title="Recruitment workflow" description={template ? `Based on the “${template.name}” template, customised for this vacancy.` : 'Custom workflow'} bodyClassName="px-5 pb-5">
+      <Panel
+        title="Recruitment workflow"
+        description={template ? `Based on the “${template.name}” template, customised for this vacancy.` : 'Custom workflow'}
+        bodyClassName="px-5 pb-5"
+      >
         <WorkflowPreview stages={row.job.stages} counts={counts} />
       </Panel>
       <Panel title="Stage breakdown" description="Active candidates per stage">
-        <ul className="divide-y divide-line border-t border-line">
+        <ul className="divide-line border-line divide-y border-t">
           {row.byStage.map((s, i) => (
             <li key={s.id} className="flex items-center gap-3 px-5 py-3">
-              <span className="w-5 text-xs text-faint tabular">{i + 1}</span>
+              <span className="text-faint tabular w-5 text-xs">{i + 1}</span>
               <span className={`h-2 w-2 rounded-full ${STAGE_TYPES[s.type]?.dot}`} aria-hidden />
               <span className="flex-1 text-sm">{s.name}</span>
-              <span className="text-xs text-muted">{STAGE_TYPES[s.type]?.label}</span>
-              <span className="w-10 text-right text-sm font-medium tabular">{s.count}</span>
+              <span className="text-muted text-xs">{STAGE_TYPES[s.type]?.label}</span>
+              <span className="tabular w-10 text-right text-sm font-medium">{s.count}</span>
             </li>
           ))}
         </ul>

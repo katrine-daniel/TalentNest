@@ -87,12 +87,22 @@ export default function AnalyticsPage() {
   }, [data, scope, filters.department, range.months])
 
   if (!can('analytics.view')) {
-    return <EmptyState icon={Lock} title="Analytics isn’t available for your role" description="Ask an administrator to grant the “View reports & analytics” permission." />
+    return (
+      <EmptyState
+        icon={Lock}
+        title="Analytics isn’t available for your role"
+        description="Ask an administrator to grant the “View reports & analytics” permission."
+      />
+    )
   }
 
   const exportReport = () => {
     const rows = [
-      ['TalentNest recruitment report', `Range: ${range.label}`, `Department: ${options.departments.find((d) => d.value === filters.department)?.label ?? 'All'}`],
+      [
+        'TalentNest recruitment report',
+        `Range: ${range.label}`,
+        `Department: ${options.departments.find((d) => d.value === filters.department)?.label ?? 'All'}`,
+      ],
       [],
       ['Metric', 'Value'],
       ['Applications', report.kpis.applications],
@@ -121,8 +131,20 @@ export default function AnalyticsPage() {
         description="Hiring performance across departments, stages and recruiters."
         actions={
           <>
-            <SegmentedControl label="Date range" options={RANGES} value={range.value} onChange={(v) => setFilter('range', v)} className="w-full justify-between sm:w-auto" />
-            <FilterSelect label="Department" value={filters.department} onChange={(v) => setFilter('department', v)} options={options.departments} className="w-full sm:w-52" />
+            <SegmentedControl
+              label="Date range"
+              options={RANGES}
+              value={range.value}
+              onChange={(v) => setFilter('range', v)}
+              className="w-full justify-between sm:w-auto"
+            />
+            <FilterSelect
+              label="Department"
+              value={filters.department}
+              onChange={(v) => setFilter('department', v)}
+              options={options.departments}
+              className="w-full sm:w-52"
+            />
             <Button icon={Download} onClick={exportReport}>
               Export CSV
             </Button>

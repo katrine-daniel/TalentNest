@@ -19,7 +19,14 @@ function dayLabel(date) {
 export default function UpcomingInterviews({ items, limit = 8 }) {
   const { candidatesById, jobsById, usersById, templatesById } = useLookups()
   if (!items.length) {
-    return <EmptyState compact icon={CalendarCheck2} title="Nothing scheduled" description="Interviews and assessment deadlines for the coming week will appear here." />
+    return (
+      <EmptyState
+        compact
+        icon={CalendarCheck2}
+        title="Nothing scheduled"
+        description="Interviews and assessment deadlines for the coming week will appear here."
+      />
+    )
   }
 
   const groups = []
@@ -34,25 +41,25 @@ export default function UpcomingInterviews({ items, limit = 8 }) {
     <div className="space-y-4 px-5 pb-4">
       {groups.map((group) => (
         <section key={group.day} aria-label={dayLabel(group.day)}>
-          <h3 className="mb-1.5 text-xxs font-semibold tracking-wide text-muted uppercase">{dayLabel(group.day)}</h3>
+          <h3 className="text-xxs text-muted mb-1.5 font-semibold tracking-wide uppercase">{dayLabel(group.day)}</h3>
           <ul className="space-y-1">
             {group.entries.map(({ kind, id, at, item }) => {
               const candidate = candidatesById.get(item.candidateId)
               const job = jobsById.get(item.jobId)
               const isInterview = kind === 'interview'
               const accent = EVENT_ACCENTS[isInterview ? interviewAccent(item.stageName) : 'assessment']
-              const ModeIcon = isInterview ? MODE_ICONS[item.mode] ?? Video : ClipboardCheck
+              const ModeIcon = isInterview ? (MODE_ICONS[item.mode] ?? Video) : ClipboardCheck
               return (
                 <li key={id}>
                   <Link
                     to={isInterview ? `/calendar?event=${id}` : '/assessments?status=pending'}
-                    className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-subtle"
+                    className="group hover:bg-subtle -mx-2 flex items-center gap-3 rounded-lg px-2 py-2"
                   >
-                    <span className="w-14 shrink-0 text-xs font-medium text-ink tabular">{isInterview ? formatTime(at) : 'Due'}</span>
+                    <span className="text-ink tabular w-14 shrink-0 text-xs font-medium">{isInterview ? formatTime(at) : 'Due'}</span>
                     <span className={cn('h-8 w-0.5 shrink-0 rounded-full', accent.dot)} aria-hidden />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{fullName(candidate)}</span>
-                      <span className="flex items-center gap-1.5 truncate text-xs text-muted">
+                      <span className="text-muted flex items-center gap-1.5 truncate text-xs">
                         <ModeIcon size={12} className="shrink-0" aria-hidden />
                         <span className="truncate">
                           {isInterview ? item.stageName : templatesById.get(item.templateId)?.name} · {job?.title}
@@ -68,7 +75,7 @@ export default function UpcomingInterviews({ items, limit = 8 }) {
         </section>
       ))}
       {items.length > limit && (
-        <Link to="/calendar" className="block text-center text-xs font-medium text-brand-600 hover:underline">
+        <Link to="/calendar" className="text-brand-600 block text-center text-xs font-medium hover:underline">
           View {items.length - limit} more in calendar
         </Link>
       )}

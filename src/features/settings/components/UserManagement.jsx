@@ -23,7 +23,13 @@ import { rules } from '@/utils/validation'
 function InviteModal({ open, onClose }) {
   const options = useOrgOptions()
   const invite = useAsyncAction(settingsService.inviteUser, { success: (u) => `${u.name} added as invited (demo — no email sent)` })
-  const { register, handleSubmit, reset, setError, formState: { errors } } = useForm()
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors },
+  } = useForm()
   useEffect(() => {
     if (open) reset({ name: '', email: '', title: '', role: 'Recruiter', departmentId: '' })
   }, [open, reset])
@@ -95,7 +101,7 @@ export default function UserManagement({ readOnly }) {
           Invite user
         </Button>
       </div>
-      <div className="rounded-2xl border border-line/80 bg-surface shadow-card">
+      <div className="border-line/80 bg-surface shadow-card rounded-2xl border">
         <DataTable
           rows={rows}
           empty={<EmptyState icon={Search} title="No users match" />}
@@ -108,15 +114,20 @@ export default function UserManagement({ readOnly }) {
                   <Avatar name={u.name} size="sm" />
                   <div className="min-w-0">
                     <p className="truncate font-medium">
-                      {u.name} {u.id === me.id && <span className="text-xs font-normal text-muted">(you)</span>}
+                      {u.name} {u.id === me.id && <span className="text-muted text-xs font-normal">(you)</span>}
                     </p>
-                    <p className="truncate text-xs text-muted">{u.email}</p>
+                    <p className="text-muted truncate text-xs">{u.email}</p>
                   </div>
                 </div>
               ),
             },
             { key: 'title', header: 'Title', hideBelow: 'xl', render: (u) => <span className="text-ink-soft">{u.title || '—'}</span> },
-            { key: 'dept', header: 'Department', hideBelow: 'lg', render: (u) => <span className="text-ink-soft">{departmentsById.get(u.departmentId)?.name ?? 'All departments'}</span> },
+            {
+              key: 'dept',
+              header: 'Department',
+              hideBelow: 'lg',
+              render: (u) => <span className="text-ink-soft">{departmentsById.get(u.departmentId)?.name ?? 'All departments'}</span>,
+            },
             {
               key: 'role',
               header: 'Role',
@@ -144,11 +155,29 @@ export default function UserManagement({ readOnly }) {
                       u.status === 'deactivated'
                         ? [{ label: 'Reactivate', icon: UserCheck, disabled: readOnly, onSelect: () => update.run(u.id, { status: 'active' }) }]
                         : [
-                            ...(u.status === 'invited' ? [{ label: 'Mark invite accepted (demo)', icon: UserCheck, disabled: readOnly, onSelect: () => update.run(u.id, { status: 'active' }) }] : []),
-                            { label: 'Deactivate', icon: UserX, danger: true, disabled: readOnly || u.id === me.id, disabledReason: u.id === me.id ? "You can't deactivate yourself" : undefined, onSelect: () => setDeactivate(u) },
+                            ...(u.status === 'invited'
+                              ? [
+                                  {
+                                    label: 'Mark invite accepted (demo)',
+                                    icon: UserCheck,
+                                    disabled: readOnly,
+                                    onSelect: () => update.run(u.id, { status: 'active' }),
+                                  },
+                                ]
+                              : []),
+                            {
+                              label: 'Deactivate',
+                              icon: UserX,
+                              danger: true,
+                              disabled: readOnly || u.id === me.id,
+                              disabledReason: u.id === me.id ? "You can't deactivate yourself" : undefined,
+                              onSelect: () => setDeactivate(u),
+                            },
                           ]
                     }
-                    renderTrigger={(props) => <Button {...props} size="sm" variant="ghost" iconOnly icon={MoreHorizontal} aria-label={`Actions for ${u.name}`} />}
+                    renderTrigger={(props) => (
+                      <Button {...props} size="sm" variant="ghost" iconOnly icon={MoreHorizontal} aria-label={`Actions for ${u.name}`} />
+                    )}
                   />
                 </CellActions>
               ),
@@ -159,7 +188,7 @@ export default function UserManagement({ readOnly }) {
               <Avatar name={u.name} size="sm" />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{u.name}</p>
-                <p className="truncate text-xs text-muted">
+                <p className="text-muted truncate text-xs">
                   {u.role} · {u.email}
                 </p>
               </div>

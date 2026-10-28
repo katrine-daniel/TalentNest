@@ -29,7 +29,7 @@ export default function DataTable({
   return (
     <>
       {mobileCard && (
-        <ul className="divide-y divide-line md:hidden">
+        <ul className="divide-line divide-y md:hidden">
           {rows.map((row) => (
             <li key={getRowId(row)}>
               {onRowClick ? (
@@ -44,7 +44,7 @@ export default function DataTable({
                       onRowClick(row)
                     }
                   }}
-                  className="block w-full px-4 py-3.5 text-left transition-colors active:bg-subtle"
+                  className="active:bg-subtle block w-full px-4 py-3.5 text-left transition-colors"
                 >
                   {mobileCard(row)}
                 </div>
@@ -55,10 +55,10 @@ export default function DataTable({
           ))}
         </ul>
       )}
-      <div className={cn('overflow-x-auto scrollbar-thin', mobileCard && 'hidden md:block', className)}>
+      <div className={cn('scrollbar-thin overflow-x-auto', mobileCard && 'hidden md:block', className)}>
         <table className="w-full border-collapse text-left text-sm">
           <thead>
-            <tr className="border-b border-line">
+            <tr className="border-line border-b">
               {columns.map((col) => {
                 const sorted = sort?.key === col.key
                 const ariaSort = sorted ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined
@@ -68,7 +68,7 @@ export default function DataTable({
                     scope="col"
                     aria-sort={ariaSort}
                     className={cn(
-                      'px-4 py-2.5 text-xxs font-medium tracking-wide whitespace-nowrap text-muted uppercase first:pl-5 last:pr-5',
+                      'text-xxs text-muted px-4 py-2.5 font-medium tracking-wide whitespace-nowrap uppercase first:pl-5 last:pr-5',
                       col.align === 'right' && 'text-right',
                       col.hideBelow && hide[col.hideBelow],
                       col.headerClassName,
@@ -78,7 +78,7 @@ export default function DataTable({
                       <button
                         type="button"
                         onClick={() => onSort(col.key)}
-                        className={cn('-mx-1 inline-flex items-center gap-1 rounded px-1 uppercase hover:text-ink', sorted && 'text-ink')}
+                        className={cn('hover:text-ink -mx-1 inline-flex items-center gap-1 rounded px-1 uppercase', sorted && 'text-ink')}
                       >
                         {col.header}
                         {sorted ? sort.dir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} /> : <ChevronsUpDown size={12} className="opacity-50" />}
@@ -91,7 +91,7 @@ export default function DataTable({
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-line">
+          <tbody className="divide-line divide-y">
             {rows.map((row) => (
               <tr
                 key={getRowId(row)}
@@ -105,7 +105,7 @@ export default function DataTable({
                 }
                 tabIndex={onRowClick ? 0 : undefined}
                 aria-label={onRowClick ? rowLabel?.(row) : undefined}
-                className={cn('group transition-colors', onRowClick && 'cursor-pointer hover:bg-subtle/70 focus-visible:bg-subtle')}
+                className={cn('group transition-colors', onRowClick && 'hover:bg-subtle/70 focus-visible:bg-subtle cursor-pointer')}
               >
                 {columns.map((col) => (
                   <td

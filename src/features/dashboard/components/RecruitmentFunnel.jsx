@@ -14,14 +14,14 @@ export default function RecruitmentFunnel({ steps, compact = false }) {
         return (
           <li key={step.key}>
             <div className="mb-1 flex items-baseline justify-between gap-3 text-xs">
-              <span className="font-medium text-ink-soft">{step.label}</span>
+              <span className="text-ink-soft font-medium">{step.label}</span>
               <span className="flex items-baseline gap-2">
-                <span className="text-sm font-semibold text-ink tabular">{step.count}</span>
-                {i > 0 && <span className={cn('w-10 text-right tabular', step.conversion < 40 ? 'text-amber-700' : 'text-muted')}>{step.conversion}%</span>}
+                <span className="text-ink tabular text-sm font-semibold">{step.count}</span>
+                {i > 0 && <span className={cn('tabular w-10 text-right', step.conversion < 40 ? 'text-amber-700' : 'text-muted')}>{step.conversion}%</span>}
                 {i === 0 && <span className="w-10" aria-hidden />}
               </span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-subtle" role="presentation">
+            <div className="bg-subtle h-2 overflow-hidden rounded-full" role="presentation">
               <motion.div
                 className="h-full rounded-full"
                 style={{ background: `color-mix(in srgb, #592ca2 ${100 - i * 12}%, #d9c9f0)` }}
@@ -33,7 +33,7 @@ export default function RecruitmentFunnel({ steps, compact = false }) {
           </li>
         )
       })}
-      <li className="pt-1 text-xxs text-faint">Percentages show conversion from the previous stage.</li>
+      <li className="text-xxs text-faint pt-1">Percentages show conversion from the previous stage.</li>
     </ol>
   )
 }

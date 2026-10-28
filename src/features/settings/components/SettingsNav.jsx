@@ -17,7 +17,7 @@ export const SETTINGS_SECTIONS = [
 export default function SettingsNav() {
   return (
     <nav aria-label="Settings sections" className="no-scrollbar -mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
-      <ul className="flex gap-1 border-b border-line lg:flex-col lg:border-b-0">
+      <ul className="border-line flex gap-1 border-b lg:flex-col lg:border-b-0">
         {SETTINGS_SECTIONS.map(({ id, label, icon: Icon }) => (
           <li key={id} className="shrink-0">
             <NavLink
@@ -25,7 +25,9 @@ export default function SettingsNav() {
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-2.5 px-3 py-2.5 text-sm whitespace-nowrap transition-colors lg:rounded-lg lg:py-2',
-                  isActive ? 'border-b-2 border-brand-600 font-medium text-brand-700 lg:border-b-0 lg:bg-brand-50' : 'border-b-2 border-transparent text-ink-soft hover:text-ink lg:border-b-0 lg:hover:bg-subtle',
+                  isActive
+                    ? 'border-brand-600 text-brand-700 lg:bg-brand-50 border-b-2 font-medium lg:border-b-0'
+                    : 'text-ink-soft hover:text-ink lg:hover:bg-subtle border-b-2 border-transparent lg:border-b-0',
                 )
               }
             >
