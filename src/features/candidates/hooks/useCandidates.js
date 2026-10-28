@@ -119,10 +119,14 @@ export function useCandidateActions() {
   const { actorId } = useSession()
   const ctx = { actorId }
   return {
-    create: useAsyncAction((values) => candidateService.create(values, ctx), { success: (c) => `${c.firstName} ${c.lastName} added to candidates` }),
+    create: useAsyncAction((values, resumeFile) => candidateService.create(values, ctx, resumeFile), {
+      success: (c) => `${c.firstName} ${c.lastName} added to candidates`,
+    }),
     update: useAsyncAction((id, patch) => candidateService.update(id, patch, ctx), { success: 'Candidate profile saved' }),
-    addNote: useAsyncAction((id, text) => candidateService.addNote(id, text, ctx), { success: 'Note added' }),
-    attachResume: useAsyncAction((id, file) => candidateService.attachResume(id, file, ctx), { success: 'Resume uploaded (demo — file metadata only)' }),
+    addNote: useAsyncAction((id, text, visibility = 'team') => candidateService.addNote(id, text, { ...ctx, visibility }), { success: 'Note added' }),
+    setTags: useAsyncAction((id, tags) => candidateService.setTags(id, tags, ctx), { success: 'Tags saved' }),
+    erase: useAsyncAction((id) => candidateService.erase(id, ctx), { success: 'Candidate data erased' }),
+    attachResume: useAsyncAction((id, file) => candidateService.attachResume(id, file, ctx), { success: 'Resume uploaded' }),
     addApplication: useAsyncAction((id, jobId) => candidateService.addApplication(id, jobId, ctx), { success: 'Candidate added to vacancy' }),
     moveStage: useAsyncAction((appId, stageId, note) => pipelineService.moveStage(appId, stageId, { ...ctx, note }), { success: 'Stage updated' }),
     reject: useAsyncAction((appId, reason) => pipelineService.reject(appId, { ...ctx, reason }), { success: 'Application marked as not progressed' }),

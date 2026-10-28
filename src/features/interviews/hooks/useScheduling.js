@@ -131,12 +131,14 @@ export function useSchedulingActions() {
   const { actorId } = useSession()
   const ctx = { actorId }
   return {
-    schedule: useAsyncAction((values) => interviewService.schedule(values, ctx), { success: 'Interview scheduled (demo — no calendar invite sent)' }),
+    schedule: useAsyncAction((values) => interviewService.schedule(values, ctx), { success: 'Interview scheduled — panelists notified in TalentNest' }),
     reschedule: useAsyncAction((id, values) => interviewService.reschedule(id, values, ctx), { success: 'Interview rescheduled' }),
     cancel: useAsyncAction((id, reason) => interviewService.cancel(id, reason, ctx), { success: 'Interview cancelled' }),
     setAttendance: useAsyncAction((id, attendance) => interviewService.setAttendance(id, attendance, ctx), { success: 'Attendance updated' }),
     sendReminder: useAsyncAction((id) => interviewService.sendReminder(id), { success: 'Reminder recorded (demo — no email sent)' }),
-    submitFeedback: useAsyncAction((id, feedback) => interviewService.submitFeedback(id, feedback, ctx), { success: 'Feedback submitted' }),
+    saveFeedback: useAsyncAction((id, values, submit) => interviewService.saveFeedback(id, values, { ...ctx, submit }), {
+      success: (_r, _id, _v, submit) => (submit ? 'Feedback submitted' : 'Draft saved — only you can see it'),
+    }),
     assign: useAsyncAction((values) => assessmentService.assign(values, ctx), { success: 'Assessment assigned (demo — no invitation sent)' }),
     recordScore: useAsyncAction((id, values) => assessmentService.recordScore(id, values, ctx), { success: 'Score recorded' }),
     extendDeadline: useAsyncAction((id, deadline) => assessmentService.extendDeadline(id, deadline, ctx), { success: 'Deadline extended' }),
@@ -154,6 +156,5 @@ export function useOfferActions() {
     }),
     update: useAsyncAction((id, patch) => offerService.update(id, patch, ctx), { success: 'Offer updated' }),
     setStatus: useAsyncAction((id, status) => offerService.setStatus(id, status, ctx), { success: (o) => `Offer marked as ${o.status}` }),
-    toggleTask: useAsyncAction((offerId, taskId) => offerService.toggleOnboardingTask(offerId, taskId)),
   }
 }

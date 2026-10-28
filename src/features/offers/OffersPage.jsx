@@ -10,7 +10,6 @@ import StatusBadge from '@/components/ui/StatusBadge'
 import Avatar from '@/components/ui/Avatar'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import MetricCard, { MetricStrip } from '@/features/dashboard/components/MetricCard'
-import OnboardingChecklist from '@/features/onboarding/components/OnboardingChecklist'
 import { useCollection, useLookups, fullName } from '@/hooks/useStore'
 import { useOfferActions } from '@/features/interviews/hooks/useScheduling'
 import { useTableState } from '@/hooks/useTableState'
@@ -156,8 +155,8 @@ export default function OffersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Offers & Onboarding"
-        description="Track offers through to a successful first day."
+        title="Offers"
+        description="Prepare, send and track offers. Accepted offers continue in Onboarding."
         actions={
           <Button variant="primary" icon={FilePlus2} onClick={() => global.openOffer()} disabled={!canManage}>
             Create offer
@@ -171,21 +170,14 @@ export default function OffersPage() {
         <MetricCard
           label="Acceptance rate"
           icon={CheckCircle2}
-          value={decided ? Math.round((accepted.length / decided) * 100) : 0}
-          detail={`% of ${decided} decided offers`}
+          value={decided ? Math.round((accepted.length / decided) * 100) : null}
+          suffix="%"
+          detail={`Of ${decided} decided offers`}
         />
-        <MetricCard label="Onboarding" icon={UserRoundCheck} value={accepted.length} detail="New hires in progress" emphasis />
+        <MetricCard label="Accepted" icon={UserRoundCheck} value={accepted.length} detail="Open onboarding →" to="/onboarding" emphasis />
       </MetricStrip>
 
-      <Tabs
-        value={tab}
-        onChange={setTab}
-        label="Offers sections"
-        tabs={[
-          { value: 'offers', label: 'Offers', count: rows.length },
-          { value: 'onboarding', label: 'Onboarding', count: accepted.length },
-        ]}
-      />
+      <Tabs value={tab} onChange={setTab} label="Offers sections" tabs={[{ value: 'offers', label: 'Offers', count: rows.length }]} />
 
       {tab === 'offers' ? (
         <div className="border-line/80 bg-surface shadow-card rounded-2xl border">
@@ -244,24 +236,7 @@ export default function OffersPage() {
             )}
           />
         </div>
-      ) : accepted.length ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {accepted
-            .sort((a, b) => new Date(a.offer.startDate) - new Date(b.offer.startDate))
-            .map((r) => (
-              <OnboardingChecklist
-                key={r.id}
-                offer={r.offer}
-                candidateName={r.name}
-                jobTitle={r.job?.title}
-                onToggle={actions.toggleTask.run}
-                disabled={!canManage}
-              />
-            ))}
-        </div>
-      ) : (
-        <EmptyState icon={UserRoundCheck} title="No new hires yet" description="Accepted offers appear here with an onboarding checklist." />
-      )}
+      ) : null}
 
       <ConfirmDialog
         open={Boolean(confirm)}

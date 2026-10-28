@@ -11,7 +11,8 @@ import CandidateTimeline from './CandidateTimeline'
 import { useCandidateActions } from '@/features/candidates/hooks/useCandidates'
 import { useGlobalActions } from '@/app/providers/GlobalActionsContext'
 import { useSession } from '@/app/providers/SessionContext'
-import { useLookups } from '@/hooks/useStore'
+import { useCollection, useLookups } from '@/hooks/useStore'
+import { feedbackCompletion, panelConsensus } from '@/features/interviews/feedbackSelectors'
 import { formatDate, formatDateTime } from '@/utils/formatDate'
 import { STAGE_TYPES } from '@/utils/statusHelpers'
 import { cn } from '@/utils/cn'
@@ -44,6 +45,7 @@ export default function ApplicationCard({ entry, candidateName, onRequestMove, d
   const { app, job, stage, interviews = [], assessments = [], offer } = entry
   const { can } = useSession()
   const { templatesById, usersById } = useLookups()
+  const allFeedback = useCollection('interviewFeedback')
   const global = useGlobalActions()
   const actions = useCandidateActions()
   const [expanded, setExpanded] = useState(defaultExpanded)
@@ -158,12 +160,18 @@ export default function ApplicationCard({ entry, candidateName, onRequestMove, d
                   .filter(Boolean)
                   .join(', ')}
               </span>
-              {i.feedback ? (
-                <StatusBadge tone={['yes', 'strong-yes'].includes(i.feedback.recommendation) ? 'green' : 'red'}>
-                  {i.feedback.recommendation.replace('-', ' ')}
-                </StatusBadge>
-              ) : i.status === 'completed' ? (
-                <StatusBadge tone="amber">Feedback pending</StatusBadge>
+              {i.status === 'completed' ? (
+                (() => {
+                  const completion = feedbackCompletion(i, allFeedback)
+                  const consensus = panelConsensus(allFeedback.filter((f) => f.interviewId === i.id && f.status === 'submitted'))
+                  return completion.complete ? (
+                    <StatusBadge tone={consensus.tone}>{consensus.label}</StatusBadge>
+                  ) : (
+                    <StatusBadge tone="amber">
+                      Feedback {completion.submitted}/{completion.total}
+                    </StatusBadge>
+                  )
+                })()
               ) : (
                 <StatusBadge kind="interview" value={i.status} />
               )}

@@ -1,4 +1,4 @@
-import { mockDb } from '@/services/storage/mockDb'
+import { dataStore } from '@/services/storage/dataStore'
 import { mockRequest, ServiceError } from '@/services/api/apiClient'
 import { logActivity, candidateName } from '@/services/activityService'
 import { createId } from '@/utils/ids'
@@ -10,7 +10,7 @@ import { createId } from '@/utils/ids'
 
 function patchAssessment(id, updater) {
   let updated
-  mockDb.write('assessments', (list) => list.map((a) => (a.id === id ? (updated = updater(a)) : a)))
+  dataStore.write('assessments', (list) => list.map((a) => (a.id === id ? (updated = updater(a)) : a)))
   if (!updated) throw new ServiceError('Assessment not found', 'not-found')
   return updated
 }
@@ -19,13 +19,13 @@ export const assessmentService = {
   async assign(values, { actorId }) {
     return mockRequest(
       () => {
-        const app = mockDb.read('applications').find((a) => a.id === values.applicationId)
+        const app = dataStore.read('applications').find((a) => a.id === values.applicationId)
         if (!app) throw new ServiceError('Select a candidate application')
-        const duplicate = mockDb
+        const duplicate = dataStore
           .read('assessments')
           .some((a) => a.applicationId === app.id && a.templateId === values.templateId && ['pending', 'in-progress', 'submitted'].includes(a.status))
         if (duplicate) throw new ServiceError('This assessment is already open for the candidate')
-        const job = mockDb.read('jobs').find((j) => j.id === app.jobId)
+        const job = dataStore.read('jobs').find((j) => j.id === app.jobId)
         const stage = job.stages.find((s) => s.type === 'assessment') ?? job.stages.find((s) => s.id === app.stageId)
         const assessment = {
           id: createId('asm'),
@@ -43,7 +43,7 @@ export const assessmentService = {
           reminderSentAt: null,
           notes: values.notes ?? '',
         }
-        mockDb.write('assessments', (list) => [assessment, ...list])
+        dataStore.write('assessments', (list) => [assessment, ...list])
         logActivity({
           type: 'assessment',
           text: `Assessment assigned to ${candidateName(app.candidateId)}`,

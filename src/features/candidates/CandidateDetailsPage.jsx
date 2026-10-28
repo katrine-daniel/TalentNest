@@ -1,15 +1,18 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { BriefcaseBusiness, CalendarPlus, Pencil, Sparkles, UserX } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { BriefcaseBusiness, CalendarPlus, MoreHorizontal, Pencil, Scale, ShieldAlert, Sparkles, UserX } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import Tabs from '@/components/ui/Tabs'
 import Panel from '@/components/ui/Panel'
+import Dropdown from '@/components/ui/Dropdown'
 import EmptyState from '@/components/ui/EmptyState'
 import StatusBadge from '@/components/ui/StatusBadge'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import ApplicationCard from '@/features/candidates/components/ApplicationCard'
 import AddApplicationModal from '@/features/candidates/components/AddApplicationModal'
 import StageBadge from '@/features/candidates/components/StageBadge'
+import CandidateTags from '@/features/candidates/components/CandidateTags'
 import {
   ContactDetails,
   EducationList,
@@ -22,23 +25,34 @@ import {
 import StageChangeDialog from '@/features/pipeline/components/StageChangeDialog'
 import RecentActivity from '@/features/dashboard/components/RecentActivity'
 import FeedbackSummary from '@/features/interviews/components/FeedbackSummary'
+import FeedbackComparison from '@/features/interviews/components/FeedbackComparison'
+import TaskList from '@/features/tasks/components/TaskList'
+import PoolMembership from '@/features/talent/components/PoolMembership'
+import { feedbackCompletion } from '@/features/interviews/feedbackSelectors'
 import { useCandidateActions, useCandidateDetails } from '@/features/candidates/hooks/useCandidates'
 import { useStageMove } from '@/features/pipeline/hooks/useStageMove'
-import { useLookups, fullName } from '@/hooks/useStore'
+import { useCollection, useLookups, fullName } from '@/hooks/useStore'
 import { useGlobalActions } from '@/app/providers/GlobalActionsContext'
 import { useSession } from '@/app/providers/SessionContext'
 import { formatDate, formatDateTime } from '@/utils/formatDate'
 
+/** Candidate 360: every application, evaluation, note, task and event for one person. */
 export default function CandidateDetailsPage() {
   const { candidateId } = useParams()
+  const navigate = useNavigate()
   const details = useCandidateDetails(candidateId)
   const actions = useCandidateActions()
   const global = useGlobalActions()
-  const { can } = useSession()
+  const { can, role } = useSession()
   const { templatesById } = useLookups()
+  const allFeedback = useCollection('interviewFeedback')
+  const tasks = useCollection('tasks')
   const stageMove = useStageMove(actions.moveStage.run)
   const [tab, setTab] = useState('applications')
   const [adding, setAdding] = useState(false)
+  const [erasing, setErasing] = useState(false)
+
+  const candidateTasks = useMemo(() => tasks.filter((t) => t.candidateId === candidateId), [tasks, candidateId])
 
   if (!details) {
     return (
@@ -54,14 +68,16 @@ export default function CandidateDetailsPage() {
   const { candidate, apps, interviews, assessments, activities } = details
   const name = fullName(candidate)
   const primary = apps.find((a) => a.app.status === 'active') ?? apps[0]
-  const feedbackCount = interviews.filter((i) => i.feedback).length
+  const withFeedback = interviews.filter((i) => feedbackCompletion(i, allFeedback).submitted > 0).length
+  const openTasks = candidateTasks.filter((t) => t.status === 'open').length
 
   const tabs = [
     { value: 'applications', label: 'Applications', count: apps.length },
     { value: 'profile', label: 'Profile' },
     { value: 'evaluations', label: 'Interviews & assessments', count: interviews.length + assessments.length },
     { value: 'notes', label: 'Notes', count: candidate.notes.length },
-    { value: 'activity', label: 'Activity' },
+    { value: 'tasks', label: 'Tasks', count: openTasks },
+    { value: 'activity', label: 'Timeline' },
   ]
 
   return (
@@ -69,18 +85,19 @@ export default function CandidateDetailsPage() {
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-start gap-4">
           <Avatar name={name} size="lg" />
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl font-semibold tracking-tight">{name}</h1>
               {primary && <StageBadge app={primary.app} stage={primary.stage} />}
             </div>
-            <p className="text-muted mt-0.5 text-sm">
+            <p className="text-muted text-sm">
               {candidate.currentTitle}
               {candidate.currentCompany !== '—' && ` at ${candidate.currentCompany}`} · {candidate.experienceYears} yrs experience
             </p>
-            <p className="text-faint mt-0.5 text-xs">
-              {candidate.ref} · {candidate.location}
+            <p className="text-faint text-xs">
+              {candidate.ref} · {candidate.location} · Source: {candidate.source}
             </p>
+            <CandidateTags candidate={candidate} />
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -90,9 +107,6 @@ export default function CandidateDetailsPage() {
           <Button icon={BriefcaseBusiness} onClick={() => setAdding(true)} disabled={!can('candidates.manage')}>
             Add to vacancy
           </Button>
-          <Button icon={Sparkles} to={`/ai-assistant?candidate=${candidate.id}${primary ? `&job=${primary.job.id}` : ''}`} disabled={!can('ai.use')}>
-            Ask AI
-          </Button>
           <Button
             variant="primary"
             icon={CalendarPlus}
@@ -101,6 +115,33 @@ export default function CandidateDetailsPage() {
           >
             Schedule
           </Button>
+          <Dropdown
+            menuLabel="More actions"
+            items={[
+              {
+                label: 'Ask AI assistant',
+                icon: Sparkles,
+                disabled: !can('ai.use'),
+                onSelect: () => navigate(`/ai-assistant?candidate=${candidate.id}${primary ? `&job=${primary.job.id}` : ''}`),
+              },
+              {
+                label: 'Compare with others',
+                icon: Scale,
+                disabled: !primary,
+                onSelect: () => navigate(`/compare?job=${primary?.job.id}&ids=${primary?.app.id}`),
+              },
+              { divider: true },
+              {
+                label: 'Erase candidate data…',
+                icon: ShieldAlert,
+                danger: true,
+                disabled: role !== 'Admin',
+                disabledReason: 'Administrators only',
+                onSelect: () => setErasing(true),
+              },
+            ]}
+            renderTrigger={(props) => <Button {...props} iconOnly icon={MoreHorizontal} aria-label="More actions" />}
+          />
         </div>
       </div>
 
@@ -137,27 +178,36 @@ export default function CandidateDetailsPage() {
 
             {tab === 'evaluations' && (
               <div className="space-y-6">
-                <Panel title="Interviews" description={`${feedbackCount} with submitted feedback`}>
+                <Panel title="Interviews" description={`${withFeedback} of ${interviews.length} with submitted scorecards`}>
                   {interviews.length ? (
                     <ul className="divide-line border-line divide-y border-t">
-                      {interviews.map((i) => (
-                        <li key={i.id} className="space-y-3 px-5 py-4">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                              <p className="text-sm font-medium">{i.stageName}</p>
-                              <p className="text-muted text-xs">
-                                {formatDateTime(i.start)} · {i.mode}
-                              </p>
+                      {interviews.map((i) => {
+                        const fb = allFeedback.filter((f) => f.interviewId === i.id)
+                        const submitted = fb.filter((f) => f.status === 'submitted')
+                        const completion = feedbackCompletion(i, allFeedback)
+                        return (
+                          <li key={i.id} className="space-y-3 px-5 py-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <p className="text-sm font-medium">{i.stageName}</p>
+                                <p className="text-muted text-xs">
+                                  {formatDateTime(i.start)} · {i.mode}
+                                </p>
+                              </div>
+                              <StatusBadge kind="interview" value={i.status} />
                             </div>
-                            <StatusBadge kind="interview" value={i.status} />
-                          </div>
-                          {i.feedback ? (
-                            <FeedbackSummary interview={i} />
-                          ) : i.status === 'completed' ? (
-                            <p className="text-xs text-amber-700">Feedback has not been submitted yet.</p>
-                          ) : null}
-                        </li>
-                      ))}
+                            {i.status === 'completed' && !completion.complete && (
+                              <p className="text-xs text-amber-700">
+                                {completion.submitted}/{completion.total} scorecards submitted
+                              </p>
+                            )}
+                            <FeedbackComparison feedback={fb} scorecardId={i.scorecardId} />
+                            {submitted.map((f) => (
+                              <FeedbackSummary key={f.id} feedback={f} scorecardId={i.scorecardId} />
+                            ))}
+                          </li>
+                        )
+                      })}
                     </ul>
                   ) : (
                     <EmptyState compact title="No interviews yet" />
@@ -200,9 +250,15 @@ export default function CandidateDetailsPage() {
               </Panel>
             )}
 
+            {tab === 'tasks' && (
+              <Panel title="Follow-up tasks" bodyClassName="pb-2">
+                <TaskList tasks={candidateTasks} candidateId={candidate.id} showCandidate={false} emptyText="No tasks for this candidate." />
+              </Panel>
+            )}
+
             {tab === 'activity' && (
               <Panel bodyClassName="pt-5">
-                <RecentActivity items={activities} limit={40} linkCandidates={false} />
+                <RecentActivity items={activities} limit={60} linkCandidates={false} />
               </Panel>
             )}
           </div>
@@ -222,6 +278,10 @@ export default function CandidateDetailsPage() {
             <SkillsList skills={candidate.skills} highlight={primary?.job.skills ?? []} />
             {primary && <p className="text-xxs text-faint mt-3">Highlighted skills match {primary.job.title}.</p>}
           </Panel>
+          <Panel bodyClassName="p-5">
+            <SectionTitle>Talent pools</SectionTitle>
+            <PoolMembership candidateId={candidate.id} />
+          </Panel>
         </aside>
       </div>
 
@@ -232,6 +292,22 @@ export default function CandidateDetailsPage() {
         onClose={stageMove.cancel}
         onConfirm={stageMove.confirm}
         loading={stageMove.pending}
+      />
+      <ConfirmDialog
+        open={erasing}
+        onClose={() => setErasing(false)}
+        title={`Erase all data for ${name}?`}
+        description="This permanently deletes the profile, applications, interviews, scorecards, assessments, offers, onboarding records, tasks and stored documents. Use it for data-deletion requests. This cannot be undone."
+        confirmLabel="Erase permanently"
+        tone="danger"
+        reasonLabel={`Type the candidate ID (${candidate.ref}) to confirm`}
+        requireReason
+        loading={actions.erase.pending}
+        onConfirm={async (typed) => {
+          if (typed.trim() !== candidate.ref) return
+          const res = await actions.erase.run(candidate.id)
+          if (res.ok) navigate('/candidates', { replace: true })
+        }}
       />
     </div>
   )

@@ -5,6 +5,7 @@ import { useSession } from '@/app/providers/SessionContext'
 import { pipelineService } from '@/features/pipeline/pipelineService'
 import { matchesCandidate } from '@/utils/search'
 import { stageRank } from '@/utils/statusHelpers'
+import { isFeedbackPending } from '@/features/interviews/feedbackSelectors'
 
 const DAY = 86_400_000
 
@@ -16,6 +17,7 @@ export function useRecruitmentPipeline(jobId, { query = '', recruiterId = 'all',
   const applications = useCollection('applications')
   const interviews = useCollection('interviews')
   const assessments = useCollection('assessments')
+  const feedback = useCollection('interviewFeedback')
   const { jobsById, candidatesById, usersById } = useLookups()
   const { actorId } = useSession()
   const [overrides, setOverrides] = useState({})
@@ -43,12 +45,12 @@ export function useRecruitmentPipeline(jobId, { query = '', recruiterId = 'all',
           recruiter: usersById.get(candidate?.recruiterId),
           daysInStage: Math.max(0, Math.floor((now - new Date(enteredAt).getTime()) / DAY)),
           nextInterview: next ?? null,
-          pendingFeedback: appInterviews.some((i) => i.status === 'completed' && !i.feedback),
+          pendingFeedback: appInterviews.some((i) => isFeedbackPending(i, feedback)),
           openAssessment: assessments.find((x) => x.applicationId === app.id && ['pending', 'in-progress', 'submitted'].includes(x.status)) ?? null,
         }
       })
       .filter((c) => c.candidate && matchesCandidate(c.candidate, query) && (recruiterId === 'all' || c.candidate.recruiterId === recruiterId))
-  }, [job, jobId, applications, interviews, assessments, candidatesById, usersById, overrides, query, recruiterId, showRejected])
+  }, [job, jobId, applications, interviews, assessments, feedback, candidatesById, usersById, overrides, query, recruiterId, showRejected])
 
   const columns = useMemo(() => {
     if (!job) return []

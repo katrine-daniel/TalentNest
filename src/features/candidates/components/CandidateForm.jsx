@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Controller, useForm } from 'react-hook-form'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import TagInput from '@/components/ui/TagInput'
 import FileDropzone from '@/components/ui/FileDropzone'
-import MockNotice from '@/components/ui/MockNotice'
 import { Field, Input, Select, Textarea } from '@/components/ui/FormControls'
 import { useCandidateActions } from '@/features/candidates/hooks/useCandidates'
+import { findDuplicates } from '@/features/candidates/candidateService'
 import { useOrgOptions } from '@/features/jobs/hooks/useJobs'
 import { useCollection } from '@/hooks/useStore'
 import { useSession } from '@/app/providers/SessionContext'
@@ -76,8 +76,20 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
     control,
     reset,
     setError,
+    watch,
     formState: { errors, isDirty },
   } = useForm({ defaultValues: EMPTY })
+
+  // Live duplicate check against existing candidates (email, phone, or name + location).
+  const candidates = useCollection('candidates')
+  const [wEmail, wPhone, wFirst, wLast, wLocation] = watch(['email', 'phone', 'firstName', 'lastName', 'location'])
+  const duplicates = useMemo(
+    () =>
+      open && (wEmail || wPhone || (wFirst && wLast))
+        ? findDuplicates({ email: wEmail, phone: wPhone, firstName: wFirst, lastName: wLast, location: wLocation }, candidates, candidate?.id)
+        : [],
+    [open, wEmail, wPhone, wFirst, wLast, wLocation, candidates, candidate?.id],
+  )
 
   useEffect(() => {
     if (!open) return
@@ -97,10 +109,7 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
       else if (/email/i.test(res.error?.message)) setError('email', { message: res.error.message })
       return
     }
-    const res = await actions.create.run({
-      ...values,
-      resume: resume ? { fileName: resume.name, size: resume.size, uploadedAt: new Date().toISOString() } : null,
-    })
+    const res = await actions.create.run(values, resume)
     if (res.ok) {
       onClose()
       navigate(`/candidates/${res.data.id}`)
@@ -132,6 +141,21 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
       }
     >
       <form id="candidate-form" onSubmit={handleSubmit(onSubmit)} className="space-y-7" noValidate>
+        {duplicates.length > 0 && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="status">
+            <p className="font-medium">Possible duplicate{duplicates.length > 1 ? 's' : ''}</p>
+            <ul className="mt-1 space-y-0.5 text-xs">
+              {duplicates.slice(0, 3).map((d) => (
+                <li key={d.candidate.id}>
+                  <Link to={`/candidates/${d.candidate.id}`} onClick={onClose} className="font-medium underline">
+                    {d.candidate.firstName} {d.candidate.lastName} ({d.candidate.ref})
+                  </Link>{' '}
+                  — {d.reasons.join(', ')}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <Section title="Personal details">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="First name" required error={errors.firstName?.message}>
@@ -223,9 +247,7 @@ export default function CandidateForm({ open, onClose, candidate, defaultJobId }
                 <div className="sm:col-span-2">
                   <p className="text-ink-soft mb-1.5 text-xs font-medium">Resume</p>
                   <FileDropzone file={resume} onFile={setResume} onClear={() => setResume(null)} />
-                  <MockNotice className="mt-2">
-                    Demo mode stores only the file name and size in this browser. Connect object storage to keep the actual document.
-                  </MockNotice>
+                  <p className="text-faint mt-1.5 text-xs">Stored privately (this browser in demo mode; your organization's storage bucket with Supabase).</p>
                 </div>
                 <Field label="Recruiter note" optional className="sm:col-span-2">
                   {(a) => <Textarea {...a} {...register('note')} rows={2} placeholder="Context from the first conversation…" />}
