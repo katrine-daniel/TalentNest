@@ -1,11 +1,8 @@
 import { createRng, pick, relativeDate, intBetween } from './seedUtils'
-import { ONBOARDING_TASKS } from './mockSettings'
+import { DEFAULT_ONBOARDING_TEMPLATES } from './orgDefaults'
+import { createOnboardingPlan, derivePlanStatus } from '@/features/onboarding/onboardingPlanFactory'
 
 const DAY = 86_400_000
-
-export function onboardingChecklist(prefix, doneCount = 0) {
-  return ONBOARDING_TASKS.map((label, i) => ({ id: `${prefix}-t${i}`, label, done: i < doneCount }))
-}
 
 export function buildOffers({ applications, jobs, candidates }) {
   const rng = createRng(53)
@@ -34,7 +31,6 @@ export function buildOffers({ applications, jobs, candidates }) {
       startDate: relativeDate(intBetween(rng, 10, 35)),
       respondedAt: null,
       notes: '',
-      onboarding: onboardingChecklist(`off-${app.id}`, 0),
     }
 
     if (stage.type === 'hired') {
@@ -43,7 +39,6 @@ export function buildOffers({ applications, jobs, candidates }) {
         status: 'accepted',
         respondedAt: new Date(new Date(offerStageEntry).getTime() + DAY * 2).toISOString(),
         startDate: relativeDate(intBetween(rng, 3, 21)),
-        onboarding: onboardingChecklist(base.id, intBetween(rng, 1, 5)),
       })
     } else if (app.status === 'rejected') {
       offers.push({
@@ -59,4 +54,32 @@ export function buildOffers({ applications, jobs, candidates }) {
   })
 
   return offers
+}
+
+/** Onboarding plans for accepted offers, with some tasks already completed. */
+export function buildOnboardingPlans({ offers, jobs, users }) {
+  const rng = createRng(61)
+  const template = DEFAULT_ONBOARDING_TEMPLATES[0]
+  return offers
+    .filter((o) => o.status === 'accepted')
+    .map((offer) => {
+      const job = jobs.find((j) => j.id === offer.jobId)
+      const plan = createOnboardingPlan({ template, offer, job, users, now: new Date(offer.respondedAt) })
+      const doneCount = intBetween(rng, 1, 4)
+      plan.tasks = plan.tasks.map((t, i) =>
+        i < doneCount
+          ? {
+              ...t,
+              done: true,
+              completedAt: offer.respondedAt,
+              document: t.requiresDocument
+                ? { fileName: `${t.label.split(' ')[0]}_${offer.candidateId}.pdf`, size: 180_000, mimeType: 'application/pdf', uploadedAt: offer.respondedAt }
+                : null,
+            }
+          : t,
+      )
+      plan.status = derivePlanStatus(plan)
+      plan.history.push({ id: `${plan.id}-h1`, at: offer.respondedAt, byId: job.recruiterId, text: `${doneCount} task(s) completed` })
+      return plan
+    })
 }

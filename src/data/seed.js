@@ -3,13 +3,14 @@ import { createRng, pick, intBetween, relativeDate } from './seedUtils'
 import { mockDepartments, mockUsers } from './mockOrganization'
 import { mockWorkflowTemplates, stagesFromTemplate } from './mockWorkflows'
 import { mockJobs } from './mockJobs'
-import { buildCandidates, CANDIDATE_COUNT, CANDIDATE_SOURCES } from './mockCandidates'
+import { buildCandidates, CANDIDATE_COUNT } from './mockCandidates'
 import { buildInterviews, buildAssessments } from './mockInterviews'
-import { buildOffers } from './mockOffers'
-import { buildMonthlyHistory, buildWeeklyHistory, mockTimeToHireByDepartment } from './mockDashboard'
+import { buildOffers, buildOnboardingPlans } from './mockOffers'
+import { buildRequisitions, buildTasks, buildTalentPools, buildSavedSearches } from './mockRecruitingOps'
+import { DEFAULT_ONBOARDING_TEMPLATES, defaultAutomationRules } from './orgDefaults'
 import { mockAssessmentTemplates, mockScorecards, mockNotificationPrefs, mockSettingsMeta } from './mockSettings'
 
-export const SEED_VERSION = 6
+export const SEED_VERSION = 7
 
 const JOB_WEIGHTS = {
   'job-101': 4,
@@ -100,7 +101,7 @@ function buildApplication(rng, { id, candidate, job, forceEarly = false }) {
   }
 }
 
-function buildActivities({ applications, interviews, assessments, offers, jobs, candidates }) {
+function buildActivities({ applications, interviews, interviewFeedback, assessments, offers, jobs, candidates }) {
   const activities = []
   const name = (id) => {
     const c = candidates.find((x) => x.id === id)
@@ -141,18 +142,23 @@ function buildActivities({ applications, interviews, assessments, offers, jobs, 
       jobId: i.jobId,
       text: `${i.stageName} scheduled with ${name(i.candidateId)}`,
     })
-    if (i.feedback) {
+  })
+
+  const interviewsById = new Map(interviews.map((i) => [i.id, i]))
+  interviewFeedback
+    .filter((f) => f.status === 'submitted')
+    .forEach((f) => {
+      const i = interviewsById.get(f.interviewId)
       activities.push({
-        id: `act-${i.id}-f`,
-        at: i.feedback.submittedAt,
+        id: `act-${f.id}`,
+        at: f.submittedAt,
         type: 'feedback',
-        actorId: i.feedback.submittedById,
+        actorId: f.interviewerId,
         candidateId: i.candidateId,
         jobId: i.jobId,
         text: `Feedback submitted for ${name(i.candidateId)} — ${i.stageName}`,
       })
-    }
-  })
+    })
 
   assessments.forEach((a) => {
     if (a.completedAt) {
@@ -188,14 +194,15 @@ function buildActivities({ applications, interviews, assessments, offers, jobs, 
     .slice(0, 160)
 }
 
-function buildNotifications({ interviews, assessments, offers, applications, candidates, jobs }) {
+function buildNotifications({ interviews, interviewFeedback, assessments, offers, applications, candidates, jobs }) {
   const name = (id) => {
     const c = candidates.find((x) => x.id === id)
     return c ? `${c.firstName} ${c.lastName}` : 'Candidate'
   }
+  const submitted = (i) => interviewFeedback.filter((f) => f.interviewId === i.id && f.status === 'submitted').length
   const items = []
   interviews
-    .filter((i) => i.status === 'completed' && !i.feedback)
+    .filter((i) => i.status === 'completed' && submitted(i) < i.interviewerIds.length)
     .slice(0, 3)
     .forEach((i) =>
       items.push({
@@ -287,11 +294,17 @@ export function createSeed() {
     applications.push(buildApplication(rng, { id: `app-${2001 + i}`, candidate, job, forceEarly: true }))
   })
 
-  const interviews = buildInterviews({ applications, jobs })
+  const { interviews, feedback: interviewFeedback } = buildInterviews({ applications, jobs })
   const assessments = buildAssessments({ applications, jobs })
   const offers = buildOffers({ applications, jobs, candidates })
-  const activities = buildActivities({ applications, interviews, assessments, offers, jobs, candidates })
-  const notifications = buildNotifications({ interviews, assessments, offers, applications, candidates, jobs })
+  const onboardingPlans = buildOnboardingPlans({ offers, jobs, users: mockUsers })
+  const requisitions = buildRequisitions(jobs)
+  const jobsWithReqs = jobs.map((j) => ({ ...j, requisitionId: `req-${j.id}` }))
+  const activities = buildActivities({ applications, interviews, interviewFeedback, assessments, offers, jobs, candidates })
+  const notifications = buildNotifications({ interviews, interviewFeedback, assessments, offers, applications, candidates, jobs })
+
+  // Candidate tags for the 360 profile and talent search.
+  const tagged = candidates.map((c, i) => ({ ...c, tags: i % 4 === 0 ? ['Silver medallist'] : i % 7 === 0 ? ['Referral', 'Relocation ok'] : [] }))
 
   return {
     version: SEED_VERSION,
@@ -299,12 +312,21 @@ export function createSeed() {
     users: mockUsers,
     departments: mockDepartments,
     workflowTemplates: mockWorkflowTemplates,
-    jobs,
-    candidates,
+    jobs: jobsWithReqs,
+    requisitions,
+    candidates: tagged,
     applications,
     interviews,
+    interviewFeedback,
     assessments,
     offers,
+    onboardingPlans,
+    onboardingTemplates: DEFAULT_ONBOARDING_TEMPLATES,
+    tasks: buildTasks(applications, jobs, candidates),
+    talentPools: buildTalentPools(candidates),
+    savedSearches: buildSavedSearches(),
+    automationRules: defaultAutomationRules('usr-01', relativeDate(-30)),
+    automationRuns: [],
     activities,
     notifications,
     assessmentTemplates: mockAssessmentTemplates,
@@ -312,12 +334,6 @@ export function createSeed() {
     settings: {
       rolePermissions: mockSettingsMeta.rolePermissions,
       notificationPrefs: mockNotificationPrefs,
-    },
-    reporting: {
-      monthly: buildMonthlyHistory(12),
-      weekly: buildWeeklyHistory(12),
-      timeToHireByDepartment: mockTimeToHireByDepartment,
-      sources: CANDIDATE_SOURCES,
     },
   }
 }

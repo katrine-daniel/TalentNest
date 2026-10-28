@@ -6,3 +6,8 @@ dist
 *.log
 .DS_Store
 .claude/
+coverage
+test-results
+playwright-report
+blob-report
+supabase/.temp

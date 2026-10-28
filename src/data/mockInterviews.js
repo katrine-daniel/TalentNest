@@ -44,15 +44,30 @@ function locationFor(mode, job) {
   return `${job.location} office — Interview room ${['2A', '3B', '4C'][job.title.length % 3]}`
 }
 
-function buildFeedback(rng, scorecardId, interviewerId, at, positive) {
+const EVIDENCE = [
+  'Gave a concrete example with measurable outcome.',
+  'Answer was correct but needed prompting.',
+  'Walked through the scenario step by step.',
+  'Referenced relevant experience from previous role.',
+  'Response was generic; limited specifics.',
+]
+
+/** One interviewer's submitted scorecard (InterviewFeedback). */
+function buildFeedback(rng, { interviewId, scorecardId, interviewerId, at, positive, status = 'submitted' }) {
   const scorecard = mockScorecards.find((s) => s.id === scorecardId)
   const base = positive ? 3.6 : 2.2
   const ratings = Object.fromEntries(scorecard.criteria.map((c) => [c.id, Math.max(1, Math.min(5, Math.round(base + rng() * 1.6)))]))
+  const evidence = Object.fromEntries(scorecard.criteria.map((c) => [c.id, pick(rng, EVIDENCE)]))
   const avg = Object.values(ratings).reduce((a, b) => a + b, 0) / scorecard.criteria.length
   return {
-    submittedById: interviewerId,
-    submittedAt: at,
+    id: `fb-${interviewId}-${interviewerId}`,
+    interviewId,
+    interviewerId,
+    status,
+    updatedAt: at,
+    submittedAt: status === 'submitted' ? at : null,
     ratings,
+    evidence,
     recommendation: avg >= 4.2 ? 'strong-yes' : avg >= 3.2 ? 'yes' : avg >= 2.4 ? 'no' : 'strong-no',
     strengths: pick(rng, STRENGTHS),
     concerns: pick(rng, CONCERNS),
@@ -66,6 +81,7 @@ export function buildInterviews({ applications, jobs }) {
   const rng = createRng(31)
   const now = Date.now()
   const interviews = []
+  const feedback = []
 
   applications.forEach((app) => {
     const job = jobs.find((j) => j.id === app.jobId)
@@ -75,7 +91,10 @@ export function buildInterviews({ applications, jobs }) {
       if (stage.type !== 'interview' || idx > currentIdx) return
       const entered = enteredAt(app, stage.id)
       if (!entered) return
-      const panel = stage.name.toLowerCase().includes('hr') ? ['usr-11'] : [pick(rng, INTERVIEWERS[job.departmentId])]
+      const isHr = stage.name.toLowerCase().includes('hr')
+      const lead = pick(rng, INTERVIEWERS[job.departmentId])
+      // About half of the non-HR rounds have a two-person panel, so evaluations can be compared.
+      const panel = isHr ? ['usr-11'] : rng() < 0.5 && job.hiringManagerId !== lead ? [lead, job.hiringManagerId] : [lead]
       const mode = modeFor(job.departmentId, stage.name, rng)
       const scorecardId = scorecardForStage(stage.name)
       const base = {
@@ -103,13 +122,10 @@ export function buildInterviews({ applications, jobs }) {
         const start = new Date(new Date(entered).getTime() + DAY * intBetween(rng, 1, 2))
         start.setHours(intBetween(rng, 10, 16), pick(rng, [0, 30]), 0, 0)
         const startIso = new Date(Math.min(start.getTime(), now - DAY / 2)).toISOString()
-        interviews.push({
-          ...base,
-          start: startIso,
-          status: 'completed',
-          attendance: 'attended',
-          feedback: buildFeedback(rng, scorecardId, panel[0], startIso, !rejectedHere),
-        })
+        interviews.push({ ...base, start: startIso, status: 'completed', attendance: 'attended' })
+        panel.forEach((uid) =>
+          feedback.push(buildFeedback(rng, { interviewId: base.id, scorecardId, interviewerId: uid, at: startIso, positive: !rejectedHere })),
+        )
         return
       }
 
@@ -117,7 +133,12 @@ export function buildInterviews({ applications, jobs }) {
       const pendingFeedback = rng() < 0.3 && new Date(entered).getTime() < now - DAY * 1.2
       if (pendingFeedback) {
         const start = workingDay(-1, intBetween(rng, 10, 15), pick(rng, [0, 30]))
-        interviews.push({ ...base, start, status: 'completed', attendance: 'attended', feedback: null })
+        interviews.push({ ...base, start, status: 'completed', attendance: 'attended' })
+        // Partial completion: on two-person panels the second interviewer has only a draft.
+        if (panel.length > 1) {
+          feedback.push(buildFeedback(rng, { interviewId: base.id, scorecardId, interviewerId: panel[0], at: start, positive: true }))
+          feedback.push(buildFeedback(rng, { interviewId: base.id, scorecardId, interviewerId: panel[1], at: start, positive: true, status: 'draft' }))
+        }
       } else {
         const start = workingDay(intBetween(rng, 0, 9), intBetween(rng, 9, 17), pick(rng, [0, 30]))
         interviews.push({
@@ -126,13 +147,12 @@ export function buildInterviews({ applications, jobs }) {
           status: 'scheduled',
           attendance: rng() > 0.35 ? 'confirmed' : 'pending',
           reminderSentAt: rng() > 0.5 ? new Date(now - DAY / 3).toISOString() : null,
-          feedback: null,
         })
       }
     })
   })
 
-  return interviews
+  return { interviews, feedback }
 }
 
 export function buildAssessments({ applications, jobs }) {

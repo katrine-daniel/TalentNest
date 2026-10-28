@@ -31,6 +31,12 @@ export const rules = {
   },
 }
 
+export const passwordRules = {
+  required: 'Password is required',
+  minLength: { value: 10, message: 'Use at least 10 characters' },
+  validate: (v) => (/[A-Za-z]/.test(v) && /\d/.test(v)) || 'Include both letters and numbers',
+}
+
 export const RESUME_ACCEPT = '.pdf,.doc,.docx'
 export const RESUME_MAX_BYTES = 5 * 1024 * 1024
 
