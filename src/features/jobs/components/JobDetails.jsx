@@ -182,7 +182,7 @@ export function JobActivity({ job }) {
               <CartesianGrid stroke={CHART_COLORS.grid} vertical={false} />
               <XAxis dataKey="week" {...AXIS_PROPS} />
               <YAxis {...AXIS_PROPS} allowDecimals={false} />
-              <Tooltip content={<ChartTooltip />} cursor={{ fill: '#f3f3f6' }} />
+              <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--color-subtle)' }} />
               <Bar dataKey="applications" name="Applications" fill={CHART_COLORS.brand} radius={[3, 3, 0, 0]} maxBarSize={18} />
               <Bar dataKey="moves" name="Stage moves" fill={CHART_COLORS.brandSoft} radius={[3, 3, 0, 0]} maxBarSize={18} />
             </BarChart>

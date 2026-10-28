@@ -30,18 +30,20 @@ const EMPTY = {
   recruiterId: '',
   status: 'open',
   workflowTemplateId: '',
+  requisitionId: '',
 }
 
 const stagesFromTemplate = (template) => template?.stages.map((s, i) => ({ id: `tmp-${template.id}-${i}`, name: s.name, type: s.type })) ?? []
 
 /** Create or edit a vacancy, including its job-specific recruitment workflow. */
-export default function JobForm({ open, onClose, job }) {
+export default function JobForm({ open, onClose, job, prefill }) {
   const isEdit = Boolean(job)
   const navigate = useNavigate()
   const options = useOrgOptions()
   const templates = useCollection('workflowTemplates')
   const applications = useCollection('applications')
   const jobs = useCollection('jobs')
+  const requisitions = useCollection('requisitions')
   const actions = useJobActions()
   const [stages, setStages] = useState([])
   const [stagesError, setStagesError] = useState(null)
@@ -70,15 +72,23 @@ export default function JobForm({ open, onClose, job }) {
     setStagesError(null)
     setStagesDirty(false)
     if (job) {
-      reset({ ...EMPTY, ...job })
+      reset({ ...EMPTY, ...job, requisitionId: job.requisitionId ?? '' })
       setStages(job.stages)
     } else {
-      reset(EMPTY)
+      reset({ ...EMPTY, ...prefill, status: prefill?.requisitionId ? 'open' : 'draft' })
       setStages([])
     }
-  }, [open, job, reset])
+  }, [open, job, prefill, reset])
 
   const templateId = watch('workflowTemplateId')
+  const requisitionId = watch('requisitionId')
+  const status = watch('status')
+  const linkedReq = requisitions.find((r) => r.id === requisitionId)
+  // Approved requisitions not yet used by another vacancy (plus the one already linked to this vacancy).
+  const requisitionOptions = requisitions
+    .filter((r) => r.status === 'approved' && (!r.jobId || r.jobId === job?.id || r.id === requisitionId))
+    .map((r) => ({ value: r.id, label: ` ·  hire` }))
+  const publishBlocked = status === 'open' && linkedReq?.status !== 'approved'
   useEffect(() => {
     if (isEdit || !templateId) return
     setStages(stagesFromTemplate(templates.find((t) => t.id === templateId)))
@@ -95,7 +105,7 @@ export default function JobForm({ open, onClose, job }) {
       setStagesError('Every stage needs a name')
       return
     }
-    const payload = { ...values, stages }
+    const payload = { ...values, requisitionId: values.requisitionId || null, stages }
     const res = isEdit ? await actions.update.run(job.id, payload) : await actions.create.run(payload)
     if (res.ok) {
       onClose()
@@ -179,7 +189,28 @@ export default function JobForm({ open, onClose, job }) {
                 />
               )}
             </Field>
-            <Field label="Status">{(a) => <Select {...a} {...register('status')} options={toOptions('job')} />}</Field>
+            <Field label="Status" error={publishBlocked ? 'Publishing needs an approved requisition — save as draft or link one' : undefined}>
+              {(a) => <Select {...a} {...register('status')} options={toOptions('job')} invalid={publishBlocked} />}
+            </Field>
+            <Field
+              label="Approved requisition"
+              optional
+              className="sm:col-span-2"
+              hint={
+                linkedReq
+                  ? `Budget ₹${linkedReq.budgetMin.toLocaleString('en-IN')}–₹${linkedReq.budgetMax.toLocaleString('en-IN')} per hire`
+                  : 'Required to publish (status Open).'
+              }
+            >
+              {(a) => (
+                <Select
+                  {...a}
+                  {...register('requisitionId')}
+                  options={requisitionOptions}
+                  placeholder={requisitionOptions.length ? 'Not linked' : 'No approved requisitions available'}
+                />
+              )}
+            </Field>
             <div className="grid grid-cols-2 gap-3 sm:col-span-2">
               <Field label="Min. experience (yrs)" required error={errors.experienceMin?.message}>
                 {(a) => (
