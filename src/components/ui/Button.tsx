@@ -13,7 +13,9 @@ const VARIANTS: Record<Variant, string> = {
   danger: 'bg-danger text-white hover:bg-red-800 disabled:bg-danger/50',
   ai: 'bg-lavender text-ai hover:bg-lavender-strong disabled:opacity-60',
 }
-const SIZES: Record<Size, string> = { sm: 'h-8 px-2.5 text-[13px] gap-1.5', md: 'h-9 px-3.5 text-sm gap-2' }
+const SIZES: Record<Size, string> = { sm: 'h-8 text-[13px] gap-1.5', md: 'h-9 text-sm gap-2' }
+// Padding is separate so icon-only buttons are not squeezed by it.
+const PADDING: Record<Size, string> = { sm: 'px-2.5', md: 'px-3.5' }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -38,12 +40,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         'inline-flex shrink-0 items-center justify-center rounded-md font-medium whitespace-nowrap transition-colors disabled:cursor-not-allowed',
         VARIANTS[variant],
         SIZES[size],
-        iconOnly && (size === 'sm' ? 'w-8 px-0' : 'w-9 px-0'),
+        iconOnly ? (size === 'sm' ? 'w-8' : 'w-9') : PADDING[size],
         className,
       )}
       {...rest}
     >
-      {loading ? <Loader2 size={15} className="animate-spin" aria-hidden /> : Icon ? <Icon size={15} aria-hidden /> : null}
+      {loading ? <Loader2 size={15} className="animate-spin" aria-hidden /> : Icon ? <Icon size={iconOnly ? 17 : 15} className="shrink-0" aria-hidden /> : null}
       {!iconOnly && children}
     </button>
   )
@@ -64,6 +66,7 @@ export function LinkButton({
         'inline-flex shrink-0 items-center justify-center rounded-md font-medium whitespace-nowrap transition-colors',
         VARIANTS[variant],
         SIZES[size],
+        PADDING[size],
         className,
       )}
       {...rest}

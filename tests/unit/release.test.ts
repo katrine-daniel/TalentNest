@@ -143,3 +143,13 @@ describe('assistant grounding', () => {
     expect(a.text).toMatch(/couldn't find/)
   })
 })
+
+describe('analytics consistency', () => {
+  it('headcount at start plus joiners minus leavers equals headcount at end', async () => {
+    const { workforceSummary, defaultRange } = await import('@/domain/analytics')
+    for (const days of [30, 90, 365, 1000]) {
+      const s = workforceSummary(store.db, defaultRange(days))
+      expect(s.start + s.joiners - s.leavers).toBe(s.end)
+    }
+  })
+})

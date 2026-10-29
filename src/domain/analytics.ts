@@ -10,9 +10,13 @@ import type { Database, Employee, ID } from './types'
 export const MIN_GROUP = 3
 
 export const DEFINITIONS: Record<string, { label: string; formula: string }> = {
-  headcount: { label: 'Active headcount', formula: 'Employees with status active, on leave or offboarding on the end date of the period.' },
+  headcount: {
+    label: 'Active headcount',
+    formula:
+      'Employees who had joined and not yet passed their last working day on the date measured (excluding pre-boarding). Start = the day before the period; end = its last day or today. Start + joiners − leavers = end.',
+  },
   joiners: { label: 'Joiners', formula: 'Employees whose joining date falls in the period.' },
-  leavers: { label: 'Leavers', formula: 'Employees with an end date in the period and status offboarding or terminated.' },
+  leavers: { label: 'Leavers', formula: 'Employees whose last working day falls in the period (before its final day), with status offboarding or terminated.' },
   turnover: { label: 'Turnover rate', formula: 'Leavers in the period ÷ average of headcount at the start and end of the period.' },
   openRequests: { label: 'Open requests', formula: 'Service requests not resolved, closed, rejected or cancelled.' },
   overdueRequests: { label: 'Overdue requests', formula: 'Open requests past their service target (requests waiting on the employee are excluded).' },
@@ -56,11 +60,16 @@ export function headcountOn(db: Pick<Database, 'employees'>, date: string, r: Ra
 }
 
 export function workforceSummary(db: Database, r: Range) {
+  // Start = headcount the day before the period; end = headcount on its last day (capped at today).
+  // A joiner is counted from their joining day, a leaver from the day after their last working day,
+  // so start + joiners − leavers = end.
   const employees = db.employees.filter((e) => inDept(e, r))
-  const joiners = employees.filter((e) => e.joinDate >= r.from && e.joinDate <= r.to)
-  const leavers = employees.filter((e) => e.endDate && e.endDate >= r.from && e.endDate <= r.to && ['offboarding', 'terminated'].includes(e.status))
-  const start = headcountOn(db, r.from, r)
-  const end = headcountOn(db, r.to > today() ? today() : r.to, r)
+  const before = addDays(r.from, -1)
+  const last = r.to > today() ? today() : r.to
+  const joiners = employees.filter((e) => e.status !== 'pre_boarding' && e.joinDate > before && e.joinDate <= last)
+  const leavers = employees.filter((e) => e.endDate && e.endDate >= before && e.endDate < last && ['offboarding', 'terminated'].includes(e.status))
+  const start = headcountOn(db, before, r)
+  const end = headcountOn(db, last, r)
   return { start, end, joiners: joiners.length, leavers: leavers.length, turnover: rate(leavers.length, (start + end) / 2) }
 }
 

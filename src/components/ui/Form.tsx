@@ -1,8 +1,11 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
+/** Full width unless the caller sets its own width (e.g. `w-auto` in a filter bar). */
+const width = (className?: string) => (className && /(^|\s)w-/.test(className) ? '' : 'w-full')
+
 const control =
-  'w-full rounded-md border bg-surface px-3 text-sm text-ink placeholder:text-muted/80 transition-colors focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/15 disabled:bg-subtle disabled:text-muted'
+  'rounded-md border bg-surface px-3 text-sm text-ink placeholder:text-muted/80 transition-colors focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/15 disabled:bg-subtle disabled:text-muted'
 
 export interface FieldProps {
   label: ReactNode
@@ -43,7 +46,9 @@ export function Field({ label, error, hint, required, className, children }: Fie
 }
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...rest }, ref) {
-  return <input ref={ref} className={cn(control, 'h-9', rest['aria-invalid'] ? 'border-danger' : 'border-line-strong', className)} {...rest} />
+  return (
+    <input ref={ref} className={cn(control, width(className), 'h-9', rest['aria-invalid'] ? 'border-danger' : 'border-line-strong', className)} {...rest} />
+  )
 })
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(function Textarea({ className, rows = 3, ...rest }, ref) {
@@ -51,7 +56,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
     <textarea
       ref={ref}
       rows={rows}
-      className={cn(control, 'py-2 leading-relaxed', rest['aria-invalid'] ? 'border-danger' : 'border-line-strong', className)}
+      className={cn(control, width(className), 'py-2 leading-relaxed', rest['aria-invalid'] ? 'border-danger' : 'border-line-strong', className)}
       {...rest}
     />
   )
@@ -68,7 +73,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
   ref,
 ) {
   return (
-    <select ref={ref} className={cn(control, 'h-9 pr-8', rest['aria-invalid'] ? 'border-danger' : 'border-line-strong', className)} {...rest}>
+    <select ref={ref} className={cn(control, width(className), 'h-9 pr-8', rest['aria-invalid'] ? 'border-danger' : 'border-line-strong', className)} {...rest}>
       {placeholder !== undefined && <option value="">{placeholder}</option>}
       {options.map((o) => (
         <option key={o.value} value={o.value} disabled={o.disabled}>
