@@ -23,13 +23,13 @@ Lucide icons · @dnd-kit (pipeline drag-and-drop). Plain JavaScript (JSX).
 
 ## What's mocked (and clearly labelled in the UI)
 
-| Area | Today | Where to integrate |
-| --- | --- | --- |
-| Data storage | In-memory store persisted to `localStorage` (`src/services/mockDb.js`) | Replace `mockRequest(...)` calls in `src/services/*Service.js` with `http(...)` from `apiClient.js` |
-| Resume upload | Stores file name/size only | `candidateService.attachResume` → signed-URL upload |
-| Calendar invites, reminders, emails | Recorded as status changes only; nothing is sent | `interviewService`, `assessmentService`, `offerService` |
-| AI assistant | Deterministic, locally generated "simulated" responses with sources | `src/services/aiService.js` → backend AI proxy (`VITE_AI_PROXY_URL`) |
-| Auth & permissions | Fixed demo user; "View as role" previews UI permissions | Real auth + server-side authorization |
+| Area                                | Today                                                                  | Where to integrate                                                                                  |
+| ----------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Data storage                        | In-memory store persisted to `localStorage` (`src/services/mockDb.js`) | Replace `mockRequest(...)` calls in `src/services/*Service.js` with `http(...)` from `apiClient.js` |
+| Resume upload                       | Stores file name/size only                                             | `candidateService.attachResume` → signed-URL upload                                                 |
+| Calendar invites, reminders, emails | Recorded as status changes only; nothing is sent                       | `interviewService`, `assessmentService`, `offerService`                                             |
+| AI assistant                        | Deterministic, locally generated "simulated" responses with sources    | `src/services/aiService.js` → backend AI proxy (`VITE_AI_PROXY_URL`)                                |
+| Auth & permissions                  | Fixed demo user; "View as role" previews UI permissions                | Real auth + server-side authorization                                                               |
 
 Use **Account menu → Reset demo data** (or Settings → Demo data) to restore the sample data.
 
