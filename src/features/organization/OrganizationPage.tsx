@@ -520,7 +520,7 @@ function ConfigSection({ section }: { section: Section }) {
     >
       <p className="text-muted border-line border-b px-4 py-2.5 text-xs">{section.description}</p>
       {rows.length ? (
-        <div className="scrollbar-thin overflow-x-auto">
+        <div className="relative scrollbar-thin overflow-x-auto">
           <table className="w-full text-sm">
             <caption className="sr-only">{section.title}</caption>
             <thead>
@@ -736,7 +736,7 @@ function Users() {
           </Field>
         </div>
       </Dialog>
-      <div className="scrollbar-thin overflow-x-auto">
+      <div className="relative scrollbar-thin overflow-x-auto">
         <table className="w-full text-sm">
           <caption className="sr-only">Users</caption>
           <thead>

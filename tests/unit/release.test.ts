@@ -131,3 +131,15 @@ describe('lifecycle status changes', () => {
     expect(store.db.employees.find((e) => e.id === c.employeeId)?.status).toBe('pre_boarding')
   })
 })
+
+describe('assistant grounding', () => {
+  it('does not answer unrelated questions just because they say "policy" or "company"', async () => {
+    const { answerDemo } = await import('@/domain/assistant')
+    const { visiblePolicies } = await import('@/services/policies')
+    const a = answerDemo(store.db, account(HR_ADMIN), 'What is the policy on company cars for pets?', {
+      policies: visiblePolicies(store.db, account(HR_ADMIN)),
+    })
+    expect(a.citations).toHaveLength(0)
+    expect(a.text).toMatch(/couldn't find/)
+  })
+})

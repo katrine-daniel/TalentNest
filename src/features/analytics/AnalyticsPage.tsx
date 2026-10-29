@@ -86,7 +86,7 @@ function ChartPanel({
         {empty ? (
           <EmptyState title="Not enough data for this period" description="Widen the date range or clear the department filter." compact />
         ) : table ? (
-          <div className="scrollbar-thin overflow-x-auto">
+          <div className="relative scrollbar-thin overflow-x-auto">
             <table className="w-full text-sm">
               <caption className="sr-only">{title}</caption>
               <thead>

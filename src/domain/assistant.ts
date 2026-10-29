@@ -17,7 +17,7 @@ import { isOpenRequest, isOverdue } from './sla'
 import type { Account, AssistantCitation, AssistantMessage, Database, Policy } from './types'
 
 const STOP = new Set(
-  'a an and are as at be by can do does for from how i if in is it me my of on or our please should the this to we what when where which who why will with you your about any there their them get'.split(
+  'a an and are as at be by can do does for from how i if in is it me my of on or our please should the this to we what when where which who why will with you your about any there their them get policy policies company'.split(
     ' ',
   ),
 )

@@ -108,7 +108,7 @@ function TeamCalendar({ people }: { people: string[] }) {
       {rows.length === 0 ? (
         <EmptyState title="No team members to show" compact />
       ) : (
-        <div className="scrollbar-thin overflow-x-auto">
+        <div className="relative scrollbar-thin overflow-x-auto">
           <table className="w-full border-collapse text-xs">
             <caption className="sr-only">Team leave calendar</caption>
             <thead>
