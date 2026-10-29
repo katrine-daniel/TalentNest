@@ -165,6 +165,10 @@ function finalize(db: Database, caseId: ID, actorId: ID): Database {
       timeline: [...x.timeline, { id: createId('tl'), at: nowISO(), by: actorId, text: 'All tasks complete' }],
     })),
   }
+  // Status changes to the employee record need people.manage (enforced by RLS too). When someone else
+  // completes the last task, the scheduled checks apply the change on the joining date / last day.
+  const actor = next.accounts.find((a) => a.id === actorId)
+  if (!actor || !can(actor, 'people.manage')) return next
   const e = next.employees.find((x) => x.id === c.employeeId)
   if (e && c.kind === 'onboarding' && e.status === 'pre_boarding' && e.joinDate <= today())
     next = applyEmployeePatch(next, e.id, { status: 'active' }, actorId, 'Onboarding completed')

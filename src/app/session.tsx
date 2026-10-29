@@ -12,7 +12,7 @@ import { can, type Permission } from '@/domain/permissions'
 import type { Account } from '@/domain/types'
 import { createDemoDriver, resetDemoData } from '@/services/demoDriver'
 import { store } from '@/services/store'
-import { installAutomation, stopScheduler } from '@/services/automation'
+import { installAutomation, setAutomationSession, stopScheduler } from '@/services/automation'
 import { useDb } from './hooks'
 
 export const DEMO_SESSION_TTL = 12 * 60 * 60 * 1000
@@ -61,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState({ status: 'signed-out', mode: 'demo', accountId: null, error: null })
       return
     }
+    setAutomationSession(accountId)
     installAutomation({ scheduleInBrowser: true })
     setState({ status: 'signed-in', mode: 'demo', accountId, error: null })
   }, [])
@@ -88,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const t = setInterval(() => {
       if (readDemoSession() === 'expired') {
         stopScheduler()
+        setAutomationSession(null)
         store.disconnect()
         setState({ status: 'expired', mode: 'demo', accountId: null, error: null })
       }
@@ -105,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async signOut() {
         await store.flush()
         stopScheduler()
+        setAutomationSession(null)
         if (state.mode === 'supabase') {
           const { supabaseSignOut } = await import('@/services/supabaseSession')
           await supabaseSignOut()

@@ -1,10 +1,12 @@
 /**
  * Supabase authentication and session wiring (loaded only when Supabase is configured).
  */
+import { env } from '@/config/env'
 import { getSupabase } from '@/lib/supabase'
 import { createSupabaseDriver } from './supabaseDriver'
 import { setAssistantTokenGetter } from './assistant'
-import { installAutomation } from './automation'
+import { installAutomation, setAutomationSession } from './automation'
+import { isHR } from '@/domain/permissions'
 import { files } from './files'
 import { ServiceError, store } from './store'
 
@@ -41,7 +43,11 @@ async function connect(userId: string): Promise<Update> {
   await store.connect(createSupabaseDriver(c, orgId))
   if (store.getState().status === 'error') return { status: 'error', accountId: null, error: store.getState().error }
   // Event rules run in this browser after each change; scheduled checks run on the server.
-  installAutomation({ scheduleInBrowser: false })
+  // There is no server-side scheduler: scheduled checks (joins, leavers, overdue work, expiring documents,
+  // retries) run in the browser of signed-in HR users, whose permissions cover the records they change.
+  setAutomationSession(userId)
+  const me = store.getState().db?.accounts.find((a) => a.id === userId)
+  installAutomation({ scheduleInBrowser: isHR(me) })
   return { status: 'signed-in', accountId: userId, error: null }
 }
 
@@ -87,4 +93,20 @@ export async function updatePassword(password: string) {
   if (password.length < 10) throw new ServiceError('Use at least 10 characters.')
   const { error } = await client().auth.updateUser({ password })
   if (error) throw new ServiceError(error.message)
+}
+
+/** Invites a person through the `invite-member` Edge Function (organization administrators only). */
+export async function inviteMember(input: { email: string; role: string; employeeId: string | null; fullName: string }) {
+  const c = client()
+  const token = (await c.auth.getSession()).data.session?.access_token
+  const orgId = store.getState().db?.organization.id
+  if (!token || !orgId) throw new ServiceError('Sign in again to invite people.', 'forbidden')
+  const res = await fetch(`${env.supabaseUrl}/functions/v1/invite-member`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, apikey: env.supabaseAnonKey },
+    body: JSON.stringify({ ...input, orgId }),
+  }).catch(() => null)
+  if (!res) throw new ServiceError('The invitation service could not be reached. Is the invite-member function deployed?', 'unavailable')
+  const body = (await res.json().catch(() => ({}))) as { error?: string }
+  if (!res.ok) throw new ServiceError(body.error ?? `Invitation failed (${res.status}).`, res.status === 403 ? 'forbidden' : 'unavailable')
 }

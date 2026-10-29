@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useAction, useDb } from '@/app/hooks'
 import { useSession } from '@/app/session'
+import { isSupabaseConfigured } from '@/config/env'
 import { ROLE_LABELS } from '@/domain/permissions'
 import type { ApprovalStage, Database, LifecycleTemplateTask, Role } from '@/domain/types'
 import { fullName } from '@/lib/utils'
@@ -666,12 +667,75 @@ function Users() {
   const db = useDb()
   const { account, can } = useSession()
   const change = useAction((id: string, role: Role) => changeRole(account, id, role), 'Role updated')
+  const [inviting, setInviting] = useState(false)
+  const [invite, setInvite] = useState({ email: '', fullName: '', role: 'employee', employeeId: '' })
+  const send = useAction(
+    async () => (await import('@/services/supabaseSession')).inviteMember({ ...invite, employeeId: invite.employeeId || null }),
+    'Invitation sent — the person appears here after they accept and you reload',
+  )
+  const linked = new Set(db.accounts.map((a) => a.employeeId))
   return (
-    <Panel title="Users & roles">
+    <Panel
+      title="Users & roles"
+      actions={
+        isSupabaseConfigured &&
+        can('accounts.manage') && (
+          <Button size="sm" icon={Plus} onClick={() => setInviting(true)}>
+            Invite
+          </Button>
+        )
+      }
+    >
       <p className="text-muted border-line border-b px-4 py-2.5 text-xs">
-        Roles decide what each person can see and do; the same rules are enforced by the database when Supabase is connected. Inviting users requires the invite
-        Edge Function (see Integrations).
+        Roles decide what each person can see and do; the same rules are enforced by the database when Supabase is connected.{' '}
+        {isSupabaseConfigured
+          ? 'Invitations are sent by the invite-member Edge Function.'
+          : 'The demo workspace has a fixed set of fictional accounts; invitations need Supabase.'}
       </p>
+      <Dialog
+        open={inviting}
+        onClose={() => setInviting(false)}
+        title="Invite a person"
+        size="sm"
+        footer={
+          <>
+            <Button onClick={() => setInviting(false)}>Cancel</Button>
+            <Button variant="primary" loading={send.pending} disabled={!invite.email.trim()} onClick={async () => (await send.run()).ok && setInviting(false)}>
+              Send invitation
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <Field label="Email" required>
+            {(a) => <Input {...a} type="email" value={invite.email} onChange={(e) => setInvite({ ...invite, email: e.target.value })} />}
+          </Field>
+          <Field label="Full name">
+            {(a) => <Input {...a} value={invite.fullName} onChange={(e) => setInvite({ ...invite, fullName: e.target.value })} />}
+          </Field>
+          <Field label="Role">
+            {(a) => (
+              <Select
+                {...a}
+                value={invite.role}
+                onChange={(e) => setInvite({ ...invite, role: e.target.value })}
+                options={Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }))}
+              />
+            )}
+          </Field>
+          <Field label="Employee record" hint="Links the account to their record so they see their own requests and leave.">
+            {(a) => (
+              <Select
+                {...a}
+                value={invite.employeeId}
+                onChange={(e) => setInvite({ ...invite, employeeId: e.target.value })}
+                placeholder="Not linked"
+                options={db.employees.filter((e) => e.status !== 'terminated' && !linked.has(e.id)).map((e) => ({ value: e.id, label: fullName(e) }))}
+              />
+            )}
+          </Field>
+        </div>
+      </Dialog>
       <div className="scrollbar-thin overflow-x-auto">
         <table className="w-full text-sm">
           <caption className="sr-only">Users</caption>

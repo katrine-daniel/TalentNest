@@ -14,7 +14,7 @@ import { createId, fullName, nowISO } from '@/lib/utils'
 import { dedupeKey, interpolate, ruleMatches, validateRule, type EventContext } from '@/domain/automation'
 import { hrHandlers } from '@/domain/approvals'
 import { buildSteps } from '@/domain/approvals'
-import { can } from '@/domain/permissions'
+import { can, type Permission } from '@/domain/permissions'
 import { addBusinessHours } from '@/domain/sla'
 import type { Account, AssigneeTarget, Database, Employee, HRRequest, ID, RuleAction, WorkflowRule, WorkflowRun } from '@/domain/types'
 import { queueEvent, withAudit, withNotifications } from './activity'
@@ -153,6 +153,31 @@ function applyAction(
   }
 }
 
+/**
+ * Actions that write records ordinary members may not change. They run only when the acting session (the
+ * user whose change triggered the event, or the scheduler session) holds the permission; otherwise the run
+ * fails and is retried by an HR session on the next scheduled check. This keeps the browser and the
+ * database (row-level security) in agreement.
+ */
+const ACTION_PERMISSION: Partial<Record<RuleAction['type'], Permission>> = {
+  request_approval: 'requests.handle',
+  update_employee: 'people.manage',
+  start_lifecycle: 'lifecycle.manage',
+}
+
+let sessionAccountId: ID | null = null
+/** The signed-in account that scheduled checks and retries run as. */
+export function setAutomationSession(accountId: ID | null) {
+  sessionAccountId = accountId
+}
+
+function permissionGap(db: Database, event: Pick<DomainEvent, 'actorId'>, action: RuleAction): string | null {
+  const needed = ACTION_PERMISSION[action.type]
+  if (!needed) return null
+  const acting = db.accounts.find((a) => a.id === (event.actorId ?? sessionAccountId))
+  return acting && can(acting, needed) ? null : `Needs a session with the “${needed}” permission — retried on the next scheduled check run by HR.`
+}
+
 export interface ExecuteOptions {
   test?: boolean
   executor?: WorkflowRun['executor']
@@ -174,6 +199,11 @@ export function executeRule(rule: WorkflowRule, event: DomainEvent, opts: Execut
           outcome: action.type === 'send_email' && !EMAIL_PROVIDER_CONFIGURED ? 'skipped' : 'done',
           message: describeAction(action, ctx, db),
         })
+        continue
+      }
+      const gap = permissionGap(db, event, action)
+      if (gap) {
+        results.push({ action: action.type, outcome: 'failed', message: gap })
         continue
       }
       const out = applyAction(next, rule, action, event, ctx, key)
@@ -203,7 +233,7 @@ export function executeRule(rule: WorkflowRule, event: DomainEvent, opts: Execut
   store.commit(() => ({ ...next, runs: [run, ...next.runs].slice(0, 1000) }))
   // Lifecycle starts go through the service so its validation and events apply.
   for (const action of rule.actions) {
-    if (action.type !== 'start_lifecycle' || !event.employeeId) continue
+    if (action.type !== 'start_lifecycle' || !event.employeeId || permissionGap(store.db, event, action)) continue
     try {
       startLifecycle(null, action.kind, event.employeeId, action.templateId)
       patchRunResult(run.id, 'start_lifecycle', 'done', `${action.kind === 'onboarding' ? 'Onboarding' : 'Offboarding'} checklist started`)
@@ -315,6 +345,22 @@ export function runScheduledChecks(now = new Date()): { events: number; retries:
       ),
     )
     queueEvent({ type: 'employee.joined', entity: { type: 'employee', id: e.id }, employeeId: e.id, actorId: null, data: { date: e.joinDate } })
+    count++
+  }
+  // People whose last working day has passed become former employees and lose sign-in.
+  for (const e of store.db.employees.filter((x) => x.status === 'offboarding' && x.endDate && x.endDate < T)) {
+    store.commit((d) =>
+      withAudit(
+        {
+          ...applyEmployeePatch(d, e.id, { status: 'terminated' }, null, 'Last working day passed'),
+          accounts: d.accounts.map((a) => (a.employeeId === e.id ? { ...a, status: 'suspended' as const } : a)),
+        },
+        null,
+        'employee.left',
+        { type: 'employee', id: e.id },
+        `${fullName(e)} left (last day ${e.endDate})`,
+      ),
+    )
     count++
   }
   count += escalateOverdue(now.getTime()).length

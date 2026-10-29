@@ -559,7 +559,8 @@ export interface AssistantMessage {
   /** Facts vs. suggestions are rendered separately. */
   suggestions: string[]
   actions: Array<{ label: string; href: string; requiresConfirmation: boolean }>
-  source: 'demo' | 'ai' | null
+  /** demo = rule-based engine; records = computed from the user's records; ai = server-side AI provider. */
+  source: 'demo' | 'records' | 'ai' | null
 }
 
 export interface Conversation {

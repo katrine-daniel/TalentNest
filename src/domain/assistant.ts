@@ -101,6 +101,17 @@ const policyCitation = (c: PolicyChunk): AssistantCitation => ({
 
 type Answer = Pick<AssistantMessage, 'text' | 'citations' | 'suggestions' | 'actions'>
 
+/** Questions answered from the user's own permission-filtered records (never sent to an AI provider). */
+export const INTENTS = {
+  approvals: (q: string) => /approv/.test(q) && /(await|pending|need|waiting|my|me)/.test(q),
+  overdueChecklists: (q: string) => /overdue|late|behind/.test(q) && /onboard|offboard|checklist|lifecycle|new hire|joiner/.test(q),
+  openRequests: (q: string) => /request|ticket|case/.test(q) && /unresolved|open|outstanding|summar|status|pending/.test(q),
+  followUps: (q: string) => /follow.?up|today|focus|priorit|what should i/.test(q),
+  leaveBalance: (q: string) => /balance|how many (days|holiday)|days (left|remaining)|leave left/.test(q),
+}
+
+export const isRecordQuestion = (question: string) => Object.values(INTENTS).some((test) => test(question.toLowerCase()))
+
 function list(lines: string[], max = 6): string {
   const shown = lines.slice(0, max).map((l) => `• ${l}`)
   if (lines.length > max) shown.push(`…and ${lines.length - max} more`)
@@ -116,7 +127,7 @@ export function answerDemo(db: Database, account: Account, question: string, vis
   }
 
   // --- awaiting my approval
-  if (/approv/.test(q) && /(await|pending|need|waiting|my|me)/.test(q)) {
+  if (INTENTS.approvals(q)) {
     const items = buildInbox(db, account).filter((i) => ['leave_approval', 'request_approval', 'record_update'].includes(i.kind))
     if (!items.length)
       return {
@@ -134,7 +145,7 @@ export function answerDemo(db: Database, account: Account, question: string, vis
   }
 
   // --- overdue onboarding / offboarding
-  if (/overdue|late|behind/.test(q) && /onboard|offboard|checklist|lifecycle|new hire|joiner/.test(q)) {
+  if (INTENTS.overdueChecklists(q)) {
     const team = reportIds(db.employees, account.employeeId)
     const cases = db.lifecycleCases.filter(
       (c) => c.status === 'active' && (can(account, 'lifecycle.manage') || team.has(c.employeeId) || c.tasks.some((t) => t.assigneeId === account.id)),
@@ -159,7 +170,7 @@ export function answerDemo(db: Database, account: Account, question: string, vis
   }
 
   // --- unresolved requests summary
-  if (/request|ticket|case/.test(q) && /unresolved|open|outstanding|summar|status|pending/.test(q)) {
+  if (INTENTS.openRequests(q)) {
     const reqs = db.requests.filter((r) => canViewRequest(account, r, db) && isOpenRequest(r))
     if (!reqs.length) return { text: 'There are no unresolved requests you can see.', citations: [], suggestions: [], actions: [] }
     const overdue = reqs.filter((r) => isOverdue(r))
@@ -180,7 +191,7 @@ export function answerDemo(db: Database, account: Account, question: string, vis
   }
 
   // --- what to follow up on today
-  if (/follow.?up|today|focus|priorit|what should i/.test(q)) {
+  if (INTENTS.followUps(q)) {
     const items = buildInbox(db, account).filter((i) => i.overdue || (i.due && i.due.slice(0, 10) <= T))
     const all = buildInbox(db, account)
     const chosen = items.length ? items : all.slice(0, 5)
@@ -194,7 +205,7 @@ export function answerDemo(db: Database, account: Account, question: string, vis
   }
 
   // --- my leave balance
-  if (/balance|how many (days|holiday)|days (left|remaining)|leave left/.test(q)) {
+  if (INTENTS.leaveBalance(q)) {
     if (!account.employeeId)
       return { text: 'Your account is not linked to an employee record, so there is no leave balance to show.', citations: [], suggestions: [], actions: [] }
     const year = new Date().getFullYear()

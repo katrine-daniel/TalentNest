@@ -8,7 +8,7 @@
  */
 import { env } from '@/config/env'
 import { createId, nowISO } from '@/lib/utils'
-import { answerDemo } from '@/domain/assistant'
+import { answerDemo, isRecordQuestion } from '@/domain/assistant'
 import type { Account, AssistantMessage, Conversation, ID } from '@/domain/types'
 import { visiblePolicies } from './policies'
 import { replaceById, ServiceError, store } from './store'
@@ -25,6 +25,22 @@ export function setAssistantTokenGetter(fn: TokenGetter) {
 function isAnswer(v: unknown): v is Pick<AssistantMessage, 'text' | 'citations' | 'suggestions' | 'actions'> {
   const o = v as Record<string, unknown>
   return Boolean(o) && typeof o.text === 'string' && Array.isArray(o.citations) && Array.isArray(o.suggestions) && Array.isArray(o.actions)
+}
+
+/** Only same-app paths are allowed as links in server responses (no protocol-relative or backslash tricks). */
+export const isSafeHref = (href: unknown): href is string => typeof href === 'string' && /^\/(?![/\\])[^\s\\]*$/.test(href)
+
+function sanitize(a: Pick<AssistantMessage, 'text' | 'citations' | 'suggestions' | 'actions'>) {
+  return {
+    text: a.text.slice(0, 8000),
+    citations: a.citations.filter((c) => isSafeHref(c.href)).slice(0, 10),
+    suggestions: a.suggestions.filter((s) => typeof s === 'string').slice(0, 5),
+    // Every action from the service needs the user's confirmation.
+    actions: a.actions
+      .filter((x) => isSafeHref(x.href))
+      .map((x) => ({ ...x, requiresConfirmation: true }))
+      .slice(0, 3),
+  }
 }
 
 async function askAI(question: string, history: AssistantMessage[]) {
@@ -63,8 +79,17 @@ export async function ask(account: Account, conversationId: ID | null, question:
   const history = convo.messages
   transact((d) => ({ ...d, conversations: replaceById(d.conversations, id, (c) => ({ ...c, messages: [...c.messages, userMsg], updatedAt: nowISO() })) }))
 
-  const answer = assistantMode === 'ai' ? await askAI(text, history) : answerDemo(store.db, account, text, { policies: visiblePolicies(store.db, account) })
-  const reply: AssistantMessage = { id: createId('msg'), role: 'assistant', at: nowISO(), source: assistantMode, ...answer }
+  // Questions about the user's own work (approvals, overdue tasks, balances) are computed locally from records
+  // the user can already see; only policy questions go to the AI service.
+  const local = assistantMode === 'demo' || isRecordQuestion(text)
+  const answer = local ? answerDemo(store.db, account, text, { policies: visiblePolicies(store.db, account) }) : sanitize(await askAI(text, history))
+  const reply: AssistantMessage = {
+    id: createId('msg'),
+    role: 'assistant',
+    at: nowISO(),
+    source: assistantMode === 'demo' ? 'demo' : local ? 'records' : 'ai',
+    ...answer,
+  }
   transact((d) => ({ ...d, conversations: replaceById(d.conversations, id, (c) => ({ ...c, messages: [...c.messages, reply], updatedAt: nowISO() })) }))
   return id
 }

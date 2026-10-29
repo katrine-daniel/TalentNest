@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:db": "node tests/db/rls-check.mjs",
+    "test:db": "node tests/db/rls.check.mjs",
     "audit:deps": "npm audit --omit=dev --audit-level=high",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
