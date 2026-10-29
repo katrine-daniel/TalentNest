@@ -31,11 +31,6 @@ export default tseslint.config(
     },
   },
   {
-    // Legacy JavaScript modules are migrated to TypeScript incrementally.
-    files: ['**/*.{js,jsx}'],
-    rules: { '@typescript-eslint/no-require-imports': 'off' },
-  },
-  {
     files: ['tests/**', '**/*.test.{ts,tsx}'],
     languageOptions: { globals: { ...globals.vitest } },
   },

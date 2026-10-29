@@ -1,9 +1,9 @@
 {
-  "name": "talentnest",
+  "name": "peopleos",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "TalentNest - recruitment and talent management platform (React + Vite + TypeScript, Supabase-ready)",
+  "description": "PeopleOS - the intelligent workspace for people operations (React, TypeScript, Supabase-ready)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -21,9 +21,7 @@
     "check": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
-    "@dnd-kit/core": "^6.1.0",
     "@supabase/supabase-js": "^2.118.0",
-    "framer-motion": "^11.11.17",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

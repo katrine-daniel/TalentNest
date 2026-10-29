@@ -1,13 +1,12 @@
-// Central runtime configuration. Only VITE_* variables reach the browser, so this
-// module must never read or embed private secrets (service-role keys, AI provider keys).
+// Runtime configuration. Only public VITE_* values are read here — this module must never
+// contain or read private secrets.
 
-function optionalUrl(name: string, value: string | undefined): string {
+function url(name: string, value: string | undefined): string {
   if (!value) return ''
   try {
-    new URL(value)
-    return value.replace(/\/$/, '')
+    return new URL(value).toString().replace(/\/$/, '')
   } catch {
-    console.warn(`[config] ${name} is not a valid URL and will be ignored.`)
+    console.warn(`[config] ${name} is not a valid URL and is ignored.`)
     return ''
   }
 }
@@ -15,19 +14,21 @@ function optionalUrl(name: string, value: string | undefined): string {
 const raw = import.meta.env
 
 export const env = {
-  apiBaseUrl: optionalUrl('VITE_API_BASE_URL', raw.VITE_API_BASE_URL),
-  aiProxyUrl: optionalUrl('VITE_AI_PROXY_URL', raw.VITE_AI_PROXY_URL),
-  supabaseUrl: optionalUrl('VITE_SUPABASE_URL', raw.VITE_SUPABASE_URL),
-  supabaseAnonKey: raw.VITE_SUPABASE_ANON_KEY ?? '',
-  useMockApi: (raw.VITE_USE_MOCK_API ?? 'true') !== 'false',
+  productName: raw.VITE_PRODUCT_NAME?.trim() || 'PeopleOS',
+  productTagline: raw.VITE_PRODUCT_TAGLINE?.trim() || 'The intelligent workspace for people operations.',
+  supabaseUrl: url('VITE_SUPABASE_URL', raw.VITE_SUPABASE_URL),
+  supabaseAnonKey: raw.VITE_SUPABASE_ANON_KEY?.trim() ?? '',
+  assistantUrl: url('VITE_ASSISTANT_URL', raw.VITE_ASSISTANT_URL),
 } as const
 
-if ((env.supabaseUrl && !env.supabaseAnonKey) || (!env.supabaseUrl && env.supabaseAnonKey)) {
-  console.warn('[config] Set both VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable the Supabase backend.')
+export const isSupabaseConfigured = Boolean(env.supabaseUrl && env.supabaseAnonKey)
+
+if (Boolean(env.supabaseUrl) !== Boolean(env.supabaseAnonKey)) {
+  console.warn('[config] Set both VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to use Supabase; running the demo workspace.')
 }
 
-// Demo persistence lives in localStorage and is strictly for the demo workspace.
-export const DEMO_STORAGE_KEY = 'talentnest.demo-data.v1'
-export const DEMO_SESSION_KEY = 'talentnest.demo-session.v1'
-export const UI_PREFS_KEY = 'talentnest.ui-prefs.v1'
-export const THEME_KEY = 'talentnest.theme.v1'
+export const STORAGE_KEYS = {
+  demoData: 'peopleos.demo.v1',
+  demoSession: 'peopleos.session.v1',
+  ui: 'peopleos.ui.v1',
+} as const

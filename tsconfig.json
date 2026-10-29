@@ -12,7 +12,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": false,
-    "allowJs": true,
+    "allowJs": false,
     "checkJs": false,
     "isolatedModules": true,
     "resolveJsonModule": true,

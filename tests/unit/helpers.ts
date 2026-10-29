@@ -1,22 +1,24 @@
-import { dataStore } from '@/services/storage/dataStore'
-import { createDemoDriver } from '@/services/storage/demoDriver'
-import { fileStorage } from '@/services/storage/fileStorage'
-import { installAutomation } from '@/features/automation/automationService'
-import type { Database } from '@/types/domain'
+import { createDemoDriver } from '@/services/demoDriver'
+import { store } from '@/services/store'
+import { installAutomation } from '@/services/automation'
+import type { Account, Database } from '@/domain/types'
 
-/** Loads a fresh, isolated copy of the demo data set (no latency, no persisted state). */
-export async function loadFreshDemo(): Promise<Database> {
+/** Loads a fresh copy of the demo data into the store. */
+export async function freshDemo(): Promise<Database> {
   localStorage.clear()
-  fileStorage.useDemo()
-  installAutomation()
-  await dataStore.connect(createDemoDriver({ latencyMs: 0 }), { force: true })
-  const data = dataStore.getSnapshot().data
-  if (!data) throw new Error('demo data failed to load')
-  return data
+  installAutomation({ scheduleInBrowser: false })
+  await store.connect(createDemoDriver())
+  return store.db
 }
 
-export const db = () => dataStore.getSnapshot().data as Database
+export const account = (id: string): Account => {
+  const a = store.db.accounts.find((x) => x.id === id)
+  if (!a) throw new Error(`no account ${id}`)
+  return a
+}
 
-export const ADMIN = 'usr-01'
-export const RECRUITER = 'usr-02'
-export const INTERVIEWER = 'usr-09'
+export const HR_ADMIN = 'acc_emp_001' // Katrine Daniel
+export const HR = 'acc_emp_002' // Marcus Chen
+export const MANAGER = 'acc_emp_007' // Elena Rossi (Front Office)
+export const EMPLOYEE = 'acc_emp_008' // Samuel Okoye, reports to Elena
+export const ORG_ADMIN = 'acc_emp_004' // Aisha Rahman
