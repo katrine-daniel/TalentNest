@@ -7,7 +7,7 @@
  * the `org_id` sent from the browser is checked by the database, not trusted.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { CollectionName, Database, OrgSettings, User } from '@/types/domain'
+import type { Candidate, CandidateNote, CollectionName, Database, OrgSettings, User } from '@/types/domain'
 import { createOrgDefaults } from '@/data/orgDefaults'
 import { SEED_VERSION } from '@/data/seed'
 import { TABLES, diffCollection, fromRow, toRow } from './rowMapping'
@@ -50,6 +50,24 @@ export function createSupabaseDriver({ client, orgId, userId }: { client: Supaba
         collections.map((c) => unwrap(client.from(TABLES[c]).select('*').eq('org_id', orgId), `load ${c}`) as Promise<Record<string, unknown>[]>),
       )
       const data = Object.fromEntries(collections.map((c, i) => [c, (results[i] ?? []).map((row) => fromRow(row))])) as Record<TableCollection, unknown[]>
+
+      // Restricted notes are stored apart from candidates so RLS can hide them; it returns
+      // rows only to roles holding `candidates.notes.restricted`.
+      const restricted = (await unwrap(
+        client.from('candidate_restricted_notes').select('candidate_id, note').eq('org_id', orgId),
+        'load restricted notes',
+      )) as Array<{
+        candidate_id: string
+        note: CandidateNote
+      }>
+      if (restricted.length) {
+        const byCandidate = new Map<string, Array<{ note: CandidateNote }>>()
+        for (const r of restricted) byCandidate.set(r.candidate_id, [...(byCandidate.get(r.candidate_id) ?? []), r])
+        data.candidates = (data.candidates as Candidate[]).map((c) => {
+          const extra = byCandidate.get(c.id)
+          return extra ? { ...c, notes: [...c.notes, ...extra.map((r) => r.note)].sort((a, b) => b.at.localeCompare(a.at)) } : c
+        })
+      }
 
       const members = await unwrap(client.from('org_members').select('*').eq('org_id', orgId), 'load members')
       const settingsRows = await unwrap(client.from('org_settings').select('*').eq('org_id', orgId).limit(1), 'load settings')
