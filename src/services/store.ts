@@ -42,7 +42,9 @@ function set(next: Partial<State>) {
 export const store = {
   subscribe(listener: Listener) {
     listeners.add(listener)
-    return () => listeners.delete(listener)
+    return () => {
+      listeners.delete(listener)
+    }
   },
   getState: () => state,
 
@@ -54,7 +56,9 @@ export const store = {
 
   onPersistError(listener: (message: string) => void) {
     errorListeners.add(listener)
-    return () => errorListeners.delete(listener)
+    return () => {
+      errorListeners.delete(listener)
+    }
   },
 
   async connect(next: PersistenceDriver) {

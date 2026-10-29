@@ -16,7 +16,11 @@ import { can, canViewRequest, isHR, reportIds } from './permissions'
 import { isOpenRequest, isOverdue } from './sla'
 import type { Account, AssistantCitation, AssistantMessage, Database, Policy } from './types'
 
-const STOP = new Set('a an and are as at be by can do does for from how i if in is it me my of on or our please should the this to we what when where which who why will with you your about any there their them get'.split(' '))
+const STOP = new Set(
+  'a an and are as at be by can do does for from how i if in is it me my of on or our please should the this to we what when where which who why will with you your about any there their them get'.split(
+    ' ',
+  ),
+)
 
 export function tokenize(text: string): string[] {
   return text
@@ -48,7 +52,14 @@ export function policyChunks(policies: readonly Policy[]): PolicyChunk[] {
       const [first, ...rest] = s.split('\n')
       const heading = (first ?? '').replace(/^#+\s*/, '')
       const text = rest.join('\n').trim() || heading
-      out.push({ policy: p, version: v.version, effectiveDate: v.effectiveDate, heading, text, tokens: tokenize(`${p.title} ${p.tags.join(' ')} ${heading} ${text}`) })
+      out.push({
+        policy: p,
+        version: v.version,
+        effectiveDate: v.effectiveDate,
+        heading,
+        text,
+        tokens: tokenize(`${p.title} ${p.tags.join(' ')} ${heading} ${text}`),
+      })
     }
   }
   return out
@@ -81,7 +92,12 @@ export function searchPolicies(chunks: PolicyChunk[], question: string): Array<{
     .sort((a, b) => b.score - a.score)
 }
 
-const policyCitation = (c: PolicyChunk): AssistantCitation => ({ kind: 'policy', label: `${c.policy.title} — ${c.heading}`, detail: `v${c.version} · effective ${c.effectiveDate}`, href: `/policies/${c.policy.id}` })
+const policyCitation = (c: PolicyChunk): AssistantCitation => ({
+  kind: 'policy',
+  label: `${c.policy.title} — ${c.heading}`,
+  detail: `v${c.version} · effective ${c.effectiveDate}`,
+  href: `/policies/${c.policy.id}`,
+})
 
 type Answer = Pick<AssistantMessage, 'text' | 'citations' | 'suggestions' | 'actions'>
 
@@ -102,7 +118,13 @@ export function answerDemo(db: Database, account: Account, question: string, vis
   // --- awaiting my approval
   if (/approv/.test(q) && /(await|pending|need|waiting|my|me)/.test(q)) {
     const items = buildInbox(db, account).filter((i) => ['leave_approval', 'request_approval', 'record_update'].includes(i.kind))
-    if (!items.length) return { text: 'Nothing is waiting for your approval right now.', citations: [], suggestions: [], actions: [{ label: 'Open HR Inbox', href: '/inbox', requiresConfirmation: false }] }
+    if (!items.length)
+      return {
+        text: 'Nothing is waiting for your approval right now.',
+        citations: [],
+        suggestions: [],
+        actions: [{ label: 'Open HR Inbox', href: '/inbox', requiresConfirmation: false }],
+      }
     return {
       text: `${items.length} item${items.length === 1 ? ' is' : 's are'} waiting for your decision:\n${list(items.map((i) => `${i.title} — ${i.employee ? fullName(i.employee) : ''}${i.overdue ? ' (overdue)' : ''}`))}`,
       citations: items.slice(0, 6).map((i) => ({ kind: 'record', label: i.title, detail: i.context, href: i.href })),
@@ -114,12 +136,23 @@ export function answerDemo(db: Database, account: Account, question: string, vis
   // --- overdue onboarding / offboarding
   if (/overdue|late|behind/.test(q) && /onboard|offboard|checklist|lifecycle|new hire|joiner/.test(q)) {
     const team = reportIds(db.employees, account.employeeId)
-    const cases = db.lifecycleCases.filter((c) => c.status === 'active' && (can(account, 'lifecycle.manage') || team.has(c.employeeId) || c.tasks.some((t) => t.assigneeId === account.id)))
-    const overdue = cases.flatMap((c) => c.tasks.filter((t) => t.status === 'open' && t.dueDate < T && (can(account, 'lifecycle.manage') || team.has(c.employeeId) || t.assigneeId === account.id)).map((t) => ({ c, t })))
+    const cases = db.lifecycleCases.filter(
+      (c) => c.status === 'active' && (can(account, 'lifecycle.manage') || team.has(c.employeeId) || c.tasks.some((t) => t.assigneeId === account.id)),
+    )
+    const overdue = cases.flatMap((c) =>
+      c.tasks
+        .filter((t) => t.status === 'open' && t.dueDate < T && (can(account, 'lifecycle.manage') || team.has(c.employeeId) || t.assigneeId === account.id))
+        .map((t) => ({ c, t })),
+    )
     if (!overdue.length) return { text: 'No onboarding or offboarding tasks you can see are overdue.', citations: [], suggestions: [], actions: [] }
     return {
       text: `${overdue.length} checklist task${overdue.length === 1 ? ' is' : 's are'} overdue:\n${list(overdue.map(({ c, t }) => `${t.title} — ${empName(c.employeeId)} (${c.kind}, due ${t.dueDate}, ${t.assigneeId ? (db.accounts.find((a) => a.id === t.assigneeId)?.name ?? 'assigned') : 'HR queue'})`))}`,
-      citations: [...new Map(overdue.map(({ c }) => [c.id, c])).values()].slice(0, 6).map((c) => ({ kind: 'record', label: `${c.kind === 'onboarding' ? 'Onboarding' : 'Offboarding'}: ${empName(c.employeeId)}`, detail: `key date ${c.keyDate}`, href: `/lifecycle/${c.id}` })),
+      citations: [...new Map(overdue.map(({ c }) => [c.id, c])).values()].slice(0, 6).map((c) => ({
+        kind: 'record',
+        label: `${c.kind === 'onboarding' ? 'Onboarding' : 'Offboarding'}: ${empName(c.employeeId)}`,
+        detail: `key date ${c.keyDate}`,
+        href: `/lifecycle/${c.id}`,
+      })),
       suggestions: ['Reassign tasks whose owner is unavailable, or adjust the due date if the plan changed.'],
       actions: [{ label: 'Open onboarding & offboarding', href: '/lifecycle', requiresConfirmation: false }],
     }
@@ -135,8 +168,13 @@ export function answerDemo(db: Database, account: Account, question: string, vis
     const unassigned = isHR(account) ? reqs.filter((r) => !r.assigneeId && r.status !== 'pending_approval').length : 0
     return {
       text: `${reqs.length} unresolved request${reqs.length === 1 ? '' : 's'}: ${[...byStatus.entries()].map(([s, n]) => `${n} ${s}`).join(', ')}.${overdue.length ? ` ${overdue.length} past the service target.` : ''}${unassigned ? ` ${unassigned} unassigned.` : ''}\n${list(reqs.sort((a, b) => a.dueAt.localeCompare(b.dueAt)).map((r) => `${r.number} ${r.subject} — ${empName(r.employeeId)}${isOverdue(r) ? ' (overdue)' : ''}`))}`,
-      citations: reqs.slice(0, 6).map((r) => ({ kind: 'record', label: `${r.number} ${r.subject}`, detail: r.status.replace(/_/g, ' '), href: `/requests/${r.id}` })),
-      suggestions: [overdue.length ? 'Pick up the overdue requests first.' : '', unassigned ? 'Assign the unassigned requests so each has an owner.' : ''].filter(Boolean),
+      citations: reqs
+        .slice(0, 6)
+        .map((r) => ({ kind: 'record', label: `${r.number} ${r.subject}`, detail: r.status.replace(/_/g, ' '), href: `/requests/${r.id}` })),
+      suggestions: [
+        overdue.length ? 'Pick up the overdue requests first.' : '',
+        unassigned ? 'Assign the unassigned requests so each has an owner.' : '',
+      ].filter(Boolean),
       actions: [{ label: 'Open the request queue', href: '/requests', requiresConfirmation: false }],
     }
   }
@@ -157,7 +195,8 @@ export function answerDemo(db: Database, account: Account, question: string, vis
 
   // --- my leave balance
   if (/balance|how many (days|holiday)|days (left|remaining)|leave left/.test(q)) {
-    if (!account.employeeId) return { text: 'Your account is not linked to an employee record, so there is no leave balance to show.', citations: [], suggestions: [], actions: [] }
+    if (!account.employeeId)
+      return { text: 'Your account is not linked to an employee record, so there is no leave balance to show.', citations: [], suggestions: [], actions: [] }
     const year = new Date().getFullYear()
     const rows = db.leaveTypes.filter((t) => t.tracked && t.active).map((t) => ({ t, b: leaveBalance(db, account.employeeId as string, t.id, year) }))
     return {
@@ -186,7 +225,13 @@ export function answerDemo(db: Database, account: Account, question: string, vis
         text: `Use ${where}.${isLeave ? ' Your manager approves it; your balance updates once it is approved.' : ` ${type?.t.description} ${type?.t.approvalChain.length ? `It needs ${type.t.approvalChain.map((s) => s.name.toLowerCase()).join(', then ')}.` : 'HR handles it directly.'} Target response: ${type?.t.slaHours} business hours.`}${top && top.score > 2 && top.coverage >= 0.3 ? `\n\nFrom ${top.chunk.policy.title} (${top.chunk.heading}):\n${top.chunk.text}` : ''}`,
         citations: top && top.score > 2 && top.coverage >= 0.3 ? [policyCitation(top.chunk)] : [],
         suggestions: [],
-        actions: [{ label: isLeave ? 'Start a leave request' : `Start “${type?.t.name}” request`, href: isLeave ? '/leave/new' : `/requests/new?type=${type?.t.id}`, requiresConfirmation: true }],
+        actions: [
+          {
+            label: isLeave ? 'Start a leave request' : `Start “${type?.t.name}” request`,
+            href: isLeave ? '/leave/new' : `/requests/new?type=${type?.t.id}`,
+            requiresConfirmation: true,
+          },
+        ],
       }
     }
   }

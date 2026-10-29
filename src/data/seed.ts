@@ -42,7 +42,7 @@ const iso = (d: Date) => d.toISOString()
 
 export function createSeed(now: Date = new Date()): Database {
   const rand = rng(42)
-  const pick = <T,>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)] as T
+  const pick = <T>(arr: readonly T[]): T => arr[Math.floor(rand() * arr.length)] as T
   const T = today(now)
   const at = (daysAgo: number, hour = 10) => {
     const d = new Date(now)
@@ -186,14 +186,44 @@ export function createSeed(now: Date = new Date()): Database {
       endDate: null,
       status: preboarding ? 'pre_boarding' : 'active',
       dateOfBirth: `${1975 + Math.floor(rand() * 26)}-${String(Math.floor(rand() * 12) + 1).padStart(2, '0')}-${String(Math.floor(rand() * 27) + 1).padStart(2, '0')}`,
-      emergencyContact: { name: `${pick(['Maria', 'João', 'Sam', 'Lee', 'Alex', 'Noor'])} ${last}`, relationship: pick(['Partner', 'Parent', 'Sibling']), phone: `+351 91 ${Math.floor(rand() * 900 + 100)} ${Math.floor(rand() * 9000 + 1000)}` },
+      emergencyContact: {
+        name: `${pick(['Maria', 'João', 'Sam', 'Lee', 'Alex', 'Noor'])} ${last}`,
+        relationship: pick(['Partner', 'Parent', 'Sibling']),
+        phone: `+351 91 ${Math.floor(rand() * 900 + 100)} ${Math.floor(rand() * 9000 + 1000)}`,
+      },
       documents: preboarding
         ? []
         : [
-            { id: `doc_${i}_c`, name: 'Employment contract.pdf', kind: 'contract', fileId: null, size: 184_000, uploadedAt: iso(new Date(join)), uploadedBy: 'acc_emp_002', expiresOn: et === 'et_contract' || et === 'et_seasonal' ? addDays(join, 180) : null },
-            ...(dept === 'dep_fnb' ? [{ id: `doc_${i}_h`, name: 'Food hygiene certificate.pdf', kind: 'certificate' as const, fileId: null, size: 96_000, uploadedAt: iso(new Date(join)), uploadedBy: 'acc_emp_002', expiresOn: addDays(T, i % 2 ? 21 : 140) }] : []),
+            {
+              id: `doc_${i}_c`,
+              name: 'Employment contract.pdf',
+              kind: 'contract',
+              fileId: null,
+              size: 184_000,
+              uploadedAt: iso(new Date(join)),
+              uploadedBy: 'acc_emp_002',
+              expiresOn: et === 'et_contract' || et === 'et_seasonal' ? addDays(join, 180) : null,
+            },
+            ...(dept === 'dep_fnb'
+              ? [
+                  {
+                    id: `doc_${i}_h`,
+                    name: 'Food hygiene certificate.pdf',
+                    kind: 'certificate' as const,
+                    fileId: null,
+                    size: 96_000,
+                    uploadedAt: iso(new Date(join)),
+                    uploadedBy: 'acc_emp_002',
+                    expiresOn: addDays(T, i % 2 ? 21 : 140),
+                  },
+                ]
+              : []),
           ],
-      equipment: preboarding ? [] : dept === 'dep_tech' || loc === 'loc_hq' || loc === 'loc_remote' ? [{ id: `eq_${i}`, item: 'Laptop', assetTag: `LT-${2200 + i}`, assignedOn: join, returnedOn: null }] : [],
+      equipment: preboarding
+        ? []
+        : dept === 'dep_tech' || loc === 'loc_hq' || loc === 'loc_remote'
+          ? [{ id: `eq_${i}`, item: 'Laptop', assetTag: `LT-${2200 + i}`, assignedOn: join, returnedOn: null }]
+          : [],
       history: [{ id: `h_${i}_0`, at: iso(new Date(join)), by: null, field: 'Record', from: null, to: 'Created', note: 'Imported during demo setup' }],
       createdAt: iso(new Date(join)),
     }
@@ -248,32 +278,211 @@ export function createSeed(now: Date = new Date()): Database {
   const hrOnly: ApprovalStage[] = [{ id: 'st_hr', name: 'HR review', rule: 'hr' }]
 
   const requestTypes: RequestType[] = [
-    { id: 'rt_letter', name: 'Employment letter', category: 'letters', description: 'Proof of employment, salary confirmation or visa support letter.', approvalChain: [], slaHours: 16, defaultPriority: 'normal', selfService: true, active: true, kind: 'document' },
-    { id: 'rt_payroll', name: 'Payroll question', category: 'payroll', description: 'Questions about a payslip, deductions or payment dates.', approvalChain: [], slaHours: 16, defaultPriority: 'normal', selfService: true, active: true, kind: 'service' },
-    { id: 'rt_benefits', name: 'Benefits enquiry', category: 'benefits', description: 'Health insurance, meal allowance and other benefits.', approvalChain: [], slaHours: 24, defaultPriority: 'normal', selfService: true, active: true, kind: 'service' },
-    { id: 'rt_equipment', name: 'Equipment request or replacement', category: 'equipment', description: 'New, broken or lost work equipment (laptop, phone, uniform, tools).', approvalChain: managerOnly, slaHours: 40, defaultPriority: 'normal', selfService: true, active: true, kind: 'equipment' },
-    { id: 'rt_docs', name: 'Copy of a document', category: 'documents', description: 'A copy of your contract or another document on file.', approvalChain: [], slaHours: 16, defaultPriority: 'low', selfService: true, active: true, kind: 'document' },
-    { id: 'rt_policy', name: 'Policy question', category: 'policy', description: 'Ask HR how a company policy applies to you.', approvalChain: [], slaHours: 24, defaultPriority: 'low', selfService: true, active: true, kind: 'service' },
-    { id: 'rt_onboard', name: 'Onboarding support', category: 'onboarding', description: 'Help during your first weeks — access, schedules, training.', approvalChain: [], slaHours: 8, defaultPriority: 'high', selfService: true, active: true, kind: 'service' },
-    { id: 'rt_flex', name: 'Work arrangement change', category: 'work_arrangement', description: 'Change hours, schedule, location or remote-work pattern.', approvalChain: managerThenHR, slaHours: 40, defaultPriority: 'normal', selfService: true, active: true, kind: 'service' },
-    { id: 'rt_update', name: 'Update my personal details', category: 'records', description: 'Change your phone, personal email or emergency contact. HR verifies the change.', approvalChain: hrOnly, slaHours: 16, defaultPriority: 'normal', selfService: true, active: true, kind: 'record_update' },
-    { id: 'rt_general', name: 'General HR question', category: 'general', description: 'Anything that does not fit another category.', approvalChain: [], slaHours: 24, defaultPriority: 'normal', selfService: true, active: true, kind: 'service' },
+    {
+      id: 'rt_letter',
+      name: 'Employment letter',
+      category: 'letters',
+      description: 'Proof of employment, salary confirmation or visa support letter.',
+      approvalChain: [],
+      slaHours: 16,
+      defaultPriority: 'normal',
+      selfService: true,
+      active: true,
+      kind: 'document',
+    },
+    {
+      id: 'rt_payroll',
+      name: 'Payroll question',
+      category: 'payroll',
+      description: 'Questions about a payslip, deductions or payment dates.',
+      approvalChain: [],
+      slaHours: 16,
+      defaultPriority: 'normal',
+      selfService: true,
+      active: true,
+      kind: 'service',
+    },
+    {
+      id: 'rt_benefits',
+      name: 'Benefits enquiry',
+      category: 'benefits',
+      description: 'Health insurance, meal allowance and other benefits.',
+      approvalChain: [],
+      slaHours: 24,
+      defaultPriority: 'normal',
+      selfService: true,
+      active: true,
+      kind: 'service',
+    },
+    {
+      id: 'rt_equipment',
+      name: 'Equipment request or replacement',
+      category: 'equipment',
+      description: 'New, broken or lost work equipment (laptop, phone, uniform, tools).',
+      approvalChain: managerOnly,
+      slaHours: 40,
+      defaultPriority: 'normal',
+      selfService: true,
+      active: true,
+      kind: 'equipment',
+    },
+    {
+      id: 'rt_docs',
+      name: 'Copy of a document',
+      category: 'documents',
+      description: 'A copy of your contract or another document on file.',
+      approvalChain: [],
+      slaHours: 16,
+      defaultPriority: 'low',
+      selfService: true,
+      active: true,
+      kind: 'document',
+    },
+    {
+      id: 'rt_policy',
+      name: 'Policy question',
+      category: 'policy',
+      description: 'Ask HR how a company policy applies to you.',
+      approvalChain: [],
+      slaHours: 24,
+      defaultPriority: 'low',
+      selfService: true,
+      active: true,
+      kind: 'service',
+    },
+    {
+      id: 'rt_onboard',
+      name: 'Onboarding support',
+      category: 'onboarding',
+      description: 'Help during your first weeks — access, schedules, training.',
+      approvalChain: [],
+      slaHours: 8,
+      defaultPriority: 'high',
+      selfService: true,
+      active: true,
+      kind: 'service',
+    },
+    {
+      id: 'rt_flex',
+      name: 'Work arrangement change',
+      category: 'work_arrangement',
+      description: 'Change hours, schedule, location or remote-work pattern.',
+      approvalChain: managerThenHR,
+      slaHours: 40,
+      defaultPriority: 'normal',
+      selfService: true,
+      active: true,
+      kind: 'service',
+    },
+    {
+      id: 'rt_update',
+      name: 'Update my personal details',
+      category: 'records',
+      description: 'Change your phone, personal email or emergency contact. HR verifies the change.',
+      approvalChain: hrOnly,
+      slaHours: 16,
+      defaultPriority: 'normal',
+      selfService: true,
+      active: true,
+      kind: 'record_update',
+    },
+    {
+      id: 'rt_general',
+      name: 'General HR question',
+      category: 'general',
+      description: 'Anything that does not fit another category.',
+      approvalChain: [],
+      slaHours: 24,
+      defaultPriority: 'normal',
+      selfService: true,
+      active: true,
+      kind: 'service',
+    },
   ]
 
   const leaveTypes: LeaveType[] = [
-    { id: 'lt_annual', name: 'Annual leave', code: 'AL', annualDays: 22, tracked: true, carryOverMax: 5, allowNegative: false, requiresAttachmentAfterDays: null, approvalChain: managerOnly, color: '#4338CA', active: true },
-    { id: 'lt_sick', name: 'Sick leave', code: 'SL', annualDays: 10, tracked: true, carryOverMax: 0, allowNegative: true, requiresAttachmentAfterDays: 2, approvalChain: managerOnly, color: '#DC2626', active: true },
-    { id: 'lt_parental', name: 'Parental leave', code: 'PL', annualDays: 0, tracked: false, carryOverMax: 0, allowNegative: false, requiresAttachmentAfterDays: 0, approvalChain: managerThenHR, color: '#059669', active: true },
-    { id: 'lt_unpaid', name: 'Unpaid leave', code: 'UL', annualDays: 0, tracked: false, carryOverMax: 0, allowNegative: false, requiresAttachmentAfterDays: null, approvalChain: managerThenHR, color: '#62677A', active: true },
+    {
+      id: 'lt_annual',
+      name: 'Annual leave',
+      code: 'AL',
+      annualDays: 22,
+      tracked: true,
+      carryOverMax: 5,
+      allowNegative: false,
+      requiresAttachmentAfterDays: null,
+      approvalChain: managerOnly,
+      color: '#4338CA',
+      active: true,
+    },
+    {
+      id: 'lt_sick',
+      name: 'Sick leave',
+      code: 'SL',
+      annualDays: 10,
+      tracked: true,
+      carryOverMax: 0,
+      allowNegative: true,
+      requiresAttachmentAfterDays: 2,
+      approvalChain: managerOnly,
+      color: '#DC2626',
+      active: true,
+    },
+    {
+      id: 'lt_parental',
+      name: 'Parental leave',
+      code: 'PL',
+      annualDays: 0,
+      tracked: false,
+      carryOverMax: 0,
+      allowNegative: false,
+      requiresAttachmentAfterDays: 0,
+      approvalChain: managerThenHR,
+      color: '#059669',
+      active: true,
+    },
+    {
+      id: 'lt_unpaid',
+      name: 'Unpaid leave',
+      code: 'UL',
+      annualDays: 0,
+      tracked: false,
+      carryOverMax: 0,
+      allowNegative: false,
+      requiresAttachmentAfterDays: null,
+      approvalChain: managerThenHR,
+      color: '#62677A',
+      active: true,
+    },
   ]
 
   // --------------------------------------------------------------- requests
-  const steps = (chain: ApprovalStage[], subject: Employee, requester: Account, decisions: Array<'approved' | 'pending' | 'rejected' | 'changes_requested'>): ApprovalStep[] =>
+  const steps = (
+    chain: ApprovalStage[],
+    subject: Employee,
+    requester: Account,
+    decisions: Array<'approved' | 'pending' | 'rejected' | 'changes_requested'>,
+  ): ApprovalStep[] =>
     chain.map((stage, i) => {
-      const approver = stage.rule === 'manager' ? accounts.find((a) => a.employeeId === subject.managerId) : stage.rule === 'hr' ? acc('Marcus Chen') : undefined
-      const ids = stage.rule === 'hr' ? accounts.filter((a) => ['hr_specialist', 'hr_admin', 'org_admin'].includes(a.role) && a.id !== requester.id).map((a) => a.id) : approver ? [approver.id] : [acc('Marcus Chen').id]
+      const approver =
+        stage.rule === 'manager' ? accounts.find((a) => a.employeeId === subject.managerId) : stage.rule === 'hr' ? acc('Marcus Chen') : undefined
+      const ids =
+        stage.rule === 'hr'
+          ? accounts.filter((a) => ['hr_specialist', 'hr_admin', 'org_admin'].includes(a.role) && a.id !== requester.id).map((a) => a.id)
+          : approver
+            ? [approver.id]
+            : [acc('Marcus Chen').id]
       const d = decisions[i] ?? 'pending'
-      return { id: `apr_${subject.id}_${stage.id}_${i}_${Math.floor(rand() * 1e6)}`, stageName: stage.name, rule: stage.rule, approverIds: ids, delegatedTo: null, decision: d, decidedBy: d === 'pending' ? null : (approver?.id ?? ids[0] ?? null), decidedAt: d === 'pending' ? null : at(1), comment: d === 'approved' ? 'Approved.' : d === 'pending' ? '' : 'Please add the model and the reason for replacement.' }
+      return {
+        id: `apr_${subject.id}_${stage.id}_${i}_${Math.floor(rand() * 1e6)}`,
+        stageName: stage.name,
+        rule: stage.rule,
+        approverIds: ids,
+        delegatedTo: null,
+        decision: d,
+        decidedBy: d === 'pending' ? null : (approver?.id ?? ids[0] ?? null),
+        decidedAt: d === 'pending' ? null : at(1),
+        comment: d === 'approved' ? 'Approved.' : d === 'pending' ? '' : 'Please add the model and the reason for replacement.',
+      }
     })
 
   let reqNo = 1040
@@ -285,7 +494,14 @@ export function createSeed(now: Date = new Date()): Database {
     description: string,
     daysAgo: number,
     status: HRRequest['status'],
-    opts: { assignee?: string; priority?: HRRequest['priority']; decisions?: Array<'approved' | 'pending' | 'rejected' | 'changes_requested'>; comments?: Array<[string, string, boolean]>; resolution?: string; proposed?: Record<string, string> } = {},
+    opts: {
+      assignee?: string
+      priority?: HRRequest['priority']
+      decisions?: Array<'approved' | 'pending' | 'rejected' | 'changes_requested'>
+      comments?: Array<[string, string, boolean]>
+      resolution?: string
+      proposed?: Record<string, string>
+    } = {},
   ) => {
     const type = requestTypes.find((t) => t.id === typeId) as RequestType
     const requester = acc(who)
@@ -307,7 +523,13 @@ export function createSeed(now: Date = new Date()): Database {
       dueAt: iso(addBusinessHours(new Date(created), type.slaHours)),
       proposedChanges: opts.proposed ?? null,
       approvals: type.approvalChain.length ? steps(type.approvalChain, subjectEmp, requester, opts.decisions ?? []) : [],
-      comments: (opts.comments ?? []).map(([author, text, internal], i) => ({ id: `cm_${reqNo}_${i}`, authorId: acc(author).id, text, internal, at: at(Math.max(daysAgo - 1 - i, 0), 14) })),
+      comments: (opts.comments ?? []).map(([author, text, internal], i) => ({
+        id: `cm_${reqNo}_${i}`,
+        authorId: acc(author).id,
+        text,
+        internal,
+        at: at(Math.max(daysAgo - 1 - i, 0), 14),
+      })),
       attachments: [],
       timeline: [{ id: `tl_${reqNo}`, at: created, by: requester.id, text: 'Request submitted' }],
       resolution: opts.resolution ?? null,
@@ -317,23 +539,77 @@ export function createSeed(now: Date = new Date()): Database {
       resolvedAt: done ? at(Math.max(daysAgo - 2, 0)) : null,
     })
   }
-  addRequest('rt_equipment', 'Samuel Okoye', 'Replacement headset for front desk', 'The headset at station 2 cuts out during calls. Requesting a replacement.', 2, 'pending_approval', { decisions: ['pending'] })
-  addRequest('rt_letter', 'Diego Moreno', 'Employment confirmation for apartment rental', 'My landlord needs a letter confirming employment and start date.', 4, 'in_progress', { assignee: 'Marcus Chen', comments: [['Marcus Chen', 'Drafting now — will share by tomorrow.', false]] })
-  addRequest('rt_payroll', 'Kenji Watanabe', 'Overtime missing from last payslip', 'Overtime from the gala weekend is not on my payslip.', 6, 'open', { priority: 'high' })
-  addRequest('rt_flex', 'Daniel Kim', 'Compressed four-day week', 'I would like to work 4×10h Monday–Thursday from next month.', 3, 'pending_approval', { decisions: ['approved', 'pending'] })
-  addRequest('rt_update', 'Beatriz Lopes', 'New mobile number', 'Please update my phone number.', 1, 'pending_approval', { decisions: ['pending'], proposed: { phone: '+351 93 555 0147' } })
-  addRequest('rt_benefits', 'Nadia Haddad', 'Adding partner to health insurance', 'How do I add my partner to the health plan?', 9, 'waiting_on_employee', { assignee: 'Leonor Matos', comments: [['Leonor Matos', 'Could you send a copy of the partnership certificate?', false]] })
-  addRequest('rt_onboard', 'Rafael Costa', 'No access to the rostering app', 'I started this week and cannot log in to the rostering app.', 5, 'open', { priority: 'high' })
-  addRequest('rt_policy', 'Lucas Silva', 'Can I swap shifts with a colleague?', 'What is the process for swapping a shift?', 12, 'resolved', { assignee: 'Leonor Matos', resolution: 'Shift swaps are agreed with your supervisor and recorded in the rostering app. See the Working Time policy.' })
-  addRequest('rt_equipment', 'Laila Aziz', 'Second monitor', 'Requesting a second monitor for the support desk.', 15, 'closed', { decisions: ['approved'], assignee: 'Marcus Chen', resolution: 'Monitor delivered (asset MN-0441).' })
-  addRequest('rt_general', 'Sofia Gomes', 'Training budget for events certification', 'Is there budget for an events management certificate?', 7, 'in_progress', { assignee: 'Katrine Daniel', comments: [['Katrine Daniel', 'Budget owner is Olivia — confirming availability.', true]] })
+  addRequest(
+    'rt_equipment',
+    'Samuel Okoye',
+    'Replacement headset for front desk',
+    'The headset at station 2 cuts out during calls. Requesting a replacement.',
+    2,
+    'pending_approval',
+    { decisions: ['pending'] },
+  )
+  addRequest(
+    'rt_letter',
+    'Diego Moreno',
+    'Employment confirmation for apartment rental',
+    'My landlord needs a letter confirming employment and start date.',
+    4,
+    'in_progress',
+    { assignee: 'Marcus Chen', comments: [['Marcus Chen', 'Drafting now — will share by tomorrow.', false]] },
+  )
+  addRequest('rt_payroll', 'Kenji Watanabe', 'Overtime missing from last payslip', 'Overtime from the gala weekend is not on my payslip.', 6, 'open', {
+    priority: 'high',
+  })
+  addRequest('rt_flex', 'Daniel Kim', 'Compressed four-day week', 'I would like to work 4×10h Monday–Thursday from next month.', 3, 'pending_approval', {
+    decisions: ['approved', 'pending'],
+  })
+  addRequest('rt_update', 'Beatriz Lopes', 'New mobile number', 'Please update my phone number.', 1, 'pending_approval', {
+    decisions: ['pending'],
+    proposed: { phone: '+351 93 555 0147' },
+  })
+  addRequest('rt_benefits', 'Nadia Haddad', 'Adding partner to health insurance', 'How do I add my partner to the health plan?', 9, 'waiting_on_employee', {
+    assignee: 'Leonor Matos',
+    comments: [['Leonor Matos', 'Could you send a copy of the partnership certificate?', false]],
+  })
+  addRequest('rt_onboard', 'Rafael Costa', 'No access to the rostering app', 'I started this week and cannot log in to the rostering app.', 5, 'open', {
+    priority: 'high',
+  })
+  addRequest('rt_policy', 'Lucas Silva', 'Can I swap shifts with a colleague?', 'What is the process for swapping a shift?', 12, 'resolved', {
+    assignee: 'Leonor Matos',
+    resolution: 'Shift swaps are agreed with your supervisor and recorded in the rostering app. See the Working Time policy.',
+  })
+  addRequest('rt_equipment', 'Laila Aziz', 'Second monitor', 'Requesting a second monitor for the support desk.', 15, 'closed', {
+    decisions: ['approved'],
+    assignee: 'Marcus Chen',
+    resolution: 'Monitor delivered (asset MN-0441).',
+  })
+  addRequest(
+    'rt_general',
+    'Sofia Gomes',
+    'Training budget for events certification',
+    'Is there budget for an events management certificate?',
+    7,
+    'in_progress',
+    { assignee: 'Katrine Daniel', comments: [['Katrine Daniel', 'Budget owner is Olivia — confirming availability.', true]] },
+  )
   addRequest('rt_docs', 'André Sousa', 'Copy of my contract', 'I need a copy of my signed contract.', 1, 'open')
-  addRequest('rt_equipment', 'Mia Schneider', 'Replacement uniform jacket', 'Jacket zip is broken.', 8, 'rejected', { decisions: ['rejected'], resolution: 'Uniforms are replaced through the housekeeping store — please visit the linen room.' })
+  addRequest('rt_equipment', 'Mia Schneider', 'Replacement uniform jacket', 'Jacket zip is broken.', 8, 'rejected', {
+    decisions: ['rejected'],
+    resolution: 'Uniforms are replaced through the housekeeping store — please visit the linen room.',
+  })
   addRequest('rt_payroll', 'Pedro Santos', 'Tax withholding question', 'Which tax table is applied to my contract?', 10, 'open', { assignee: 'Marcus Chen' })
 
   // --------------------------------------------------------------- leave
   const leaveRequests: LeaveRequest[] = []
-  const addLeave = (who: string, typeId: string, startOffset: number, workdays: number, status: LeaveRequest['status'], reason: string, decisions: Array<'approved' | 'pending' | 'rejected' | 'changes_requested'>) => {
+  const addLeave = (
+    who: string,
+    typeId: string,
+    startOffset: number,
+    workdays: number,
+    status: LeaveRequest['status'],
+    reason: string,
+    decisions: Array<'approved' | 'pending' | 'rejected' | 'changes_requested'>,
+  ) => {
     const emp = byName(who)
     const requester = acc(who)
     const schedule = schedules.find((s) => s.id === emp.scheduleId) as WorkSchedule
@@ -377,8 +653,26 @@ export function createSeed(now: Date = new Date()): Database {
   addLeave('Inês Carvalho', 'lt_annual', 10, 1, 'rejected', 'Month-end close', ['rejected'])
 
   const leaveAdjustments = [
-    { id: 'adj_1', employeeId: byName('Samuel Okoye').id, leaveTypeId: 'lt_annual', year, days: 2, reason: 'Carry-over from previous year', by: acc('Marcus Chen').id, at: `${year}-01-03T10:00:00.000Z` },
-    { id: 'adj_2', employeeId: byName('Kenji Watanabe').id, leaveTypeId: 'lt_annual', year, days: 5, reason: 'Carry-over from previous year', by: acc('Marcus Chen').id, at: `${year}-01-03T10:00:00.000Z` },
+    {
+      id: 'adj_1',
+      employeeId: byName('Samuel Okoye').id,
+      leaveTypeId: 'lt_annual',
+      year,
+      days: 2,
+      reason: 'Carry-over from previous year',
+      by: acc('Marcus Chen').id,
+      at: `${year}-01-03T10:00:00.000Z`,
+    },
+    {
+      id: 'adj_2',
+      employeeId: byName('Kenji Watanabe').id,
+      leaveTypeId: 'lt_annual',
+      year,
+      days: 5,
+      reason: 'Carry-over from previous year',
+      by: acc('Marcus Chen').id,
+      at: `${year}-01-03T10:00:00.000Z`,
+    },
   ]
 
   // --------------------------------------------------------------- lifecycle
@@ -451,7 +745,14 @@ export function createSeed(now: Date = new Date()): Database {
     createdBy: acc('Katrine Daniel').id,
     createdAt: at(20),
     completedAt: null,
-    timeline: [{ id: `${id}_t0`, at: at(20), by: acc('Katrine Daniel').id, text: `${tpl.kind === 'onboarding' ? 'Onboarding' : 'Offboarding'} started from “${tpl.name}”` }],
+    timeline: [
+      {
+        id: `${id}_t0`,
+        at: at(20),
+        by: acc('Katrine Daniel').id,
+        text: `${tpl.kind === 'onboarding' ? 'Onboarding' : 'Offboarding'} started from “${tpl.name}”`,
+      },
+    ],
     tasks: tpl.tasks.map((t) => {
       const due = addDays(keyDate, t.offsetDays)
       const done = due < addDays(T, doneUntilOffset)
@@ -485,7 +786,15 @@ export function createSeed(now: Date = new Date()): Database {
 
   // --------------------------------------------------------------- policies
   const katrine = acc('Katrine Daniel').id
-  const policy = (id: string, title: string, category: string, tags: string[], summary: string, versions: Array<[string, string, string]>, opts: Partial<Policy> = {}): Policy => ({
+  const policy = (
+    id: string,
+    title: string,
+    category: string,
+    tags: string[],
+    summary: string,
+    versions: Array<[string, string, string]>,
+    opts: Partial<Policy> = {},
+  ): Policy => ({
     id,
     title,
     category,
@@ -498,7 +807,16 @@ export function createSeed(now: Date = new Date()): Database {
     audienceDepartmentIds: null,
     reviewBy: addDays(T, 200),
     updatedAt: at(30),
-    versions: versions.map(([effective, note, body], i) => ({ version: i + 1, body, effectiveDate: effective, changeNote: note, createdBy: katrine, createdAt: at(400 - i * 120), publishedAt: at(390 - i * 120), publishedBy: katrine })),
+    versions: versions.map(([effective, note, body], i) => ({
+      version: i + 1,
+      body,
+      effectiveDate: effective,
+      changeNote: note,
+      createdBy: katrine,
+      createdAt: at(400 - i * 120),
+      publishedAt: at(390 - i * 120),
+      publishedBy: katrine,
+    })),
     ...opts,
   })
   const policies: Policy[] = [
@@ -518,40 +836,96 @@ export function createSeed(now: Date = new Date()): Database {
       ],
       { requiresAcknowledgment: true },
     ),
-    policy('pol_sick', 'Sickness Absence Policy', 'Time off', ['sick', 'illness', 'absence', 'medical'], 'Reporting sickness, medical certificates and returning to work.', [
+    policy(
+      'pol_sick',
+      'Sickness Absence Policy',
+      'Time off',
+      ['sick', 'illness', 'absence', 'medical'],
+      'Reporting sickness, medical certificates and returning to work.',
       [
-        `${year - 1}-06-01`,
-        'Initial version',
-        `## Reporting sickness\nTell your manager **before your shift starts** — by phone for hotel teams. Record the absence as sick leave in PeopleOS on your return.\n\n## Medical certificates\nAbsences of **more than 2 working days** require a medical certificate, uploaded to the sick leave request.\n\n## Paid sick days\nUp to 10 working days per year are paid by the company. Further absence is handled under statutory sickness rules for your country of employment; HR will contact you.\n\n## Returning to work\nYour manager holds a short return-to-work conversation after any absence of 5 days or more.`,
+        [
+          `${year - 1}-06-01`,
+          'Initial version',
+          `## Reporting sickness\nTell your manager **before your shift starts** — by phone for hotel teams. Record the absence as sick leave in PeopleOS on your return.\n\n## Medical certificates\nAbsences of **more than 2 working days** require a medical certificate, uploaded to the sick leave request.\n\n## Paid sick days\nUp to 10 working days per year are paid by the company. Further absence is handled under statutory sickness rules for your country of employment; HR will contact you.\n\n## Returning to work\nYour manager holds a short return-to-work conversation after any absence of 5 days or more.`,
+        ],
       ],
-    ]),
+    ),
     policy(
       'pol_remote',
       'Remote and Hybrid Work Policy',
       'Working arrangements',
       ['remote', 'hybrid', 'work from home', 'flexible'],
       'Who can work remotely and how to request a different arrangement.',
-      [[`${year}-02-01`, 'Initial version', `## Eligibility\nRemote or hybrid work is available for **office-based roles** where the work can be done effectively away from a property. Guest-facing hotel roles are on-site.\n\n## Requesting an arrangement\nSubmit a *Work arrangement change* request. It is approved by your manager and then by HR.\n\n## Expectations\nBe reachable during core hours (10:00–16:00 local time) and attend in-person team days set by your manager.\n\n## Equipment\nThe company provides a laptop. Request additional equipment through an *Equipment request*.`]],
+      [
+        [
+          `${year}-02-01`,
+          'Initial version',
+          `## Eligibility\nRemote or hybrid work is available for **office-based roles** where the work can be done effectively away from a property. Guest-facing hotel roles are on-site.\n\n## Requesting an arrangement\nSubmit a *Work arrangement change* request. It is approved by your manager and then by HR.\n\n## Expectations\nBe reachable during core hours (10:00–16:00 local time) and attend in-person team days set by your manager.\n\n## Equipment\nThe company provides a laptop. Request additional equipment through an *Equipment request*.`,
+        ],
+      ],
       { audienceDepartmentIds: ['dep_finance', 'dep_sales', 'dep_tech', 'dep_people'] },
     ),
-    policy('pol_equipment', 'Equipment and IT Use Policy', 'IT & equipment', ['equipment', 'laptop', 'replacement', 'it', 'lost', 'broken'], 'Issuing, replacing and returning work equipment.', [
+    policy(
+      'pol_equipment',
+      'Equipment and IT Use Policy',
+      'IT & equipment',
+      ['equipment', 'laptop', 'replacement', 'it', 'lost', 'broken'],
+      'Issuing, replacing and returning work equipment.',
       [
-        `${year - 1}-09-01`,
-        'Initial version',
-        `## Issuing equipment\nEquipment needed for your role is prepared before your first day.\n\n## Replacements\nIf equipment is **broken, lost or no longer suitable**, submit an *Equipment request or replacement* in PeopleOS describing the item and what happened. Your manager approves the request and IT arranges the replacement — usually within 5 working days.\n\n## Lost or stolen devices\nReport lost or stolen laptops and phones to IT **immediately** so access can be secured.\n\n## Returning equipment\nAll equipment is returned on or before your last working day.`,
+        [
+          `${year - 1}-09-01`,
+          'Initial version',
+          `## Issuing equipment\nEquipment needed for your role is prepared before your first day.\n\n## Replacements\nIf equipment is **broken, lost or no longer suitable**, submit an *Equipment request or replacement* in PeopleOS describing the item and what happened. Your manager approves the request and IT arranges the replacement — usually within 5 working days.\n\n## Lost or stolen devices\nReport lost or stolen laptops and phones to IT **immediately** so access can be secured.\n\n## Returning equipment\nAll equipment is returned on or before your last working day.`,
+        ],
       ],
-    ]),
-    policy('pol_conduct', 'Code of Conduct', 'Conduct', ['conduct', 'behaviour', 'ethics', 'harassment'], 'Standards of behaviour expected of every team member.', [
-      [`${year}-01-15`, 'Annual review', `## Our standards\nTreat guests and colleagues with respect. Harassment, discrimination and bullying are not tolerated.\n\n## Raising concerns\nRaise concerns with your manager, HR, or confidentially through a *General HR question* marked as sensitive.\n\n## Conflicts of interest\nDeclare any conflict of interest to HR.`],
-    ], { requiresAcknowledgment: true }),
-    policy('pol_working_time', 'Working Time and Shift Policy', 'Working arrangements', ['shift', 'rota', 'overtime', 'swap', 'hours'], 'Rotas, shift swaps, breaks and overtime for hotel teams.', [
-      [`${year - 1}-03-01`, 'Initial version', `## Rotas\nRotas are published at least **two weeks** ahead in the rostering app.\n\n## Shift swaps\nYou may swap a shift with a colleague in the same role if your supervisor agrees. Record the swap in the rostering app.\n\n## Overtime\nOvertime must be approved by your manager in advance and appears on the following month's payslip.`],
-    ]),
+    ),
+    policy(
+      'pol_conduct',
+      'Code of Conduct',
+      'Conduct',
+      ['conduct', 'behaviour', 'ethics', 'harassment'],
+      'Standards of behaviour expected of every team member.',
+      [
+        [
+          `${year}-01-15`,
+          'Annual review',
+          `## Our standards\nTreat guests and colleagues with respect. Harassment, discrimination and bullying are not tolerated.\n\n## Raising concerns\nRaise concerns with your manager, HR, or confidentially through a *General HR question* marked as sensitive.\n\n## Conflicts of interest\nDeclare any conflict of interest to HR.`,
+        ],
+      ],
+      { requiresAcknowledgment: true },
+    ),
+    policy(
+      'pol_working_time',
+      'Working Time and Shift Policy',
+      'Working arrangements',
+      ['shift', 'rota', 'overtime', 'swap', 'hours'],
+      'Rotas, shift swaps, breaks and overtime for hotel teams.',
+      [
+        [
+          `${year - 1}-03-01`,
+          'Initial version',
+          `## Rotas\nRotas are published at least **two weeks** ahead in the rostering app.\n\n## Shift swaps\nYou may swap a shift with a colleague in the same role if your supervisor agrees. Record the swap in the rostering app.\n\n## Overtime\nOvertime must be approved by your manager in advance and appears on the following month's payslip.`,
+        ],
+      ],
+    ),
     {
-      ...policy('pol_expenses', 'Travel and Expenses Policy', 'Finance', ['expenses', 'travel', 'reimbursement'], 'Draft — under review by Finance.', [[addDays(T, 30), 'First draft', `## Draft\nThis policy is being drafted and is not yet in force.`]]),
+      ...policy('pol_expenses', 'Travel and Expenses Policy', 'Finance', ['expenses', 'travel', 'reimbursement'], 'Draft — under review by Finance.', [
+        [addDays(T, 30), 'First draft', `## Draft\nThis policy is being drafted and is not yet in force.`],
+      ]),
       status: 'draft',
       publishedVersion: null,
-      versions: [{ version: 1, body: '## Draft\nThis policy is being drafted and is not yet in force.', effectiveDate: addDays(T, 30), changeNote: 'First draft', createdBy: katrine, createdAt: at(5), publishedAt: null, publishedBy: null }],
+      versions: [
+        {
+          version: 1,
+          body: '## Draft\nThis policy is being drafted and is not yet in force.',
+          effectiveDate: addDays(T, 30),
+          changeNote: 'First draft',
+          createdBy: katrine,
+          createdAt: at(5),
+          publishedAt: null,
+          publishedBy: null,
+        },
+      ],
     },
   ]
   const policyAcks = employees
@@ -562,7 +936,14 @@ export function createSeed(now: Date = new Date()): Database {
     ])
 
   // --------------------------------------------------------------- automation
-  const rule = (id: string, name: string, description: string, trigger: WorkflowRule['trigger'], conditions: WorkflowRule['conditions'], actions: WorkflowRule['actions']): WorkflowRule => ({
+  const rule = (
+    id: string,
+    name: string,
+    description: string,
+    trigger: WorkflowRule['trigger'],
+    conditions: WorkflowRule['conditions'],
+    actions: WorkflowRule['actions'],
+  ): WorkflowRule => ({
     id,
     name,
     description,
@@ -577,37 +958,136 @@ export function createSeed(now: Date = new Date()): Database {
     changeLog: [{ id: `${id}_c`, at: at(60), by: katrine, text: 'Rule created' }],
   })
   const rules: WorkflowRule[] = [
-    rule('rule_onboard', 'Start onboarding for new hires', 'When an employee record is created with a future joining date, start the matching onboarding checklist.', 'employee.created', [{ field: 'employee.status', operator: 'equals', value: 'pre_boarding' }], [
-      { type: 'start_lifecycle', kind: 'onboarding', templateId: null },
-      { type: 'notify', to: 'manager', title: 'New team member joining', message: '{employee} joins on {date}. Please review the onboarding checklist.' },
-    ]),
-    rule('rule_overdue_req', 'Escalate overdue HR requests', 'Notify the HR queue when a request passes its due time.', 'task.overdue', [{ field: 'entity.type', operator: 'equals', value: 'request' }], [
-      { type: 'notify', to: 'hr_queue', title: 'Request overdue', message: '{subject} is past its service target.' },
-    ]),
-    rule('rule_cert', 'Certificate expiry reminder', 'Remind HR 30 days before a certificate expires.', 'document.expiring', [{ field: 'document.kind', operator: 'equals', value: 'certificate' }], [
-      { type: 'create_task', title: 'Renew {document} for {employee}', assignTo: 'hr_queue', dueInDays: 14, priority: 'normal' },
-      { type: 'notify', to: 'employee', title: 'Certificate expiring', message: 'Your {document} expires on {date}. HR will contact you about renewal.' },
-    ]),
-    rule('rule_dept_change', 'Department change follow-up', 'When someone changes department, ask IT to review their access.', 'employee.department_changed', [], [
-      { type: 'create_task', title: 'Review system access for {employee} (moved to {department})', assignTo: `account:${acc('Priya Nair').id}`, dueInDays: 3, priority: 'normal' },
-    ]),
+    rule(
+      'rule_onboard',
+      'Start onboarding for new hires',
+      'When an employee record is created with a future joining date, start the matching onboarding checklist.',
+      'employee.created',
+      [{ field: 'employee.status', operator: 'equals', value: 'pre_boarding' }],
+      [
+        { type: 'start_lifecycle', kind: 'onboarding', templateId: null },
+        { type: 'notify', to: 'manager', title: 'New team member joining', message: '{employee} joins on {date}. Please review the onboarding checklist.' },
+      ],
+    ),
+    rule(
+      'rule_overdue_req',
+      'Escalate overdue HR requests',
+      'Notify the HR queue when a request passes its due time.',
+      'task.overdue',
+      [{ field: 'entity.type', operator: 'equals', value: 'request' }],
+      [{ type: 'notify', to: 'hr_queue', title: 'Request overdue', message: '{subject} is past its service target.' }],
+    ),
+    rule(
+      'rule_cert',
+      'Certificate expiry reminder',
+      'Remind HR 30 days before a certificate expires.',
+      'document.expiring',
+      [{ field: 'document.kind', operator: 'equals', value: 'certificate' }],
+      [
+        { type: 'create_task', title: 'Renew {document} for {employee}', assignTo: 'hr_queue', dueInDays: 14, priority: 'normal' },
+        { type: 'notify', to: 'employee', title: 'Certificate expiring', message: 'Your {document} expires on {date}. HR will contact you about renewal.' },
+      ],
+    ),
+    rule(
+      'rule_dept_change',
+      'Department change follow-up',
+      'When someone changes department, ask IT to review their access.',
+      'employee.department_changed',
+      [],
+      [
+        {
+          type: 'create_task',
+          title: 'Review system access for {employee} (moved to {department})',
+          assignTo: `account:${acc('Priya Nair').id}`,
+          dueInDays: 3,
+          priority: 'normal',
+        },
+      ],
+    ),
   ]
 
   // --------------------------------------------------------------- tasks, notifications, misc
   const tasks = [
-    { id: 'task_1', title: 'Prepare Q3 headcount report for the COO', description: '', assigneeId: katrine, dueDate: addDays(T, 2), status: 'open' as const, priority: 'normal' as const, link: null, sourceKey: null, createdBy: katrine, createdAt: at(3), completedAt: null },
-    { id: 'task_2', title: 'Review seasonal contracts ending next month', description: 'Pine Lodge seasonal team.', assigneeId: acc('Marcus Chen').id, dueDate: addDays(T, -1), status: 'open' as const, priority: 'high' as const, link: null, sourceKey: null, createdBy: katrine, createdAt: at(6), completedAt: null },
+    {
+      id: 'task_1',
+      title: 'Prepare Q3 headcount report for the COO',
+      description: '',
+      assigneeId: katrine,
+      dueDate: addDays(T, 2),
+      status: 'open' as const,
+      priority: 'normal' as const,
+      link: null,
+      sourceKey: null,
+      createdBy: katrine,
+      createdAt: at(3),
+      completedAt: null,
+    },
+    {
+      id: 'task_2',
+      title: 'Review seasonal contracts ending next month',
+      description: 'Pine Lodge seasonal team.',
+      assigneeId: acc('Marcus Chen').id,
+      dueDate: addDays(T, -1),
+      status: 'open' as const,
+      priority: 'high' as const,
+      link: null,
+      sourceKey: null,
+      createdBy: katrine,
+      createdAt: at(6),
+      completedAt: null,
+    },
   ]
 
   const announcements = [
-    { id: 'ann_1', title: 'Annual leave policy updated', body: 'Entitlement is now 22 days for full-time team members. Please read and acknowledge the updated policy.', authorId: katrine, publishedAt: at(25), audienceDepartmentIds: null },
-    { id: 'ann_2', title: 'Summer peak period', body: 'Leave at both properties is limited during the peak period — plan requests early.', authorId: acc('Aisha Rahman').id, publishedAt: at(4), audienceDepartmentIds: ['dep_front', 'dep_house', 'dep_fnb'] },
+    {
+      id: 'ann_1',
+      title: 'Annual leave policy updated',
+      body: 'Entitlement is now 22 days for full-time team members. Please read and acknowledge the updated policy.',
+      authorId: katrine,
+      publishedAt: at(25),
+      audienceDepartmentIds: null,
+    },
+    {
+      id: 'ann_2',
+      title: 'Summer peak period',
+      body: 'Leave at both properties is limited during the peak period — plan requests early.',
+      authorId: acc('Aisha Rahman').id,
+      publishedAt: at(4),
+      audienceDepartmentIds: ['dep_front', 'dep_house', 'dep_fnb'],
+    },
   ]
 
   const notifications = [
-    { id: 'ntf_1', accountId: katrine, title: 'Work arrangement change awaiting HR approval', body: 'Daniel Kim — compressed four-day week', link: '/requests/req_1043', read: false, at: at(1, 11), kind: 'request' as const },
-    { id: 'ntf_2', accountId: acc('Elena Rossi').id, title: 'Leave request from Samuel Okoye', body: '5 days annual leave', link: '/leave?tab=approvals', read: false, at: at(1, 9), kind: 'leave' as const },
-    { id: 'ntf_3', accountId: acc('Samuel Okoye').id, title: 'Your equipment request is awaiting manager approval', body: 'Replacement headset for front desk', link: '/requests/req_1040', read: true, at: at(2, 10), kind: 'request' as const },
+    {
+      id: 'ntf_1',
+      accountId: katrine,
+      title: 'Work arrangement change awaiting HR approval',
+      body: 'Daniel Kim — compressed four-day week',
+      link: '/requests/req_1043',
+      read: false,
+      at: at(1, 11),
+      kind: 'request' as const,
+    },
+    {
+      id: 'ntf_2',
+      accountId: acc('Elena Rossi').id,
+      title: 'Leave request from Samuel Okoye',
+      body: '5 days annual leave',
+      link: '/leave?tab=approvals',
+      read: false,
+      at: at(1, 9),
+      kind: 'leave' as const,
+    },
+    {
+      id: 'ntf_3',
+      accountId: acc('Samuel Okoye').id,
+      title: 'Your equipment request is awaiting manager approval',
+      body: 'Replacement headset for front desk',
+      link: '/requests/req_1040',
+      read: true,
+      at: at(2, 10),
+      kind: 'request' as const,
+    },
   ]
 
   return {
@@ -637,7 +1117,16 @@ export function createSeed(now: Date = new Date()): Database {
     notifications,
     notificationPrefs: [],
     inboxState: [],
-    audit: [{ id: 'aud_0', at: at(0, 8), actorId: null, action: 'demo.created', entity: { type: 'organization', id: organization.id }, summary: 'Demo workspace created with fictional data' }],
+    audit: [
+      {
+        id: 'aud_0',
+        at: at(0, 8),
+        actorId: null,
+        action: 'demo.created',
+        entity: { type: 'organization', id: organization.id },
+        summary: 'Demo workspace created with fictional data',
+      },
+    ],
     conversations: [],
   }
 }

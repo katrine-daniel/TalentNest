@@ -1,4 +1,4 @@
-import { createId, nowISO } from '@/lib/utils'
+import { createId } from '@/lib/utils'
 import type { Account, ID, Notification } from '@/domain/types'
 import { replaceById, ServiceError, store } from './store'
 import { transact } from './tx'
@@ -26,7 +26,7 @@ export function markAllRead(actor: Account) {
 export function setPreference(actor: Account, kind: Notification['kind'], channel: 'inApp' | 'email', value: boolean) {
   transact((d) => {
     const existing = d.notificationPrefs.find((p) => p.accountId === actor.id && p.kind === kind)
-    const pref = { accountId: actor.id, kind, inApp: existing?.inApp ?? true, email: existing?.email ?? false, [channel]: value }
+    const pref = { id: `${actor.id}:${kind}`, accountId: actor.id, kind, inApp: existing?.inApp ?? true, email: existing?.email ?? false, [channel]: value }
     return { ...d, notificationPrefs: [...d.notificationPrefs.filter((p) => !(p.accountId === actor.id && p.kind === kind)), pref] }
   })
 }
@@ -38,5 +38,3 @@ export function snoozeInboxItem(actor: Account, itemKey: string, until: string |
     return { ...d, inboxState: until ? [...rest, { id: createId('ibx'), accountId: actor.id, itemKey, snoozedUntil: until }] : rest }
   })
 }
-
-export const nowStamp = nowISO

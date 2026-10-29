@@ -12,7 +12,17 @@ import { can, isHR } from './permissions'
 import { isOverdue, isOpenRequest } from './sla'
 import type { Account, Database, Employee, ID, Priority } from './types'
 
-export type InboxKind = 'leave_approval' | 'request_approval' | 'record_update' | 'request' | 'request_followup' | 'leave_followup' | 'lifecycle_task' | 'document_review' | 'task' | 'policy_ack'
+export type InboxKind =
+  | 'leave_approval'
+  | 'request_approval'
+  | 'record_update'
+  | 'request'
+  | 'request_followup'
+  | 'leave_followup'
+  | 'lifecycle_task'
+  | 'document_review'
+  | 'task'
+  | 'policy_ack'
 
 export interface InboxItem {
   key: string
@@ -76,7 +86,21 @@ export function buildInbox(db: Database, account: Account, now: Date = new Date(
       })
     }
     if (l.status === 'changes_requested' && (l.employeeId === account.employeeId || l.requestedBy === account.id)) {
-      items.push({ key: `leavefix:${l.id}`, kind: 'leave_followup', title: `Update your ${type?.name.toLowerCase() ?? 'leave'} request`, context: l.approvals.find((s) => s.decision === 'changes_requested')?.comment ?? '', employee: e, ownerId: account.id, ownerLabel: 'You', priority: 'normal', due: l.startDate, overdue: false, status: 'Changes requested', href: `/leave/${l.id}`, ref: { id: l.id } })
+      items.push({
+        key: `leavefix:${l.id}`,
+        kind: 'leave_followup',
+        title: `Update your ${type?.name.toLowerCase() ?? 'leave'} request`,
+        context: l.approvals.find((s) => s.decision === 'changes_requested')?.comment ?? '',
+        employee: e,
+        ownerId: account.id,
+        ownerLabel: 'You',
+        priority: 'normal',
+        due: l.startDate,
+        overdue: false,
+        status: 'Changes requested',
+        href: `/leave/${l.id}`,
+        ref: { id: l.id },
+      })
     }
   }
 
@@ -103,7 +127,13 @@ export function buildInbox(db: Database, account: Account, now: Date = new Date(
       })
       continue
     }
-    if (hr && isOpenRequest(r) && r.status !== 'pending_approval' && r.status !== 'changes_requested' && (r.assigneeId === account.id || r.assigneeId === null)) {
+    if (
+      hr &&
+      isOpenRequest(r) &&
+      r.status !== 'pending_approval' &&
+      r.status !== 'changes_requested' &&
+      (r.assigneeId === account.id || r.assigneeId === null)
+    ) {
       items.push({
         key: `req:${r.id}`,
         kind: 'request',
@@ -115,13 +145,34 @@ export function buildInbox(db: Database, account: Account, now: Date = new Date(
         priority: r.priority,
         due: r.dueAt,
         overdue,
-        status: r.status === 'waiting_on_employee' ? 'Waiting on employee' : r.status === 'approved' ? 'Approved — fulfil' : r.status === 'in_progress' ? 'In progress' : 'Open',
+        status:
+          r.status === 'waiting_on_employee'
+            ? 'Waiting on employee'
+            : r.status === 'approved'
+              ? 'Approved — fulfil'
+              : r.status === 'in_progress'
+                ? 'In progress'
+                : 'Open',
         href: `/requests/${r.id}`,
         ref: { id: r.id },
       })
     }
     if (r.requesterId === account.id && (r.status === 'waiting_on_employee' || r.status === 'changes_requested')) {
-      items.push({ key: `reqfix:${r.id}`, kind: 'request_followup', title: r.subject, context: r.status === 'changes_requested' ? 'HR or your approver asked for changes' : 'HR needs more information from you', employee: e, ownerId: account.id, ownerLabel: 'You', priority: r.priority, due: null, overdue: false, status: r.status === 'changes_requested' ? 'Changes requested' : 'Reply needed', href: `/requests/${r.id}`, ref: { id: r.id } })
+      items.push({
+        key: `reqfix:${r.id}`,
+        kind: 'request_followup',
+        title: r.subject,
+        context: r.status === 'changes_requested' ? 'HR or your approver asked for changes' : 'HR needs more information from you',
+        employee: e,
+        ownerId: account.id,
+        ownerLabel: 'You',
+        priority: r.priority,
+        due: null,
+        overdue: false,
+        status: r.status === 'changes_requested' ? 'Changes requested' : 'Reply needed',
+        href: `/requests/${r.id}`,
+        ref: { id: r.id },
+      })
     }
   }
 
@@ -152,7 +203,21 @@ export function buildInbox(db: Database, account: Account, now: Date = new Date(
   for (const t of db.tasks.filter((x) => x.status === 'open')) {
     if (!(t.assigneeId === account.id || (t.assigneeId === null && hr))) continue
     const e = t.link?.type === 'employee' ? emp(t.link.id) : null
-    items.push({ key: `task:${t.id}`, kind: 'task', title: t.title, context: t.description || (t.sourceKey ? 'Created by automation' : `Created by ${name(t.createdBy)}`), employee: e, ownerId: t.assigneeId, ownerLabel: t.assigneeId === account.id ? 'You' : 'HR queue', priority: t.priority, due: t.dueDate, overdue: Boolean(t.dueDate && t.dueDate < T), status: 'Open', href: e ? `/people/${e.id}` : '/inbox', ref: { id: t.id } })
+    items.push({
+      key: `task:${t.id}`,
+      kind: 'task',
+      title: t.title,
+      context: t.description || (t.sourceKey ? 'Created by automation' : `Created by ${name(t.createdBy)}`),
+      employee: e,
+      ownerId: t.assigneeId,
+      ownerLabel: t.assigneeId === account.id ? 'You' : 'HR queue',
+      priority: t.priority,
+      due: t.dueDate,
+      overdue: Boolean(t.dueDate && t.dueDate < T),
+      status: 'Open',
+      href: e ? `/people/${e.id}` : '/inbox',
+      ref: { id: t.id },
+    })
   }
 
   if (account.employeeId) {
@@ -160,11 +225,29 @@ export function buildInbox(db: Database, account: Account, now: Date = new Date(
     for (const p of db.policies.filter((x) => x.status === 'published' && x.requiresAcknowledgment && x.publishedVersion !== null)) {
       const inAudience = !p.audienceDepartmentIds || (me && p.audienceDepartmentIds.includes(me.departmentId))
       const acked = db.policyAcks.some((a) => a.policyId === p.id && a.version === p.publishedVersion && a.employeeId === account.employeeId)
-      if (inAudience && !acked) items.push({ key: `ack:${p.id}:${p.publishedVersion}`, kind: 'policy_ack', title: `Read and acknowledge: ${p.title}`, context: `Version ${p.publishedVersion}`, employee: me, ownerId: account.id, ownerLabel: 'You', priority: 'normal', due: null, overdue: false, status: 'Not acknowledged', href: `/policies/${p.id}`, ref: { id: p.id } })
+      if (inAudience && !acked)
+        items.push({
+          key: `ack:${p.id}:${p.publishedVersion}`,
+          kind: 'policy_ack',
+          title: `Read and acknowledge: ${p.title}`,
+          context: `Version ${p.publishedVersion}`,
+          employee: me,
+          ownerId: account.id,
+          ownerLabel: 'You',
+          priority: 'normal',
+          due: null,
+          overdue: false,
+          status: 'Not acknowledged',
+          href: `/policies/${p.id}`,
+          ref: { id: p.id },
+        })
     }
   }
 
-  return items.sort((a, b) => Number(b.overdue) - Number(a.overdue) || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (a.due ?? '9999').localeCompare(b.due ?? '9999'))
+  return items.sort(
+    (a, b) =>
+      Number(b.overdue) - Number(a.overdue) || PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority] || (a.due ?? '9999').localeCompare(b.due ?? '9999'),
+  )
 }
 
 export function isSnoozed(db: Pick<Database, 'inboxState'>, accountId: ID, key: string, now = Date.now()): boolean {

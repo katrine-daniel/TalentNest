@@ -56,14 +56,22 @@ export function resolveTarget(db: Database, target: AssigneeTarget, employee: Em
 type Result = WorkflowRun['results'][number]
 
 /** Applies one action to `db`. Pure with respect to the store; returns the next db and a result line. */
-function applyAction(db: Database, rule: WorkflowRule, action: RuleAction, event: Pick<DomainEvent, 'employeeId' | 'data'>, ctx: EventContext, key: string): { db: Database; result: Result } {
+function applyAction(
+  db: Database,
+  rule: WorkflowRule,
+  action: RuleAction,
+  event: Pick<DomainEvent, 'employeeId' | 'data'>,
+  ctx: EventContext,
+  key: string,
+): { db: Database; result: Result } {
   const employee = db.employees.find((e) => e.id === event.employeeId)
   switch (action.type) {
     case 'create_task': {
       const targets = resolveTarget(db, action.assignTo, employee)
       // HR-queue tasks stay unassigned so any HR handler can pick them up.
       const assignee = action.assignTo === 'hr_queue' ? null : (targets[0] ?? null)
-      if (action.assignTo !== 'hr_queue' && !assignee) return { db, result: { action: action.type, outcome: 'failed', message: 'No one to assign the task to (target not found).' } }
+      if (action.assignTo !== 'hr_queue' && !assignee)
+        return { db, result: { action: action.type, outcome: 'failed', message: 'No one to assign the task to (target not found).' } }
       const { db: next, task } = createTaskRecord(db, {
         title: interpolate(action.title, ctx),
         description: `Created by automation “${rule.name}”.`,
@@ -74,12 +82,24 @@ function applyAction(db: Database, rule: WorkflowRule, action: RuleAction, event
         sourceKey: `${key}:task:${action.title}`,
         createdBy: null,
       })
-      return { db: next, result: { action: action.type, outcome: 'done', message: task ? `Task “${task.title}” created` : 'Task already existed (not duplicated)' } }
+      return {
+        db: next,
+        result: { action: action.type, outcome: 'done', message: task ? `Task “${task.title}” created` : 'Task already existed (not duplicated)' },
+      }
     }
     case 'notify': {
       const targets = resolveTarget(db, action.to, employee)
       if (!targets.length) return { db, result: { action: action.type, outcome: 'failed', message: 'No recipient found.' } }
-      const next = withNotifications(db, targets.map((accountId) => ({ accountId, title: interpolate(action.title, ctx), body: interpolate(action.message, ctx), link: employee ? `/people/${employee.id}` : null, kind: 'automation' as const })))
+      const next = withNotifications(
+        db,
+        targets.map((accountId) => ({
+          accountId,
+          title: interpolate(action.title, ctx),
+          body: interpolate(action.message, ctx),
+          link: employee ? `/people/${employee.id}` : null,
+          kind: 'automation' as const,
+        })),
+      )
       return { db: next, result: { action: action.type, outcome: 'done', message: `Notified ${targets.length} user(s)` } }
     }
     case 'send_email':
@@ -115,11 +135,17 @@ function applyAction(db: Database, rule: WorkflowRule, action: RuleAction, event
         updatedAt: now,
         resolvedAt: null,
       }
-      return { db: { ...db, requests: [request, ...db.requests] }, result: { action: action.type, outcome: 'done', message: `Approval request ${number} created` } }
+      return {
+        db: { ...db, requests: [request, ...db.requests] },
+        result: { action: action.type, outcome: 'done', message: `Approval request ${number} created` },
+      }
     }
     case 'update_employee': {
       if (!employee) return { db, result: { action: action.type, outcome: 'failed', message: 'Employee not found.' } }
-      return { db: applyEmployeePatch(db, employee.id, { [action.field]: action.value }, null, `Automation “${rule.name}”`), result: { action: action.type, outcome: 'done', message: `Set ${action.field} to ${action.value}` } }
+      return {
+        db: applyEmployeePatch(db, employee.id, { [action.field]: action.value }, null, `Automation “${rule.name}”`),
+        result: { action: action.type, outcome: 'done', message: `Set ${action.field} to ${action.value}` },
+      }
     }
     case 'start_lifecycle':
       // Needs the live store (it validates against current data); handled by the caller.
@@ -143,7 +169,11 @@ export function executeRule(rule: WorkflowRule, event: DomainEvent, opts: Execut
   for (const action of rule.actions) {
     try {
       if (opts.test) {
-        results.push({ action: action.type, outcome: action.type === 'send_email' && !EMAIL_PROVIDER_CONFIGURED ? 'skipped' : 'done', message: describeAction(action, ctx, db) })
+        results.push({
+          action: action.type,
+          outcome: action.type === 'send_email' && !EMAIL_PROVIDER_CONFIGURED ? 'skipped' : 'done',
+          message: describeAction(action, ctx, db),
+        })
         continue
       }
       const out = applyAction(next, rule, action, event, ctx, key)
@@ -196,7 +226,10 @@ function patchRunResult(runId: ID, action: RuleAction['type'], outcome: Result['
 }
 
 export function describeAction(action: RuleAction, ctx: EventContext, db: Database): string {
-  const who = (t: AssigneeTarget) => (t.startsWith('account:') ? (db.accounts.find((a) => `account:${a.id}` === t)?.name ?? 'unknown user') : { employee: 'the employee', manager: 'their manager', hr_queue: 'the HR queue', department_head: 'the department head' }[t as 'employee'])
+  const who = (t: AssigneeTarget) =>
+    t.startsWith('account:')
+      ? (db.accounts.find((a) => `account:${a.id}` === t)?.name ?? 'unknown user')
+      : { employee: 'the employee', manager: 'their manager', hr_queue: 'the HR queue', department_head: 'the department head' }[t as 'employee']
   switch (action.type) {
     case 'create_task':
       return `Create task “${interpolate(action.title, ctx)}” for ${who(action.assignTo)}, due in ${action.dueInDays} day(s)`
@@ -222,7 +255,12 @@ export function handleEvent(event: DomainEvent, executor: WorkflowRun['executor'
   const ctx = buildContext(db, event)
   for (const rule of db.rules) {
     if (!rule.enabled || !ruleMatches(rule, event.type, ctx)) continue
-    const key = dedupeKey(rule.id, event.type, String(event.data.key ?? event.entity?.id ?? event.employeeId ?? ''), event.type === 'schedule.daily' ? today() : null)
+    const key = dedupeKey(
+      rule.id,
+      event.type,
+      String(event.data.key ?? event.entity?.id ?? event.employeeId ?? ''),
+      event.type === 'schedule.daily' ? today() : null,
+    )
     const prior = store.db.runs.filter((r) => r.dedupeKey === key)
     if (alreadyRan(store.db, key) || prior.some((r) => r.status === 'failed' && r.attempts >= rule.maxAttempts)) continue
     if (prior.some((r) => r.status === 'failed')) continue // retried by the scheduler, not on repeat events
@@ -238,7 +276,13 @@ export function previewRule(rule: WorkflowRule, event: DomainEvent) {
   const ctx = buildContext(db, event)
   const errors = validateRule(rule, db)
   const matches = ruleMatches(rule, event.type, ctx)
-  return { errors, matches, context: ctx, run: matches && !errors.length ? executeRule(rule, event, { test: true }) : null, failing: rule.conditions.filter((c) => !ruleMatches({ trigger: rule.trigger, conditions: [c] }, event.type, ctx)) }
+  return {
+    errors,
+    matches,
+    context: ctx,
+    run: matches && !errors.length ? executeRule(rule, event, { test: true }) : null,
+    failing: rule.conditions.filter((c) => !ruleMatches({ trigger: rule.trigger, conditions: [c] }, event.type, ctx)),
+  }
 }
 
 export function retryRun(actor: Account | null, runId: ID) {
@@ -246,7 +290,12 @@ export function retryRun(actor: Account | null, runId: ID) {
   const run = store.db.runs.find((r) => r.id === runId)
   const rule = run && store.db.rules.find((r) => r.id === run.ruleId)
   if (!run || !rule || run.status !== 'failed' || !run.event) throw new ServiceError('Only failed runs with a recorded event can be retried.', 'conflict')
-  return executeRule(rule, { type: run.trigger, entity: run.entity, employeeId: run.event.employeeId, actorId: actor?.id ?? null, data: run.event.data }, { executor: 'browser' }, run.attempts)
+  return executeRule(
+    rule,
+    { type: run.trigger, entity: run.entity, employeeId: run.event.employeeId, actorId: actor?.id ?? null, data: run.event.data },
+    { executor: 'browser' },
+    run.attempts,
+  )
 }
 
 /** Scheduled pass: joins, overdue work, expiring documents, daily rules and automatic retries. */
@@ -256,24 +305,56 @@ export function runScheduledChecks(now = new Date()): { events: number; retries:
   let count = 0
   // Employees whose joining date has arrived become active.
   for (const e of db.employees.filter((x) => x.status === 'pre_boarding' && x.joinDate <= T)) {
-    store.commit((d) => withAudit(applyEmployeePatch(d, e.id, { status: 'active' }, null, 'Joining date reached'), null, 'employee.joined', { type: 'employee', id: e.id }, `${fullName(e)} joined`))
+    store.commit((d) =>
+      withAudit(
+        applyEmployeePatch(d, e.id, { status: 'active' }, null, 'Joining date reached'),
+        null,
+        'employee.joined',
+        { type: 'employee', id: e.id },
+        `${fullName(e)} joined`,
+      ),
+    )
     queueEvent({ type: 'employee.joined', entity: { type: 'employee', id: e.id }, employeeId: e.id, actorId: null, data: { date: e.joinDate } })
     count++
   }
   count += escalateOverdue(now.getTime()).length
   for (const c of store.db.lifecycleCases.filter((x) => x.status === 'active')) {
     for (const t of c.tasks.filter((x) => x.status === 'open' && x.dueDate < T)) {
-      queueEvent({ type: 'task.overdue', entity: { type: 'lifecycle', id: c.id }, employeeId: c.employeeId, actorId: null, data: { key: t.id, 'entity.type': 'lifecycle_task', subject: t.title, daysOverdue: daysBetween(t.dueDate, T) } })
+      queueEvent({
+        type: 'task.overdue',
+        entity: { type: 'lifecycle', id: c.id },
+        employeeId: c.employeeId,
+        actorId: null,
+        data: { key: t.id, 'entity.type': 'lifecycle_task', subject: t.title, daysOverdue: daysBetween(t.dueDate, T) },
+      })
       count++
     }
   }
   for (const t of store.db.tasks.filter((x) => x.status === 'open' && x.dueDate && x.dueDate < T)) {
-    queueEvent({ type: 'task.overdue', entity: t.link, employeeId: t.link?.type === 'employee' ? t.link.id : null, actorId: null, data: { key: t.id, 'entity.type': 'task', subject: t.title, daysOverdue: daysBetween(t.dueDate as string, T) } })
+    queueEvent({
+      type: 'task.overdue',
+      entity: t.link,
+      employeeId: t.link?.type === 'employee' ? t.link.id : null,
+      actorId: null,
+      data: { key: t.id, 'entity.type': 'task', subject: t.title, daysOverdue: daysBetween(t.dueDate as string, T) },
+    })
     count++
   }
   for (const e of store.db.employees.filter((x) => x.status !== 'terminated')) {
     for (const doc of e.documents.filter((d) => d.expiresOn && d.expiresOn >= T && daysBetween(T, d.expiresOn) <= 30)) {
-      queueEvent({ type: 'document.expiring', entity: { type: 'employee', id: e.id }, employeeId: e.id, actorId: null, data: { key: doc.id, document: doc.name.replace(/\.\w+$/, ''), 'document.kind': doc.kind, date: doc.expiresOn, daysUntilExpiry: daysBetween(T, doc.expiresOn as string) } })
+      queueEvent({
+        type: 'document.expiring',
+        entity: { type: 'employee', id: e.id },
+        employeeId: e.id,
+        actorId: null,
+        data: {
+          key: doc.id,
+          document: doc.name.replace(/\.\w+$/, ''),
+          'document.kind': doc.kind,
+          date: doc.expiresOn,
+          daysUntilExpiry: daysBetween(T, doc.expiresOn as string),
+        },
+      })
       count++
     }
   }
@@ -302,9 +383,31 @@ export function saveRule(actor: Account, input: RuleInput, id?: ID): WorkflowRul
   const existing = id ? store.db.rules.find((r) => r.id === id) : undefined
   if (id && !existing) throw new ServiceError('Rule not found.', 'not_found')
   const rule: WorkflowRule = existing
-    ? { ...existing, ...input, name: input.name.trim(), updatedAt: now, changeLog: [...existing.changeLog, { id: createId('chg'), at: now, by: actor.id, text: summarizeChange(existing, input) }] }
-    : { ...input, name: input.name.trim(), id: createId('rule'), createdBy: actor.id, createdAt: now, updatedAt: now, changeLog: [{ id: createId('chg'), at: now, by: actor.id, text: 'Rule created' }] }
-  transact((d) => withAudit({ ...d, rules: existing ? replaceById(d.rules, rule.id, () => rule) : [...d.rules, rule] }, actor.id, existing ? 'rule.updated' : 'rule.created', { type: 'rule', id: rule.id }, rule.name))
+    ? {
+        ...existing,
+        ...input,
+        name: input.name.trim(),
+        updatedAt: now,
+        changeLog: [...existing.changeLog, { id: createId('chg'), at: now, by: actor.id, text: summarizeChange(existing, input) }],
+      }
+    : {
+        ...input,
+        name: input.name.trim(),
+        id: createId('rule'),
+        createdBy: actor.id,
+        createdAt: now,
+        updatedAt: now,
+        changeLog: [{ id: createId('chg'), at: now, by: actor.id, text: 'Rule created' }],
+      }
+  transact((d) =>
+    withAudit(
+      { ...d, rules: existing ? replaceById(d.rules, rule.id, () => rule) : [...d.rules, rule] },
+      actor.id,
+      existing ? 'rule.updated' : 'rule.created',
+      { type: 'rule', id: rule.id },
+      rule.name,
+    ),
+  )
   return rule
 }
 
@@ -329,7 +432,9 @@ export function deleteRule(actor: Account, id: ID) {
   if (!can(actor, 'automation.manage')) throw new ServiceError('Only automation managers can delete rules.', 'forbidden')
   const rule = store.db.rules.find((r) => r.id === id)
   if (!rule) throw new ServiceError('Rule not found.', 'not_found')
-  transact((d) => withAudit({ ...d, rules: d.rules.filter((r) => r.id !== id) }, actor.id, 'rule.deleted', { type: 'rule', id }, `${rule.name} deleted (run history kept)`))
+  transact((d) =>
+    withAudit({ ...d, rules: d.rules.filter((r) => r.id !== id) }, actor.id, 'rule.deleted', { type: 'rule', id }, `${rule.name} deleted (run history kept)`),
+  )
 }
 
 let installed = false

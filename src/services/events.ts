@@ -17,7 +17,9 @@ const handlers = new Set<Handler>()
 export const events = {
   subscribe(handler: Handler) {
     handlers.add(handler)
-    return () => handlers.delete(handler)
+    return () => {
+      handlers.delete(handler)
+    }
   },
   /** Publishes events queued by the last service call. */
   flush() {

@@ -30,7 +30,12 @@ export const latestVersion = (p: Policy): PolicyVersion => p.versions[p.versions
 export function needsAcknowledgment(db: Database, account: Account): Policy[] {
   if (!account.employeeId) return []
   return db.policies.filter(
-    (p) => p.status === 'published' && p.requiresAcknowledgment && p.publishedVersion !== null && inAudience(p, db, account) && !db.policyAcks.some((a) => a.policyId === p.id && a.version === p.publishedVersion && a.employeeId === account.employeeId),
+    (p) =>
+      p.status === 'published' &&
+      p.requiresAcknowledgment &&
+      p.publishedVersion !== null &&
+      inAudience(p, db, account) &&
+      !db.policyAcks.some((a) => a.policyId === p.id && a.version === p.publishedVersion && a.employeeId === account.employeeId),
   )
 }
 
@@ -68,7 +73,18 @@ export function createPolicy(actor: Account, input: PolicyInput): Policy {
     ownerId: actor.id,
     status: 'draft',
     publishedVersion: null,
-    versions: [{ version: 1, body: input.body.trim(), effectiveDate: input.effectiveDate, changeNote: input.changeNote.trim() || 'First draft', createdBy: actor.id, createdAt: now, publishedAt: null, publishedBy: null }],
+    versions: [
+      {
+        version: 1,
+        body: input.body.trim(),
+        effectiveDate: input.effectiveDate,
+        changeNote: input.changeNote.trim() || 'First draft',
+        createdBy: actor.id,
+        createdAt: now,
+        publishedAt: null,
+        publishedBy: null,
+      },
+    ],
     requiresAcknowledgment: input.requiresAcknowledgment,
     audienceDepartmentIds: input.audienceDepartmentIds?.length ? input.audienceDepartmentIds : null,
     reviewBy: input.reviewBy,
@@ -91,8 +107,24 @@ export function savePolicyDraft(actor: Account, id: ID, input: PolicyInput) {
   const latest = latestVersion(p)
   const now = nowISO()
   const versions = latest.publishedAt
-    ? [...p.versions, { version: latest.version + 1, body: input.body.trim(), effectiveDate: input.effectiveDate, changeNote: input.changeNote.trim() || 'Revision', createdBy: actor.id, createdAt: now, publishedAt: null, publishedBy: null }]
-    : p.versions.map((v) => (v.version === latest.version ? { ...v, body: input.body.trim(), effectiveDate: input.effectiveDate, changeNote: input.changeNote.trim() || v.changeNote } : v))
+    ? [
+        ...p.versions,
+        {
+          version: latest.version + 1,
+          body: input.body.trim(),
+          effectiveDate: input.effectiveDate,
+          changeNote: input.changeNote.trim() || 'Revision',
+          createdBy: actor.id,
+          createdAt: now,
+          publishedAt: null,
+          publishedBy: null,
+        },
+      ]
+    : p.versions.map((v) =>
+        v.version === latest.version
+          ? { ...v, body: input.body.trim(), effectiveDate: input.effectiveDate, changeNote: input.changeNote.trim() || v.changeNote }
+          : v,
+      )
   transact((d) =>
     withAudit(
       {
@@ -127,7 +159,15 @@ export function submitForReview(actor: Account, id: ID) {
   if (!can(actor, 'policies.manage')) throw new ServiceError('Only policy managers can submit for review.', 'forbidden')
   const p = store.db.policies.find((x) => x.id === id)
   if (!p || !hasUnpublishedChanges(p)) throw new ServiceError('There is no draft to review.', 'conflict')
-  transact((d) => withAudit({ ...d, policies: replaceById(d.policies, id, (x) => ({ ...x, status: x.status === 'published' ? 'published' : 'in_review', updatedAt: nowISO() })) }, actor.id, 'policy.review', { type: 'policy', id }, `${p.title} v${latestVersion(p).version} submitted for review`))
+  transact((d) =>
+    withAudit(
+      { ...d, policies: replaceById(d.policies, id, (x) => ({ ...x, status: x.status === 'published' ? 'published' : 'in_review', updatedAt: nowISO() })) },
+      actor.id,
+      'policy.review',
+      { type: 'policy', id },
+      `${p.title} v${latestVersion(p).version} submitted for review`,
+    ),
+  )
 }
 
 export function publishPolicy(actor: Account, id: ID) {
@@ -141,7 +181,13 @@ export function publishPolicy(actor: Account, id: ID) {
     let next = withAudit(
       {
         ...d,
-        policies: replaceById(d.policies, id, (x) => ({ ...x, status: 'published', publishedVersion: latest.version, versions: x.versions.map((v) => (v.version === latest.version ? { ...v, publishedAt: now, publishedBy: actor.id } : v)), updatedAt: now })),
+        policies: replaceById(d.policies, id, (x) => ({
+          ...x,
+          status: 'published',
+          publishedVersion: latest.version,
+          versions: x.versions.map((v) => (v.version === latest.version ? { ...v, publishedAt: now, publishedBy: actor.id } : v)),
+          updatedAt: now,
+        })),
       },
       actor.id,
       'policy.published',
@@ -150,7 +196,16 @@ export function publishPolicy(actor: Account, id: ID) {
     )
     if (p.requiresAcknowledgment) {
       const audience = d.accounts.filter((a) => a.status === 'active' && a.employeeId && inAudience(p, d, a))
-      next = withNotifications(next, audience.map((a) => ({ accountId: a.id, title: `Please read and acknowledge: ${p.title}`, body: `Version ${latest.version}, effective ${latest.effectiveDate}`, link: `/policies/${id}`, kind: 'policy' as const })))
+      next = withNotifications(
+        next,
+        audience.map((a) => ({
+          accountId: a.id,
+          title: `Please read and acknowledge: ${p.title}`,
+          body: `Version ${latest.version}, effective ${latest.effectiveDate}`,
+          link: `/policies/${id}`,
+          kind: 'policy' as const,
+        })),
+      )
     }
     return next
   })
@@ -161,7 +216,15 @@ export function archivePolicy(actor: Account, id: ID, archive = true) {
   const p = store.db.policies.find((x) => x.id === id)
   if (!p) throw new ServiceError('Policy not found.', 'not_found')
   const status: Policy['status'] = archive ? 'archived' : p.publishedVersion ? 'published' : 'draft'
-  transact((d) => withAudit({ ...d, policies: replaceById(d.policies, id, (x) => ({ ...x, status, updatedAt: nowISO() })) }, actor.id, archive ? 'policy.archived' : 'policy.restored', { type: 'policy', id }, p.title))
+  transact((d) =>
+    withAudit(
+      { ...d, policies: replaceById(d.policies, id, (x) => ({ ...x, status, updatedAt: nowISO() })) },
+      actor.id,
+      archive ? 'policy.archived' : 'policy.restored',
+      { type: 'policy', id },
+      p.title,
+    ),
+  )
 }
 
 export function acknowledgePolicy(actor: Account, id: ID) {
@@ -170,12 +233,16 @@ export function acknowledgePolicy(actor: Account, id: ID) {
   if (!actor.employeeId) throw new ServiceError('Your account is not linked to an employee record.')
   if (store.db.policyAcks.some((a) => a.policyId === id && a.version === p.publishedVersion && a.employeeId === actor.employeeId)) return
   const ack = { id: createId('ack'), policyId: id, version: p.publishedVersion, employeeId: actor.employeeId, at: nowISO() }
-  transact((d) => withAudit({ ...d, policyAcks: [...d.policyAcks, ack] }, actor.id, 'policy.acknowledged', { type: 'policy', id }, `${p.title} v${p.publishedVersion}`))
+  transact((d) =>
+    withAudit({ ...d, policyAcks: [...d.policyAcks, ack] }, actor.id, 'policy.acknowledged', { type: 'policy', id }, `${p.title} v${p.publishedVersion}`),
+  )
 }
 
 export function acknowledgmentStats(db: Database, p: Policy) {
   if (!p.requiresAcknowledgment || p.publishedVersion === null) return null
-  const audience = db.employees.filter((e) => ['active', 'on_leave', 'offboarding'].includes(e.status) && (!p.audienceDepartmentIds || p.audienceDepartmentIds.includes(e.departmentId)))
+  const audience = db.employees.filter(
+    (e) => ['active', 'on_leave', 'offboarding'].includes(e.status) && (!p.audienceDepartmentIds || p.audienceDepartmentIds.includes(e.departmentId)),
+  )
   const acked = new Set(db.policyAcks.filter((a) => a.policyId === p.id && a.version === p.publishedVersion).map((a) => a.employeeId))
   return { audience: audience.length, acknowledged: audience.filter((e) => acked.has(e.id)).length, outstanding: audience.filter((e) => !acked.has(e.id)) }
 }

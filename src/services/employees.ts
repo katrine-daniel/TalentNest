@@ -46,7 +46,8 @@ export function findDuplicates(input: Partial<EmployeeInput>, employees: readonl
       const reasons: string[] = []
       if (work && normalizeEmail(e.workEmail) === work) reasons.push('same work email')
       if (personal && e.personalEmail && normalizeEmail(e.personalEmail) === personal) reasons.push('same personal email')
-      if (name && `${e.firstName} ${e.lastName}`.toLowerCase() === name && input.dateOfBirth && e.dateOfBirth === input.dateOfBirth) reasons.push('same name and date of birth')
+      if (name && `${e.firstName} ${e.lastName}`.toLowerCase() === name && input.dateOfBirth && e.dateOfBirth === input.dateOfBirth)
+        reasons.push('same name and date of birth')
       return { employee: e, reasons }
     })
     .filter((m) => m.reasons.length)
@@ -58,7 +59,8 @@ export function validateEmployee(db: Database, input: EmployeeInput, excludeId?:
   if (!input.lastName?.trim()) errors.lastName = 'Last name is required.'
   if (!input.title?.trim()) errors.title = 'Job title is required.'
   if (!EMAIL_RE.test(input.workEmail ?? '')) errors.workEmail = 'Enter a valid work email.'
-  else if (db.employees.some((e) => e.id !== excludeId && normalizeEmail(e.workEmail) === normalizeEmail(input.workEmail))) errors.workEmail = 'Another employee already uses this work email.'
+  else if (db.employees.some((e) => e.id !== excludeId && normalizeEmail(e.workEmail) === normalizeEmail(input.workEmail)))
+    errors.workEmail = 'Another employee already uses this work email.'
   if (input.personalEmail && !EMAIL_RE.test(input.personalEmail)) errors.personalEmail = 'Enter a valid email or leave it empty.'
   if (input.phone && !/^[+\d][\d\s().-]{6,}$/.test(input.phone)) errors.phone = 'Enter a valid phone number.'
   if (!db.departments.some((d) => d.id === input.departmentId)) errors.departmentId = 'Choose a department.'
@@ -72,8 +74,10 @@ export function validateEmployee(db: Database, input: EmployeeInput, excludeId?:
     else if (excludeId && wouldCreateCycle(db.employees, excludeId, input.managerId)) errors.managerId = 'This would create a reporting loop.'
     else if (!db.employees.some((e) => e.id === input.managerId && e.status !== 'terminated')) errors.managerId = 'Choose an active manager.'
   }
-  if (input.teamId && db.teams.find((t) => t.id === input.teamId)?.departmentId !== input.departmentId) errors.teamId = 'The team belongs to another department.'
-  if (input.employeeNo && db.employees.some((e) => e.id !== excludeId && e.employeeNo === input.employeeNo)) errors.employeeNo = 'This employee ID is already used.'
+  if (input.teamId && db.teams.find((t) => t.id === input.teamId)?.departmentId !== input.departmentId)
+    errors.teamId = 'The team belongs to another department.'
+  if (input.employeeNo && db.employees.some((e) => e.id !== excludeId && e.employeeNo === input.employeeNo))
+    errors.employeeNo = 'This employee ID is already used.'
   return errors
 }
 
@@ -134,7 +138,8 @@ export function createEmployee(actor: Account, input: EmployeeInput, opts: { all
   const errors = validateEmployee(db, input)
   if (Object.keys(errors).length) throw new ServiceError(Object.values(errors)[0] as string)
   const dups = findDuplicates(input, db.employees)
-  if (dups.length && !opts.allowDuplicate) throw new ServiceError(`Possible duplicate of ${dups[0]?.employee.firstName} ${dups[0]?.employee.lastName} (${dups[0]?.reasons.join(', ')}).`, 'conflict')
+  if (dups.length && !opts.allowDuplicate)
+    throw new ServiceError(`Possible duplicate of ${dups[0]?.employee.firstName} ${dups[0]?.employee.lastName} (${dups[0]?.reasons.join(', ')}).`, 'conflict')
   const now = nowISO()
   const status: EmployeeStatus = input.joinDate > today() ? 'pre_boarding' : 'active'
   const employee: Employee = {
@@ -163,9 +168,24 @@ export function createEmployee(actor: Account, input: EmployeeInput, opts: { all
     history: [{ id: createId('chg'), at: now, by: actor.id, field: 'Record', from: null, to: 'Created' }],
     createdAt: now,
   }
-  queueEvent({ type: 'employee.created', entity: { type: 'employee', id: employee.id }, employeeId: employee.id, actorId: actor.id, data: { 'employee.status': status } })
-  if (status === 'active') queueEvent({ type: 'employee.joined', entity: { type: 'employee', id: employee.id }, employeeId: employee.id, actorId: actor.id, data: {} })
-  transact((d) => withAudit({ ...d, employees: [...d.employees, employee] }, actor.id, 'employee.created', { type: 'employee', id: employee.id }, `Created ${employee.firstName} ${employee.lastName}`))
+  queueEvent({
+    type: 'employee.created',
+    entity: { type: 'employee', id: employee.id },
+    employeeId: employee.id,
+    actorId: actor.id,
+    data: { 'employee.status': status },
+  })
+  if (status === 'active')
+    queueEvent({ type: 'employee.joined', entity: { type: 'employee', id: employee.id }, employeeId: employee.id, actorId: actor.id, data: {} })
+  transact((d) =>
+    withAudit(
+      { ...d, employees: [...d.employees, employee] },
+      actor.id,
+      'employee.created',
+      { type: 'employee', id: employee.id },
+      `Created ${employee.firstName} ${employee.lastName}`,
+    ),
+  )
   return employee
 }
 
@@ -183,7 +203,15 @@ export function applyEmployeePatch(db: Database, employeeId: ID, patch: Employee
       changes.push({ id: createId('chg'), at: nowISO(), by: actorId, field: 'Emergency contact', from: before ? '•••' : null, to: value ? '•••' : null, note })
       continue
     }
-    changes.push({ id: createId('chg'), at: nowISO(), by: actorId, field: LABELS[key] ?? key, from: display(db, key, before), to: display(db, key, value), note })
+    changes.push({
+      id: createId('chg'),
+      at: nowISO(),
+      by: actorId,
+      field: LABELS[key] ?? key,
+      from: display(db, key, before),
+      to: display(db, key, value),
+      note,
+    })
   }
   if (!changes.length) return db
   if (patch.departmentId && patch.departmentId !== current.departmentId) {
@@ -223,12 +251,28 @@ export function updateEmployee(actor: Account, employeeId: ID, input: EmployeeIn
     joinDate: input.joinDate,
     dateOfBirth: input.dateOfBirth || null,
   }
-  transact((d) => withAudit(applyEmployeePatch(d, employeeId, patch, actor.id), actor.id, 'employee.updated', { type: 'employee', id: employeeId }, `Updated ${input.firstName} ${input.lastName}`))
+  transact((d) =>
+    withAudit(
+      applyEmployeePatch(d, employeeId, patch, actor.id),
+      actor.id,
+      'employee.updated',
+      { type: 'employee', id: employeeId },
+      `Updated ${input.firstName} ${input.lastName}`,
+    ),
+  )
 }
 
 export function setEmergencyContact(actor: Account, employeeId: ID, contact: Employee['emergencyContact']) {
   if (!can(actor, 'people.manage')) throw new ServiceError('Only HR can change emergency contacts directly.', 'forbidden')
-  transact((d) => withAudit(applyEmployeePatch(d, employeeId, { emergencyContact: contact }, actor.id), actor.id, 'employee.emergency_contact', { type: 'employee', id: employeeId }, 'Emergency contact updated'))
+  transact((d) =>
+    withAudit(
+      applyEmployeePatch(d, employeeId, { emergencyContact: contact }, actor.id),
+      actor.id,
+      'employee.emergency_contact',
+      { type: 'employee', id: employeeId },
+      'Emergency contact updated',
+    ),
+  )
 }
 
 /** Marks an employee as leaving (offboarding) or terminated. Records are retained, not deleted. */
@@ -256,7 +300,17 @@ export function erasePersonalData(actor: Account, employeeId: ID) {
   if (e.status !== 'terminated') throw new ServiceError('Personal data can only be erased for former employees.')
   transact((d) =>
     withAudit(
-      { ...d, employees: replaceById(d.employees, employeeId, (x) => ({ ...x, personalEmail: null, phone: null, dateOfBirth: null, emergencyContact: null, history: [{ id: createId('chg'), at: nowISO(), by: actor.id, field: 'Personal data', from: null, to: 'Erased (retention)' }, ...x.history] })) },
+      {
+        ...d,
+        employees: replaceById(d.employees, employeeId, (x) => ({
+          ...x,
+          personalEmail: null,
+          phone: null,
+          dateOfBirth: null,
+          emergencyContact: null,
+          history: [{ id: createId('chg'), at: nowISO(), by: actor.id, field: 'Personal data', from: null, to: 'Erased (retention)' }, ...x.history],
+        })),
+      },
       actor.id,
       'employee.personal_data_erased',
       { type: 'employee', id: employeeId },
@@ -268,8 +322,25 @@ export function erasePersonalData(actor: Account, employeeId: ID) {
 export async function addDocument(actor: Account, employeeId: ID, file: File, kind: Employee['documents'][number]['kind'], expiresOn: string | null) {
   requirePermission(actor, 'people.manage')
   const stored = await files.upload(file, `employees/${employeeId}`)
-  const doc = { id: createId('doc'), name: stored.name, kind, fileId: stored.fileId, size: stored.size, uploadedAt: nowISO(), uploadedBy: actor.id, expiresOn: expiresOn || null }
-  transact((d) => withAudit({ ...d, employees: replaceById(d.employees, employeeId, (e) => ({ ...e, documents: [doc, ...e.documents] })) }, actor.id, 'employee.document_added', { type: 'employee', id: employeeId }, `Document added: ${doc.name}`))
+  const doc = {
+    id: createId('doc'),
+    name: stored.name,
+    kind,
+    fileId: stored.fileId,
+    size: stored.size,
+    uploadedAt: nowISO(),
+    uploadedBy: actor.id,
+    expiresOn: expiresOn || null,
+  }
+  transact((d) =>
+    withAudit(
+      { ...d, employees: replaceById(d.employees, employeeId, (e) => ({ ...e, documents: [doc, ...e.documents] })) },
+      actor.id,
+      'employee.document_added',
+      { type: 'employee', id: employeeId },
+      `Document added: ${doc.name}`,
+    ),
+  )
   return doc
 }
 
@@ -278,22 +349,45 @@ export async function removeDocument(actor: Account, employeeId: ID, documentId:
   const doc = store.db.employees.find((e) => e.id === employeeId)?.documents.find((x) => x.id === documentId)
   if (!doc) throw new ServiceError('Document not found.', 'not_found')
   if (doc.fileId) await files.remove(doc.fileId).catch(() => undefined)
-  transact((d) => withAudit({ ...d, employees: replaceById(d.employees, employeeId, (e) => ({ ...e, documents: e.documents.filter((x) => x.id !== documentId) })) }, actor.id, 'employee.document_removed', { type: 'employee', id: employeeId }, `Document removed: ${doc.name}`))
+  transact((d) =>
+    withAudit(
+      { ...d, employees: replaceById(d.employees, employeeId, (e) => ({ ...e, documents: e.documents.filter((x) => x.id !== documentId) })) },
+      actor.id,
+      'employee.document_removed',
+      { type: 'employee', id: employeeId },
+      `Document removed: ${doc.name}`,
+    ),
+  )
 }
 
 export function assignEquipment(actor: Account, employeeId: ID, item: string, assetTag: string) {
   requirePermission(actor, 'people.manage')
   if (!item.trim() || !assetTag.trim()) throw new ServiceError('Enter the item and its asset tag.')
-  if (store.db.employees.some((e) => e.equipment.some((q) => q.assetTag === assetTag.trim() && !q.returnedOn))) throw new ServiceError('That asset is already assigned to someone.', 'conflict')
+  if (store.db.employees.some((e) => e.equipment.some((q) => q.assetTag === assetTag.trim() && !q.returnedOn)))
+    throw new ServiceError('That asset is already assigned to someone.', 'conflict')
   const eq = { id: createId('eq'), item: item.trim(), assetTag: assetTag.trim(), assignedOn: today(), returnedOn: null }
-  transact((d) => withAudit({ ...d, employees: replaceById(d.employees, employeeId, (e) => ({ ...e, equipment: [eq, ...e.equipment] })) }, actor.id, 'employee.equipment_assigned', { type: 'employee', id: employeeId }, `${eq.item} (${eq.assetTag}) assigned`))
+  transact((d) =>
+    withAudit(
+      { ...d, employees: replaceById(d.employees, employeeId, (e) => ({ ...e, equipment: [eq, ...e.equipment] })) },
+      actor.id,
+      'employee.equipment_assigned',
+      { type: 'employee', id: employeeId },
+      `${eq.item} (${eq.assetTag}) assigned`,
+    ),
+  )
 }
 
 export function returnEquipment(actor: Account, employeeId: ID, equipmentId: ID) {
   requirePermission(actor, 'people.manage')
   transact((d) =>
     withAudit(
-      { ...d, employees: replaceById(d.employees, employeeId, (e) => ({ ...e, equipment: e.equipment.map((q) => (q.id === equipmentId ? { ...q, returnedOn: today() } : q)) })) },
+      {
+        ...d,
+        employees: replaceById(d.employees, employeeId, (e) => ({
+          ...e,
+          equipment: e.equipment.map((q) => (q.id === equipmentId ? { ...q, returnedOn: today() } : q)),
+        })),
+      },
       actor.id,
       'employee.equipment_returned',
       { type: 'employee', id: employeeId },
@@ -303,7 +397,21 @@ export function returnEquipment(actor: Account, employeeId: ID, equipmentId: ID)
 }
 
 // ------------------------------------------------------------------ CSV import
-export const IMPORT_COLUMNS = ['first_name', 'last_name', 'work_email', 'title', 'department', 'location', 'employment_type', 'schedule', 'join_date', 'manager_email', 'personal_email', 'phone', 'employee_id'] as const
+export const IMPORT_COLUMNS = [
+  'first_name',
+  'last_name',
+  'work_email',
+  'title',
+  'department',
+  'location',
+  'employment_type',
+  'schedule',
+  'join_date',
+  'manager_email',
+  'personal_email',
+  'phone',
+  'employee_id',
+] as const
 
 export interface ImportPreview {
   valid: Array<{ line: number; input: EmployeeInput }>
@@ -362,6 +470,16 @@ export function commitImport(actor: Account, preview: ImportPreview): { imported
     }
   }
   const skipped = preview.errors.length + failed.length
-  transact((d) => withNotifications(d, [{ accountId: actor.id, title: `Imported ${count} employee record(s)`, body: skipped ? `${skipped} row(s) were skipped because of errors.` : 'All rows imported.', link: '/people', kind: 'system' }]))
+  transact((d) =>
+    withNotifications(d, [
+      {
+        accountId: actor.id,
+        title: `Imported ${count} employee record(s)`,
+        body: skipped ? `${skipped} row(s) were skipped because of errors.` : 'All rows imported.',
+        link: '/people',
+        kind: 'system',
+      },
+    ]),
+  )
   return { imported: count, failed }
 }

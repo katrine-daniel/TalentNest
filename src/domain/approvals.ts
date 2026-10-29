@@ -36,7 +36,10 @@ export function resolveApprovers(db: Ctx, stage: ApprovalStage, subject: Employe
   if (stage.rule === 'hr') ids = hrHandlers(db).map((a) => a.id)
   ids = ids.filter((id) => !exclude.has(id))
   // Fallback: HR handlers who are not involved.
-  if (!ids.length) ids = hrHandlers(db).map((a) => a.id).filter((id) => !exclude.has(id))
+  if (!ids.length)
+    ids = hrHandlers(db)
+      .map((a) => a.id)
+      .filter((id) => !exclude.has(id))
   return ids
 }
 

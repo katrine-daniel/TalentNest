@@ -128,26 +128,66 @@ export async function createRequest(actor: Account, input: RequestInput, attachm
     approvals,
     comments: [],
     attachments: uploaded,
-    timeline: [{ id: createId('tl'), at: now, by: actor.id, text: employeeId === actor.employeeId ? 'Request submitted' : `Raised by ${actor.name} on behalf of the employee` }],
+    timeline: [
+      {
+        id: createId('tl'),
+        at: now,
+        by: actor.id,
+        text: employeeId === actor.employeeId ? 'Request submitted' : `Raised by ${actor.name} on behalf of the employee`,
+      },
+    ],
     resolution: null,
     escalatedAt: null,
     createdAt: now,
     updatedAt: now,
     resolvedAt: null,
   }
-  queueEvent({ type: 'request.submitted', entity: { type: 'request', id: request.id }, employeeId, actorId: actor.id, data: { 'request.category': type.category, 'request.type': type.name, subject: title, priority: request.priority } })
+  queueEvent({
+    type: 'request.submitted',
+    entity: { type: 'request', id: request.id },
+    employeeId,
+    actorId: actor.id,
+    data: { 'request.category': type.category, 'request.type': type.name, subject: title, priority: request.priority },
+  })
   const first = approvals[0]
   transact((d) =>
-    withNotifications(withAudit({ ...d, requests: [request, ...d.requests] }, actor.id, 'request.created', { type: 'request', id: request.id }, `${request.number} ${title}`), [
-      ...(first ? first.approverIds.map((id) => ({ accountId: id, title: `Approval needed: ${title}`, body: `${request.number} · ${type.name}`, link: `/requests/${request.id}`, kind: 'request' as const })) : []),
-      ...(!first ? hrHandlers(d).map((a) => ({ accountId: a.id, title: `New request: ${title}`, body: `${request.number} · ${type.name}`, link: `/requests/${request.id}`, kind: 'request' as const })) : []),
-    ]),
+    withNotifications(
+      withAudit({ ...d, requests: [request, ...d.requests] }, actor.id, 'request.created', { type: 'request', id: request.id }, `${request.number} ${title}`),
+      [
+        ...(first
+          ? first.approverIds.map((id) => ({
+              accountId: id,
+              title: `Approval needed: ${title}`,
+              body: `${request.number} · ${type.name}`,
+              link: `/requests/${request.id}`,
+              kind: 'request' as const,
+            }))
+          : []),
+        ...(!first
+          ? hrHandlers(d).map((a) => ({
+              accountId: a.id,
+              title: `New request: ${title}`,
+              body: `${request.number} · ${type.name}`,
+              link: `/requests/${request.id}`,
+              kind: 'request' as const,
+            }))
+          : []),
+      ],
+    ),
   )
   return request
 }
 
 function update(db: Database, id: ID, actorId: ID, text: string, patch: Partial<HRRequest>): Database {
-  return { ...db, requests: replaceById(db.requests, id, (r) => ({ ...r, ...patch, updatedAt: nowISO(), timeline: [...r.timeline, { id: createId('tl'), at: nowISO(), by: actorId, text }] })) }
+  return {
+    ...db,
+    requests: replaceById(db.requests, id, (r) => ({
+      ...r,
+      ...patch,
+      updatedAt: nowISO(),
+      timeline: [...r.timeline, { id: createId('tl'), at: nowISO(), by: actorId, text }],
+    })),
+  }
 }
 
 export function addComment(actor: Account, id: ID, text: string, internal: boolean) {
@@ -158,11 +198,28 @@ export function addComment(actor: Account, id: ID, text: string, internal: boole
   const comment = { id: createId('cm'), authorId: actor.id, text: body, internal, at: nowISO() }
   const resumes = r.status === 'waiting_on_employee' && r.requesterId === actor.id
   transact((d) => {
-    let next: Database = { ...d, requests: replaceById(d.requests, id, (x) => ({ ...x, comments: [...x.comments, comment], updatedAt: nowISO(), status: resumes ? 'in_progress' : x.status })) }
+    let next: Database = {
+      ...d,
+      requests: replaceById(d.requests, id, (x) => ({
+        ...x,
+        comments: [...x.comments, comment],
+        updatedAt: nowISO(),
+        status: resumes ? 'in_progress' : x.status,
+      })),
+    }
     if (resumes) next = update(next, id, actor.id, 'Employee replied — back in progress', {})
     if (internal) return next
     const notify = actor.id === r.requesterId ? (r.assigneeId ? [r.assigneeId] : hrHandlers(d).map((a) => a.id)) : [r.requesterId]
-    return withNotifications(next, notify.map((accountId) => ({ accountId, title: `New comment on ${r.number}`, body: body.slice(0, 120), link: `/requests/${id}`, kind: 'request' as const })))
+    return withNotifications(
+      next,
+      notify.map((accountId) => ({
+        accountId,
+        title: `New comment on ${r.number}`,
+        body: body.slice(0, 120),
+        link: `/requests/${id}`,
+        kind: 'request' as const,
+      })),
+    )
   })
 }
 
@@ -173,15 +230,21 @@ export function assignRequest(actor: Account, id: ID, assigneeId: ID | null) {
   if (assigneeId && (!assignee || !isHR(assignee))) throw new ServiceError('Requests can only be assigned to HR staff.')
   transact((d) => {
     const r = d.requests.find((x) => x.id === id) as HRRequest
-    let next = update(d, id, actor.id, assignee ? `Assigned to ${assignee.name}` : 'Unassigned', { assigneeId, status: r.status === 'open' && assignee ? 'in_progress' : r.status })
+    let next = update(d, id, actor.id, assignee ? `Assigned to ${assignee.name}` : 'Unassigned', {
+      assigneeId,
+      status: r.status === 'open' && assignee ? 'in_progress' : r.status,
+    })
     next = withAudit(next, actor.id, 'request.assigned', { type: 'request', id }, assignee ? `Assigned to ${assignee.name}` : 'Unassigned')
-    return assignee && assignee.id !== actor.id ? withNotifications(next, [{ accountId: assignee.id, title: `Assigned to you: ${r.subject}`, body: r.number, link: `/requests/${id}`, kind: 'request' }]) : next
+    return assignee && assignee.id !== actor.id
+      ? withNotifications(next, [{ accountId: assignee.id, title: `Assigned to you: ${r.subject}`, body: r.number, link: `/requests/${id}`, kind: 'request' }])
+      : next
   })
 }
 
 export function changeStatus(actor: Account, id: ID, status: RequestStatus, note = '') {
   const r = getVisible(id, actor)
-  if (!allowedTransitions(r, actor).includes(status)) throw new ServiceError(`A request that is ${STATUS_LABELS[r.status].toLowerCase()} cannot be moved to ${STATUS_LABELS[status].toLowerCase()}.`, 'conflict')
+  if (!allowedTransitions(r, actor).includes(status))
+    throw new ServiceError(`A request that is ${STATUS_LABELS[r.status].toLowerCase()} cannot be moved to ${STATUS_LABELS[status].toLowerCase()}.`, 'conflict')
   if (status === 'resolved' && !note.trim() && !r.resolution) throw new ServiceError('Add a resolution note so the employee knows the outcome.')
   if (status === 'waiting_on_employee' && !note.trim()) throw new ServiceError('Tell the employee what you need from them.')
   const patch: Partial<HRRequest> = { status }
@@ -189,9 +252,26 @@ export function changeStatus(actor: Account, id: ID, status: RequestStatus, note
   if (status === 'in_progress' && r.status === 'resolved') Object.assign(patch, { resolvedAt: null })
   transact((d) => {
     let next = update(d, id, actor.id, `Status: ${STATUS_LABELS[status]}${note.trim() ? ` — ${note.trim()}` : ''}`, patch)
-    if (status === 'waiting_on_employee') next = { ...next, requests: replaceById(next.requests, id, (x) => ({ ...x, comments: [...x.comments, { id: createId('cm'), authorId: actor.id, text: note.trim(), internal: false, at: nowISO() }] })) }
+    if (status === 'waiting_on_employee')
+      next = {
+        ...next,
+        requests: replaceById(next.requests, id, (x) => ({
+          ...x,
+          comments: [...x.comments, { id: createId('cm'), authorId: actor.id, text: note.trim(), internal: false, at: nowISO() }],
+        })),
+      }
     next = withAudit(next, actor.id, 'request.status', { type: 'request', id }, `${r.number}: ${STATUS_LABELS[r.status]} → ${STATUS_LABELS[status]}`)
-    return actor.id === r.requesterId ? next : withNotifications(next, [{ accountId: r.requesterId, title: `${r.number} is now ${STATUS_LABELS[status].toLowerCase()}`, body: r.subject, link: `/requests/${id}`, kind: 'request' }])
+    return actor.id === r.requesterId
+      ? next
+      : withNotifications(next, [
+          {
+            accountId: r.requesterId,
+            title: `${r.number} is now ${STATUS_LABELS[status].toLowerCase()}`,
+            body: r.subject,
+            link: `/requests/${id}`,
+            kind: 'request',
+          },
+        ])
   })
 }
 
@@ -206,8 +286,22 @@ export function decideRequest(actor: Account, id: ID, decision: Decision, commen
     throw new ServiceError((e as Error).message)
   }
   const type = store.db.requestTypes.find((t) => t.id === r.typeId)
-  const status: RequestStatus = result.outcome === 'pending' ? 'pending_approval' : result.outcome === 'approved' ? (type?.kind === 'record_update' ? 'resolved' : 'approved') : result.outcome
-  if (result.outcome !== 'pending') queueEvent({ type: 'request.decided', entity: { type: 'request', id }, employeeId: r.employeeId, actorId: actor.id, data: { 'request.category': r.category, 'request.type': type?.name ?? '', decision: result.outcome, subject: r.subject } })
+  const status: RequestStatus =
+    result.outcome === 'pending'
+      ? 'pending_approval'
+      : result.outcome === 'approved'
+        ? type?.kind === 'record_update'
+          ? 'resolved'
+          : 'approved'
+        : result.outcome
+  if (result.outcome !== 'pending')
+    queueEvent({
+      type: 'request.decided',
+      entity: { type: 'request', id },
+      employeeId: r.employeeId,
+      actorId: actor.id,
+      data: { 'request.category': r.category, 'request.type': type?.name ?? '', decision: result.outcome, subject: r.subject },
+    })
   transact((d) => {
     const label = decision === 'approved' ? 'Approved' : decision === 'rejected' ? 'Rejected' : 'Changes requested'
     let next = update(d, id, actor.id, `${label} by ${actor.name}${comment.trim() ? `: ${comment.trim()}` : ''}`, {
@@ -222,8 +316,24 @@ export function decideRequest(actor: Account, id: ID, decision: Decision, commen
     const active = result.steps.find((s) => s.decision === 'pending')
     return withNotifications(next, [
       { accountId: r.requesterId, title: `${r.number}: ${label.toLowerCase()}`, body: comment.trim() || r.subject, link: `/requests/${id}`, kind: 'request' },
-      ...(result.outcome === 'pending' && active ? active.approverIds.map((a) => ({ accountId: a, title: `Approval needed: ${r.subject}`, body: `${r.number} · ${active.stageName}`, link: `/requests/${id}`, kind: 'request' as const })) : []),
-      ...(status === 'approved' ? hrHandlers(d).map((a) => ({ accountId: a.id, title: `Approved, ready to fulfil: ${r.subject}`, body: r.number, link: `/requests/${id}`, kind: 'request' as const })) : []),
+      ...(result.outcome === 'pending' && active
+        ? active.approverIds.map((a) => ({
+            accountId: a,
+            title: `Approval needed: ${r.subject}`,
+            body: `${r.number} · ${active.stageName}`,
+            link: `/requests/${id}`,
+            kind: 'request' as const,
+          }))
+        : []),
+      ...(status === 'approved'
+        ? hrHandlers(d).map((a) => ({
+            accountId: a.id,
+            title: `Approved, ready to fulfil: ${r.subject}`,
+            body: r.number,
+            link: `/requests/${id}`,
+            kind: 'request' as const,
+          }))
+        : []),
     ])
   })
 }
@@ -232,7 +342,9 @@ export function delegateApproval(actor: Account, id: ID, toAccountId: ID) {
   const r = getVisible(id, actor)
   const db = store.db
   const subject = db.employees.find((e) => e.id === r.employeeId)
-  const eligible = db.accounts.filter((a) => a.status === 'active' && a.id !== r.requesterId && a.employeeId !== subject?.id && (a.role !== 'employee' || isHR(a))).map((a) => a.id)
+  const eligible = db.accounts
+    .filter((a) => a.status === 'active' && a.id !== r.requesterId && a.employeeId !== subject?.id && (a.role !== 'employee' || isHR(a)))
+    .map((a) => a.id)
   let steps
   try {
     steps = delegateStep(r.approvals, actor.id, toAccountId, eligible)
@@ -240,7 +352,11 @@ export function delegateApproval(actor: Account, id: ID, toAccountId: ID) {
     throw new ServiceError((e as Error).message)
   }
   const to = db.accounts.find((a) => a.id === toAccountId)
-  transact((d) => withNotifications(update(d, id, actor.id, `Approval delegated to ${to?.name}`, { approvals: steps }), [{ accountId: toAccountId, title: `Approval delegated to you: ${r.subject}`, body: r.number, link: `/requests/${id}`, kind: 'request' }]))
+  transact((d) =>
+    withNotifications(update(d, id, actor.id, `Approval delegated to ${to?.name}`, { approvals: steps }), [
+      { accountId: toAccountId, title: `Approval delegated to you: ${r.subject}`, body: r.number, link: `/requests/${id}`, kind: 'request' },
+    ]),
+  )
 }
 
 /** Requester updates the request after "changes requested"; the approval chain restarts. */
@@ -254,7 +370,21 @@ export function resubmitRequest(actor: Account, id: ID, description: string, pro
   if (!type || !subject) throw new ServiceError('The request type or employee no longer exists.')
   const steps = buildSteps(db, type.approvalChain, subject, actor.id)
   transact((d) =>
-    withNotifications(update(d, id, actor.id, 'Resubmitted with changes', { description: description.trim() || r.description, proposedChanges: proposedChanges ?? r.proposedChanges, approvals: steps, status: 'pending_approval' }), (steps[0]?.approverIds ?? []).map((a) => ({ accountId: a, title: `Resubmitted for approval: ${r.subject}`, body: r.number, link: `/requests/${id}`, kind: 'request' as const }))),
+    withNotifications(
+      update(d, id, actor.id, 'Resubmitted with changes', {
+        description: description.trim() || r.description,
+        proposedChanges: proposedChanges ?? r.proposedChanges,
+        approvals: steps,
+        status: 'pending_approval',
+      }),
+      (steps[0]?.approverIds ?? []).map((a) => ({
+        accountId: a,
+        title: `Resubmitted for approval: ${r.subject}`,
+        body: r.number,
+        link: `/requests/${id}`,
+        kind: 'request' as const,
+      })),
+    ),
   )
 }
 
@@ -273,12 +403,29 @@ export function escalateOverdue(now = Date.now()): ID[] {
   transact((d) => {
     let next = d
     for (const r of due) {
-      next = update(next, r.id, 'system', 'Escalated — past its service target', { escalatedAt: new Date(now).toISOString(), priority: r.priority === 'urgent' ? 'urgent' : 'high' })
-      queueEvent({ type: 'task.overdue', entity: { type: 'request', id: r.id }, employeeId: r.employeeId, actorId: null, data: { 'entity.type': 'request', subject: r.subject, 'request.category': r.category } })
+      next = update(next, r.id, 'system', 'Escalated — past its service target', {
+        escalatedAt: new Date(now).toISOString(),
+        priority: r.priority === 'urgent' ? 'urgent' : 'high',
+      })
+      queueEvent({
+        type: 'task.overdue',
+        entity: { type: 'request', id: r.id },
+        employeeId: r.employeeId,
+        actorId: null,
+        data: { 'entity.type': 'request', subject: r.subject, 'request.category': r.category },
+      })
     }
     return withNotifications(
       next,
-      due.flatMap((r) => (r.assigneeId ? [r.assigneeId] : hrHandlers(d).map((a) => a.id)).map((accountId) => ({ accountId, title: `Overdue: ${r.subject}`, body: `${r.number} passed its service target`, link: `/requests/${r.id}`, kind: 'request' as const }))),
+      due.flatMap((r) =>
+        (r.assigneeId ? [r.assigneeId] : hrHandlers(d).map((a) => a.id)).map((accountId) => ({
+          accountId,
+          title: `Overdue: ${r.subject}`,
+          body: `${r.number} passed its service target`,
+          link: `/requests/${r.id}`,
+          kind: 'request' as const,
+        })),
+      ),
     )
   })
   return due.map((r) => r.id)

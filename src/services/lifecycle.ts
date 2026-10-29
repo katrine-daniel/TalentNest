@@ -15,10 +15,21 @@ import { files } from './files'
 import { replaceById, ServiceError, store } from './store'
 import { transact } from './tx'
 
-export const OWNER_LABELS: Record<TaskOwner, string> = { hr: 'HR', manager: 'Manager', it: 'IT', employee: 'Employee', facilities: 'Facilities', finance: 'Finance' }
+export const OWNER_LABELS: Record<TaskOwner, string> = {
+  hr: 'HR',
+  manager: 'Manager',
+  it: 'IT',
+  employee: 'Employee',
+  facilities: 'Facilities',
+  finance: 'Finance',
+}
 
 /** Most specific matching active template: each matching filter scores a point; mismatches exclude it. */
-export function suggestTemplate(templates: readonly LifecycleTemplate[], kind: LifecycleKind, e: Pick<Employee, 'departmentId' | 'locationId' | 'employmentTypeId'>): LifecycleTemplate | undefined {
+export function suggestTemplate(
+  templates: readonly LifecycleTemplate[],
+  kind: LifecycleKind,
+  e: Pick<Employee, 'departmentId' | 'locationId' | 'employmentTypeId'>,
+): LifecycleTemplate | undefined {
   const score = (t: LifecycleTemplate) => {
     const filters: Array<[ID | null, ID]> = [
       [t.departmentId, e.departmentId],
@@ -52,7 +63,12 @@ export function canManageTask(actor: Account, task: LifecycleCase['tasks'][numbe
 /** Cases visible to the account: HR sees all; others see cases they have tasks in or that concern their reports. */
 export function visibleCases(db: Database, actor: Account): LifecycleCase[] {
   if (can(actor, 'lifecycle.manage')) return db.lifecycleCases
-  return db.lifecycleCases.filter((c) => c.employeeId === actor.employeeId || c.tasks.some((t) => t.assigneeId === actor.id) || db.employees.find((e) => e.id === c.employeeId)?.managerId === actor.employeeId)
+  return db.lifecycleCases.filter(
+    (c) =>
+      c.employeeId === actor.employeeId ||
+      c.tasks.some((t) => t.assigneeId === actor.id) ||
+      db.employees.find((e) => e.id === c.employeeId)?.managerId === actor.employeeId,
+  )
 }
 
 export function startLifecycle(actorOrSystem: Account | null, kind: LifecycleKind, employeeId: ID, templateId: ID | null, keyDate?: string): LifecycleCase {
@@ -60,11 +76,15 @@ export function startLifecycle(actorOrSystem: Account | null, kind: LifecycleKin
   const db = store.db
   const employee = db.employees.find((e) => e.id === employeeId)
   if (!employee) throw new ServiceError('Employee not found.', 'not_found')
-  if (db.lifecycleCases.some((c) => c.employeeId === employeeId && c.kind === kind && c.status === 'active')) throw new ServiceError(`${employee.firstName} already has an active ${kind} checklist.`, 'conflict')
-  const template = templateId ? db.lifecycleTemplates.find((t) => t.id === templateId && t.kind === kind) : suggestTemplate(db.lifecycleTemplates, kind, employee)
+  if (db.lifecycleCases.some((c) => c.employeeId === employeeId && c.kind === kind && c.status === 'active'))
+    throw new ServiceError(`${employee.firstName} already has an active ${kind} checklist.`, 'conflict')
+  const template = templateId
+    ? db.lifecycleTemplates.find((t) => t.id === templateId && t.kind === kind)
+    : suggestTemplate(db.lifecycleTemplates, kind, employee)
   if (!template) throw new ServiceError(`No active ${kind} template matches this employee. Create one in Organization → Templates.`)
   const date = keyDate ?? (kind === 'onboarding' ? employee.joinDate : employee.endDate)
-  if (!date || !isValidISODate(date)) throw new ServiceError(kind === 'offboarding' ? 'Set the last working day first.' : 'The employee has no valid joining date.')
+  if (!date || !isValidISODate(date))
+    throw new ServiceError(kind === 'offboarding' ? 'Set the last working day first.' : 'The employee has no valid joining date.')
   const now = nowISO()
   const actorId = actorOrSystem?.id ?? null
   const c: LifecycleCase = {
@@ -77,7 +97,14 @@ export function startLifecycle(actorOrSystem: Account | null, kind: LifecycleKin
     createdBy: actorId,
     createdAt: now,
     completedAt: null,
-    timeline: [{ id: createId('tl'), at: now, by: actorId, text: `${kind === 'onboarding' ? 'Onboarding' : 'Offboarding'} started from “${template.name}”${actorId ? '' : ' by automation'}` }],
+    timeline: [
+      {
+        id: createId('tl'),
+        at: now,
+        by: actorId,
+        text: `${kind === 'onboarding' ? 'Onboarding' : 'Offboarding'} started from “${template.name}”${actorId ? '' : ' by automation'}`,
+      },
+    ],
     tasks: template.tasks.map((t) => ({
       id: createId('lct'),
       title: t.title,
@@ -96,10 +123,26 @@ export function startLifecycle(actorOrSystem: Account | null, kind: LifecycleKin
   if (kind === 'onboarding') queueEvent({ type: 'onboarding.started', entity: { type: 'lifecycle', id: c.id }, employeeId, actorId, data: { date } })
   transact((d) => {
     let next: Database = { ...d, lifecycleCases: [c, ...d.lifecycleCases] }
-    if (kind === 'offboarding' && employee.status !== 'offboarding') next = applyEmployeePatch(next, employeeId, { status: 'offboarding', endDate: date }, actorId, 'Offboarding started')
-    next = withAudit(next, actorId, `lifecycle.${kind}_started`, { type: 'lifecycle', id: c.id }, `${employee.firstName} ${employee.lastName}: ${template.name}`)
+    if (kind === 'offboarding' && employee.status !== 'offboarding')
+      next = applyEmployeePatch(next, employeeId, { status: 'offboarding', endDate: date }, actorId, 'Offboarding started')
+    next = withAudit(
+      next,
+      actorId,
+      `lifecycle.${kind}_started`,
+      { type: 'lifecycle', id: c.id },
+      `${employee.firstName} ${employee.lastName}: ${template.name}`,
+    )
     const assignees = [...new Set(c.tasks.map((t) => t.assigneeId).filter(Boolean) as ID[])]
-    return withNotifications(next, assignees.map((accountId) => ({ accountId, title: `${kind === 'onboarding' ? 'Onboarding' : 'Offboarding'} tasks for ${employee.firstName} ${employee.lastName}`, body: `${c.tasks.filter((t) => t.assigneeId === accountId).length} task(s) assigned to you`, link: `/lifecycle/${c.id}`, kind: 'lifecycle' as const })))
+    return withNotifications(
+      next,
+      assignees.map((accountId) => ({
+        accountId,
+        title: `${kind === 'onboarding' ? 'Onboarding' : 'Offboarding'} tasks for ${employee.firstName} ${employee.lastName}`,
+        body: `${c.tasks.filter((t) => t.assigneeId === accountId).length} task(s) assigned to you`,
+        link: `/lifecycle/${c.id}`,
+        kind: 'lifecycle' as const,
+      })),
+    )
   })
   return c
 }
@@ -113,9 +156,18 @@ function getCase(id: ID): LifecycleCase {
 function finalize(db: Database, caseId: ID, actorId: ID): Database {
   const c = db.lifecycleCases.find((x) => x.id === caseId) as LifecycleCase
   if (c.status !== 'active' || c.tasks.some((t) => t.status === 'open')) return db
-  let next: Database = { ...db, lifecycleCases: replaceById(db.lifecycleCases, caseId, (x) => ({ ...x, status: 'completed', completedAt: nowISO(), timeline: [...x.timeline, { id: createId('tl'), at: nowISO(), by: actorId, text: 'All tasks complete' }] })) }
+  let next: Database = {
+    ...db,
+    lifecycleCases: replaceById(db.lifecycleCases, caseId, (x) => ({
+      ...x,
+      status: 'completed',
+      completedAt: nowISO(),
+      timeline: [...x.timeline, { id: createId('tl'), at: nowISO(), by: actorId, text: 'All tasks complete' }],
+    })),
+  }
   const e = next.employees.find((x) => x.id === c.employeeId)
-  if (e && c.kind === 'onboarding' && e.status === 'pre_boarding' && e.joinDate <= today()) next = applyEmployeePatch(next, e.id, { status: 'active' }, actorId, 'Onboarding completed')
+  if (e && c.kind === 'onboarding' && e.status === 'pre_boarding' && e.joinDate <= today())
+    next = applyEmployeePatch(next, e.id, { status: 'active' }, actorId, 'Onboarding completed')
   if (e && c.kind === 'offboarding' && e.endDate && e.endDate <= today()) {
     next = applyEmployeePatch(next, e.id, { status: 'terminated' }, actorId, 'Offboarding completed')
     next = { ...next, accounts: next.accounts.map((a) => (a.employeeId === e.id ? { ...a, status: 'suspended' } : a)) }
@@ -137,7 +189,15 @@ export function completeTask(actor: Account, caseId: ID, taskId: ID, note: strin
       lifecycleCases: replaceById(d.lifecycleCases, caseId, (x) => ({
         ...x,
         tasks: x.tasks.map((t) => (t.id === taskId ? { ...t, status: 'done', completedAt: nowISO(), completedBy: actor.id, note: note.trim() } : t)),
-        timeline: [...x.timeline, { id: createId('tl'), at: nowISO(), by: actor.id, text: `Completed: ${task.title}${task.externalAction ? ' (confirmed done in the external system — not performed by PeopleOS)' : ''}` }],
+        timeline: [
+          ...x.timeline,
+          {
+            id: createId('tl'),
+            at: nowISO(),
+            by: actor.id,
+            text: `Completed: ${task.title}${task.externalAction ? ' (confirmed done in the external system — not performed by PeopleOS)' : ''}`,
+          },
+        ],
       })),
     }
     next = finalize(next, caseId, actor.id)
@@ -198,14 +258,21 @@ export function reassignTask(actor: Account, caseId: ID, taskId: ID, assigneeId:
         timeline: [...x.timeline, { id: createId('tl'), at: nowISO(), by: actor.id, text: `${task.title} → ${to?.name ?? 'HR queue'}` }],
       })),
     }
-    return to ? withNotifications(next, [{ accountId: to.id, title: `Task assigned: ${task.title}`, body: `Due ${task.dueDate}`, link: `/lifecycle/${caseId}`, kind: 'lifecycle' }]) : next
+    return to
+      ? withNotifications(next, [
+          { accountId: to.id, title: `Task assigned: ${task.title}`, body: `Due ${task.dueDate}`, link: `/lifecycle/${caseId}`, kind: 'lifecycle' },
+        ])
+      : next
   })
 }
 
 export function setTaskDueDate(actor: Account, caseId: ID, taskId: ID, dueDate: string) {
   if (!can(actor, 'lifecycle.manage')) throw new ServiceError('Only HR can change due dates.', 'forbidden')
   if (!isValidISODate(dueDate)) throw new ServiceError('Enter a valid date.')
-  transact((d) => ({ ...d, lifecycleCases: replaceById(d.lifecycleCases, caseId, (x) => ({ ...x, tasks: x.tasks.map((t) => (t.id === taskId ? { ...t, dueDate } : t)) })) }))
+  transact((d) => ({
+    ...d,
+    lifecycleCases: replaceById(d.lifecycleCases, caseId, (x) => ({ ...x, tasks: x.tasks.map((t) => (t.id === taskId ? { ...t, dueDate } : t)) })),
+  }))
 }
 
 export async function attachTaskDocument(actor: Account, caseId: ID, taskId: ID, file: File) {
@@ -214,18 +281,46 @@ export async function attachTaskDocument(actor: Account, caseId: ID, taskId: ID,
   if (!task) throw new ServiceError('Task not found.', 'not_found')
   if (!canManageTask(actor, task)) throw new ServiceError('This task is assigned to someone else.', 'forbidden')
   const stored = await files.upload(file, `employees/${c.employeeId}`)
-  const doc = { id: createId('doc'), name: stored.name, kind: 'other' as const, fileId: stored.fileId, size: stored.size, uploadedAt: nowISO(), uploadedBy: actor.id, expiresOn: null }
+  const doc = {
+    id: createId('doc'),
+    name: stored.name,
+    kind: 'other' as const,
+    fileId: stored.fileId,
+    size: stored.size,
+    uploadedAt: nowISO(),
+    uploadedBy: actor.id,
+    expiresOn: null,
+  }
   transact((d) => ({
     ...d,
     employees: replaceById(d.employees, c.employeeId, (e) => ({ ...e, documents: [doc, ...e.documents] })),
-    lifecycleCases: replaceById(d.lifecycleCases, caseId, (x) => ({ ...x, tasks: x.tasks.map((t) => (t.id === taskId ? { ...t, documentId: doc.id } : t)), timeline: [...x.timeline, { id: createId('tl'), at: nowISO(), by: actor.id, text: `Document uploaded for “${task.title}”: ${doc.name}` }] })),
+    lifecycleCases: replaceById(d.lifecycleCases, caseId, (x) => ({
+      ...x,
+      tasks: x.tasks.map((t) => (t.id === taskId ? { ...t, documentId: doc.id } : t)),
+      timeline: [...x.timeline, { id: createId('tl'), at: nowISO(), by: actor.id, text: `Document uploaded for “${task.title}”: ${doc.name}` }],
+    })),
   }))
 }
 
 export function cancelCase(actor: Account, caseId: ID, reason: string) {
   if (!can(actor, 'lifecycle.manage')) throw new ServiceError('Only HR can cancel a checklist.', 'forbidden')
   if (!reason.trim()) throw new ServiceError('Give a reason.')
-  transact((d) => withAudit({ ...d, lifecycleCases: replaceById(d.lifecycleCases, caseId, (x) => ({ ...x, status: 'cancelled', timeline: [...x.timeline, { id: createId('tl'), at: nowISO(), by: actor.id, text: `Cancelled: ${reason.trim()}` }] })) }, actor.id, 'lifecycle.cancelled', { type: 'lifecycle', id: caseId }, reason.trim()))
+  transact((d) =>
+    withAudit(
+      {
+        ...d,
+        lifecycleCases: replaceById(d.lifecycleCases, caseId, (x) => ({
+          ...x,
+          status: 'cancelled',
+          timeline: [...x.timeline, { id: createId('tl'), at: nowISO(), by: actor.id, text: `Cancelled: ${reason.trim()}` }],
+        })),
+      },
+      actor.id,
+      'lifecycle.cancelled',
+      { type: 'lifecycle', id: caseId },
+      reason.trim(),
+    ),
+  )
 }
 
 export function caseProgress(c: LifecycleCase) {

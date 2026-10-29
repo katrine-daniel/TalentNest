@@ -188,7 +188,8 @@ export interface TimelineEntry {
 }
 
 // ------------------------------------------------------------------ service desk & requests
-export type RequestCategory = 'leave' | 'payroll' | 'benefits' | 'letters' | 'documents' | 'equipment' | 'policy' | 'onboarding' | 'records' | 'work_arrangement' | 'general'
+export type RequestCategory =
+  'leave' | 'payroll' | 'benefits' | 'letters' | 'documents' | 'equipment' | 'policy' | 'onboarding' | 'records' | 'work_arrangement' | 'general'
 
 export interface RequestType {
   id: ID
@@ -209,7 +210,8 @@ export interface RequestType {
 
 export type Priority = 'low' | 'normal' | 'high' | 'urgent'
 
-export type RequestStatus = 'open' | 'in_progress' | 'waiting_on_employee' | 'pending_approval' | 'changes_requested' | 'approved' | 'rejected' | 'resolved' | 'closed' | 'cancelled'
+export type RequestStatus =
+  'open' | 'in_progress' | 'waiting_on_employee' | 'pending_approval' | 'changes_requested' | 'approved' | 'rejected' | 'resolved' | 'closed' | 'cancelled'
 
 export interface RequestComment {
   id: ID
@@ -514,6 +516,8 @@ export interface Notification {
 }
 
 export interface NotificationPreference {
+  /** `<accountId>:<kind>` */
+  id: string
   accountId: ID
   kind: Notification['kind']
   inApp: boolean

@@ -15,7 +15,7 @@ export function parseCSV(text: string): string[][] {
   let row: string[] = []
   let cell = ''
   let quoted = false
-  const input = text.replace(/^﻿/, '')
+  const input = text.replace(/^\uFEFF/, '')
   for (let i = 0; i < input.length; i++) {
     const ch = input[i]
     if (quoted) {
@@ -44,8 +44,11 @@ export function parseCSV(text: string): string[][] {
   return rows.filter((r) => r.some((c) => c.trim() !== ''))
 }
 
+/** Byte-order mark so spreadsheet apps detect UTF-8. */
+const BOM = String.fromCharCode(0xfeff)
+
 export function downloadCSV(filename: string, headers: string[], rows: unknown[][]) {
-  const blob = new Blob(['﻿' + toCSV(headers, rows)], { type: 'text/csv;charset=utf-8' })
+  const blob = new Blob([BOM + toCSV(headers, rows)], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

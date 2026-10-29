@@ -16,10 +16,19 @@ export const DEFINITIONS: Record<string, { label: string; formula: string }> = {
   turnover: { label: 'Turnover rate', formula: 'Leavers in the period ÷ average of headcount at the start and end of the period.' },
   openRequests: { label: 'Open requests', formula: 'Service requests not resolved, closed, rejected or cancelled.' },
   overdueRequests: { label: 'Overdue requests', formula: 'Open requests past their service target (requests waiting on the employee are excluded).' },
-  resolution: { label: 'Median resolution time', formula: 'Median business-agnostic hours from submission to resolution, for requests resolved in the period.' },
+  resolution: {
+    label: 'Median resolution time',
+    formula: 'Median business-agnostic hours from submission to resolution, for requests resolved in the period.',
+  },
   slaMet: { label: 'Resolved within target', formula: 'Requests resolved in the period on or before their due time ÷ requests resolved in the period.' },
-  approvalTurnaround: { label: 'Median approval turnaround', formula: 'Median hours from submission to the final approval decision, for leave and requests decided in the period.' },
-  onboardingCompletion: { label: 'Onboarding tasks on time', formula: 'Onboarding tasks completed on or before their due date ÷ onboarding tasks due in the period.' },
+  approvalTurnaround: {
+    label: 'Median approval turnaround',
+    formula: 'Median hours from submission to the final approval decision, for leave and requests decided in the period.',
+  },
+  onboardingCompletion: {
+    label: 'Onboarding tasks on time',
+    formula: 'Onboarding tasks completed on or before their due date ÷ onboarding tasks due in the period.',
+  },
   leaveUsage: { label: 'Leave taken', formula: 'Working days of approved leave starting in the period, by leave type. Groups under 3 people are hidden.' },
   ackRate: { label: 'Policy acknowledgment', formula: 'Employees who acknowledged the current version ÷ employees in the policy audience.' },
 }
@@ -57,7 +66,8 @@ export function workforceSummary(db: Database, r: Range) {
 
 export function headcountBy(db: Database, key: 'departmentId' | 'locationId' | 'employmentTypeId', r: Range) {
   const date = r.to > today() ? today() : r.to
-  const names = (id: string) => (key === 'departmentId' ? db.departments : key === 'locationId' ? db.locations : db.employmentTypes).find((x) => x.id === id)?.name ?? 'Unknown'
+  const names = (id: string) =>
+    (key === 'departmentId' ? db.departments : key === 'locationId' ? db.locations : db.employmentTypes).find((x) => x.id === id)?.name ?? 'Unknown'
   const counts = new Map<string, number>()
   for (const e of db.employees.filter((x) => inDept(x, r) && employedOn(x, date))) counts.set(e[key], (counts.get(e[key]) ?? 0) + 1)
   return [...counts.entries()].map(([id, count]) => ({ id, name: names(id), count })).sort((a, b) => b.count - a.count)
@@ -72,7 +82,11 @@ export function movementByMonth(db: Database, r: Range) {
   while (cursor <= end && months.length < 36) {
     const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`
     const emps = db.employees.filter((e) => inDept(e, r))
-    months.push({ month: key, joiners: emps.filter((e) => e.joinDate.startsWith(key)).length, leavers: emps.filter((e) => e.endDate?.startsWith(key) && ['offboarding', 'terminated'].includes(e.status)).length })
+    months.push({
+      month: key,
+      joiners: emps.filter((e) => e.joinDate.startsWith(key)).length,
+      leavers: emps.filter((e) => e.endDate?.startsWith(key) && ['offboarding', 'terminated'].includes(e.status)).length,
+    })
     cursor.setMonth(cursor.getMonth() + 1)
   }
   return months
@@ -86,11 +100,14 @@ export function requestMetrics(db: Database, r: Range, now = Date.now()) {
   })
   const open = scoped.filter((q) => !DONE_STATUSES.includes(q.status))
   const overdue = open.filter((q) => q.status !== 'waiting_on_employee' && new Date(q.dueAt).getTime() < now)
-  const resolved = scoped.filter((q) => q.resolvedAt && q.resolvedAt.slice(0, 10) >= r.from && q.resolvedAt.slice(0, 10) <= r.to && ['resolved', 'closed'].includes(q.status))
+  const resolved = scoped.filter(
+    (q) => q.resolvedAt && q.resolvedAt.slice(0, 10) >= r.from && q.resolvedAt.slice(0, 10) <= r.to && ['resolved', 'closed'].includes(q.status),
+  )
   const hours = resolved.map((q) => (new Date(q.resolvedAt as string).getTime() - new Date(q.createdAt).getTime()) / 3_600_000)
   const onTime = resolved.filter((q) => (q.resolvedAt as string) <= q.dueAt).length
   const byCategory = new Map<string, number>()
-  for (const q of scoped.filter((x) => x.createdAt.slice(0, 10) >= r.from && x.createdAt.slice(0, 10) <= r.to)) byCategory.set(q.category, (byCategory.get(q.category) ?? 0) + 1)
+  for (const q of scoped.filter((x) => x.createdAt.slice(0, 10) >= r.from && x.createdAt.slice(0, 10) <= r.to))
+    byCategory.set(q.category, (byCategory.get(q.category) ?? 0) + 1)
   return {
     open: open.length,
     overdue: overdue.length,
@@ -123,17 +140,32 @@ export function onboardingMetrics(db: Database, r: Range) {
     .flatMap((c) => c.tasks.filter((t) => t.status !== 'skipped' && t.dueDate >= r.from && t.dueDate <= r.to && t.dueDate <= today()))
   const onTime = tasks.filter((t) => t.status === 'done' && t.completedAt && t.completedAt.slice(0, 10) <= t.dueDate).length
   const active = db.lifecycleCases.filter((c) => c.status === 'active' && emp.get(c.employeeId) && inDept(emp.get(c.employeeId) as Employee, r))
-  return { due: tasks.length, onTime, rate: rate(onTime, tasks.length), activeOnboarding: active.filter((c) => c.kind === 'onboarding').length, activeOffboarding: active.filter((c) => c.kind === 'offboarding').length }
+  return {
+    due: tasks.length,
+    onTime,
+    rate: rate(onTime, tasks.length),
+    activeOnboarding: active.filter((c) => c.kind === 'onboarding').length,
+    activeOffboarding: active.filter((c) => c.kind === 'offboarding').length,
+  }
 }
 
 export function leaveUsage(db: Database, r: Range) {
   const emp = new Map(db.employees.map((e) => [e.id, e]))
-  const approved = db.leaveRequests.filter((l) => l.status === 'approved' && l.startDate >= r.from && l.startDate <= r.to && emp.get(l.employeeId) && inDept(emp.get(l.employeeId) as Employee, r))
+  const approved = db.leaveRequests.filter(
+    (l) => l.status === 'approved' && l.startDate >= r.from && l.startDate <= r.to && emp.get(l.employeeId) && inDept(emp.get(l.employeeId) as Employee, r),
+  )
   return db.leaveTypes.map((t) => {
     const rows = approved.filter((l) => l.leaveTypeId === t.id)
     const people = new Set(rows.map((l) => l.employeeId)).size
     const suppressed = people > 0 && people < MIN_GROUP
-    return { id: t.id, name: t.name, color: t.color, people: suppressed ? null : people, days: suppressed ? null : rows.reduce((s, l) => s + l.days, 0), suppressed }
+    return {
+      id: t.id,
+      name: t.name,
+      color: t.color,
+      people: suppressed ? null : people,
+      days: suppressed ? null : rows.reduce((s, l) => s + l.days, 0),
+      suppressed,
+    }
   })
 }
 

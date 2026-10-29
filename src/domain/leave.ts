@@ -46,7 +46,11 @@ export function daysInYear(req: LeaveRequest, year: number, schedule: Pick<WorkS
   if (req.startDate >= from && req.endDate <= to) return req.days
   const start = req.startDate < from ? from : req.startDate
   const end = req.endDate > to ? to : req.endDate
-  return countLeaveDays({ startDate: start, endDate: end, halfDayStart: req.halfDayStart && start === req.startDate, halfDayEnd: req.halfDayEnd && end === req.endDate }, schedule, holidays)
+  return countLeaveDays(
+    { startDate: start, endDate: end, halfDayStart: req.halfDayStart && start === req.startDate, halfDayEnd: req.halfDayEnd && end === req.endDate },
+    schedule,
+    holidays,
+  )
 }
 
 export function entitlement(type: LeaveType, employee: Pick<Employee, 'joinDate' | 'employmentTypeId'>, fte: number, year: number): number {
@@ -69,7 +73,12 @@ export interface LeaveBalance {
   available: number
 }
 
-export function leaveBalance(db: Pick<Database, 'employees' | 'leaveTypes' | 'leaveRequests' | 'leaveAdjustments' | 'schedules' | 'holidays' | 'employmentTypes'>, employeeId: ID, leaveTypeId: ID, year: number): LeaveBalance | null {
+export function leaveBalance(
+  db: Pick<Database, 'employees' | 'leaveTypes' | 'leaveRequests' | 'leaveAdjustments' | 'schedules' | 'holidays' | 'employmentTypes'>,
+  employeeId: ID,
+  leaveTypeId: ID,
+  year: number,
+): LeaveBalance | null {
   const employee = db.employees.find((e) => e.id === employeeId)
   const type = db.leaveTypes.find((t) => t.id === leaveTypeId)
   if (!employee || !type || !type.tracked) return null
@@ -77,9 +86,12 @@ export function leaveBalance(db: Pick<Database, 'employees' | 'leaveTypes' | 'le
   const fte = db.employmentTypes.find((t) => t.id === employee.employmentTypeId)?.fte ?? 1
   const hol = holidaysFor(db.holidays, employee.locationId)
   const mine = db.leaveRequests.filter((r) => r.employeeId === employeeId && r.leaveTypeId === leaveTypeId)
-  const sum = (statuses: LeaveRequest['status'][]) => mine.filter((r) => statuses.includes(r.status)).reduce((s, r) => s + daysInYear(r, year, schedule, hol), 0)
+  const sum = (statuses: LeaveRequest['status'][]) =>
+    mine.filter((r) => statuses.includes(r.status)).reduce((s, r) => s + daysInYear(r, year, schedule, hol), 0)
   const ent = entitlement(type, employee, fte, year)
-  const adjustments = db.leaveAdjustments.filter((a) => a.employeeId === employeeId && a.leaveTypeId === leaveTypeId && a.year === year).reduce((s, a) => s + a.days, 0)
+  const adjustments = db.leaveAdjustments
+    .filter((a) => a.employeeId === employeeId && a.leaveTypeId === leaveTypeId && a.year === year)
+    .reduce((s, a) => s + a.days, 0)
   const taken = sum(['approved'])
   const pending = sum(['pending', 'changes_requested'])
   return { leaveTypeId, year, entitlement: ent, adjustments, taken, pending, available: ent + adjustments - taken - pending }
@@ -113,18 +125,39 @@ export function validateLeave(
   if (days === 0) errors.push('The selected dates contain no working days for this schedule.')
 
   const overlapping = db.leaveRequests.filter(
-    (r) => r.employeeId === input.employeeId && r.id !== excludeId && ['pending', 'approved', 'changes_requested'].includes(r.status) && rangesOverlap(r.startDate, r.endDate, input.startDate, input.endDate),
+    (r) =>
+      r.employeeId === input.employeeId &&
+      r.id !== excludeId &&
+      ['pending', 'approved', 'changes_requested'].includes(r.status) &&
+      rangesOverlap(r.startDate, r.endDate, input.startDate, input.endDate),
   )
-  if (overlapping.length) errors.push(`These dates overlap ${overlapping.length === 1 ? 'another request' : `${overlapping.length} other requests`} (${overlapping.map((r) => `${r.startDate} – ${r.endDate}`).join(', ')}).`)
+  if (overlapping.length)
+    errors.push(
+      `These dates overlap ${overlapping.length === 1 ? 'another request' : `${overlapping.length} other requests`} (${overlapping.map((r) => `${r.startDate} – ${r.endDate}`).join(', ')}).`,
+    )
 
   if (type.tracked && days > 0) {
     const years = new Set([parseISODate(input.startDate).getFullYear(), parseISODate(input.endDate).getFullYear()])
     for (const year of years) {
       const bal = leaveBalance(db, input.employeeId, input.leaveTypeId, year)
-      const asRequest = { ...input, id: 'new', days, reason: '', status: 'pending', approvals: [], timeline: [], requestedBy: '', createdAt: '', updatedAt: '' } as LeaveRequest
+      const asRequest = {
+        ...input,
+        id: 'new',
+        days,
+        reason: '',
+        status: 'pending',
+        approvals: [],
+        timeline: [],
+        requestedBy: '',
+        createdAt: '',
+        updatedAt: '',
+      } as LeaveRequest
       const needed = daysInYear(asRequest, year, schedule, holidaysFor(db.holidays, employee.locationId))
       const previous = excludeId ? db.leaveRequests.find((r) => r.id === excludeId) : undefined
-      const credit = previous && ['pending', 'changes_requested'].includes(previous.status) ? daysInYear(previous, year, schedule, holidaysFor(db.holidays, employee.locationId)) : 0
+      const credit =
+        previous && ['pending', 'changes_requested'].includes(previous.status)
+          ? daysInYear(previous, year, schedule, holidaysFor(db.holidays, employee.locationId))
+          : 0
       if (bal && bal.available + credit - needed < 0 && !type.allowNegative) {
         errors.push(`Not enough ${type.name.toLowerCase()} in ${year}: ${bal.available + credit} day(s) available, ${needed} requested.`)
       }

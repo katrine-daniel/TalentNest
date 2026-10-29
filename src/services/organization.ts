@@ -6,12 +6,28 @@
 import { isValidISODate } from '@/lib/dates'
 import { createId } from '@/lib/utils'
 import { can, type Permission } from '@/domain/permissions'
-import type { Account, Database, Department, EmploymentType, Holiday, ID, LeaveType, LifecycleTemplate, Location, Organization, RequestType, Role, Team, WorkSchedule } from '@/domain/types'
+import type {
+  Account,
+  Database,
+  Department,
+  EmploymentType,
+  Holiday,
+  ID,
+  LeaveType,
+  LifecycleTemplate,
+  Location,
+  Organization,
+  RequestType,
+  Role,
+  Team,
+  WorkSchedule,
+} from '@/domain/types'
 import { withAudit } from './activity'
 import { ServiceError, store } from './store'
 import { required, transact } from './tx'
 
-type ConfigCollection = 'departments' | 'teams' | 'locations' | 'employmentTypes' | 'schedules' | 'holidays' | 'requestTypes' | 'leaveTypes' | 'lifecycleTemplates'
+type ConfigCollection =
+  'departments' | 'teams' | 'locations' | 'employmentTypes' | 'schedules' | 'holidays' | 'requestTypes' | 'leaveTypes' | 'lifecycleTemplates'
 type Item<K extends ConfigCollection> = Database[K][number]
 
 const PERMISSION: Record<ConfigCollection, Permission> = {
@@ -50,13 +66,15 @@ function validate(db: Database, collection: ConfigCollection, item: Record<strin
   }
   if (collection === 'leaveTypes') {
     required(String(item.code ?? ''), 'Code')
-    if (item.tracked && !(Number(item.annualDays) > 0 && Number(item.annualDays) <= 365)) throw new ServiceError('Tracked leave needs an annual entitlement between 1 and 365 days.')
+    if (item.tracked && !(Number(item.annualDays) > 0 && Number(item.annualDays) <= 365))
+      throw new ServiceError('Tracked leave needs an annual entitlement between 1 and 365 days.')
   }
   if (collection === 'lifecycleTemplates') {
     const tasks = item.tasks as LifecycleTemplate['tasks']
     if (!tasks?.length) throw new ServiceError('Add at least one task.')
     if (tasks.some((t) => !t.title.trim())) throw new ServiceError('Every task needs a title.')
-    if (tasks.some((t) => !Number.isInteger(t.offsetDays) || Math.abs(t.offsetDays) > 365)) throw new ServiceError('Task offsets must be whole days within a year.')
+    if (tasks.some((t) => !Number.isInteger(t.offsetDays) || Math.abs(t.offsetDays) > 365))
+      throw new ServiceError('Task offsets must be whole days within a year.')
   }
 }
 
@@ -69,7 +87,10 @@ export function saveConfig<K extends ConfigCollection>(actor: Account, collectio
   const record = { ...item, id: exists ? item.id : createId(collection.slice(0, 3)) } as Item<K>
   transact((d) =>
     withAudit(
-      { ...d, [collection]: exists ? (d[collection] as Array<Item<K>>).map((x) => (x.id === record.id ? record : x)) : [...(d[collection] as Array<Item<K>>), record] },
+      {
+        ...d,
+        [collection]: exists ? (d[collection] as Array<Item<K>>).map((x) => (x.id === record.id ? record : x)) : [...(d[collection] as Array<Item<K>>), record],
+      },
       actor.id,
       `config.${collection}.${exists ? 'updated' : 'created'}`,
       { type: 'settings', id: record.id },
@@ -106,13 +127,29 @@ export function deleteConfig(actor: Account, collection: ConfigCollection, id: I
   if (!can(actor, PERMISSION[collection])) throw new ServiceError('You do not have permission to change organization settings.', 'forbidden')
   const used = usageOf(store.db, collection, id)
   if (used) throw new ServiceError(`In use by ${used} record(s). Reassign them or deactivate this item instead.`, 'conflict')
-  transact((d) => withAudit({ ...d, [collection]: (d[collection] as Array<{ id: ID }>).filter((x) => x.id !== id) }, actor.id, `config.${collection}.deleted`, { type: 'settings', id }, `${collection} item deleted`))
+  transact((d) =>
+    withAudit(
+      { ...d, [collection]: (d[collection] as Array<{ id: ID }>).filter((x) => x.id !== id) },
+      actor.id,
+      `config.${collection}.deleted`,
+      { type: 'settings', id },
+      `${collection} item deleted`,
+    ),
+  )
 }
 
 export function updateOrganization(actor: Account, patch: Partial<Omit<Organization, 'id'>>) {
   if (!can(actor, 'org.manage')) throw new ServiceError('You do not have permission to change the company profile.', 'forbidden')
   if (patch.name !== undefined) required(patch.name, 'Company name')
-  transact((d) => withAudit({ ...d, organization: { ...d.organization, ...patch } }, actor.id, 'organization.updated', { type: 'organization', id: d.organization.id }, 'Company profile updated'))
+  transact((d) =>
+    withAudit(
+      { ...d, organization: { ...d.organization, ...patch } },
+      actor.id,
+      'organization.updated',
+      { type: 'organization', id: d.organization.id },
+      'Company profile updated',
+    ),
+  )
 }
 
 export function changeRole(actor: Account, accountId: ID, role: Role) {
@@ -120,7 +157,15 @@ export function changeRole(actor: Account, accountId: ID, role: Role) {
   if (accountId === actor.id) throw new ServiceError('You cannot change your own role.', 'forbidden')
   const target = store.db.accounts.find((a) => a.id === accountId)
   if (!target) throw new ServiceError('User not found.', 'not_found')
-  transact((d) => withAudit({ ...d, accounts: d.accounts.map((a) => (a.id === accountId ? { ...a, role } : a)) }, actor.id, 'account.role_changed', { type: 'account', id: accountId }, `${target.name}: ${target.role} → ${role}`))
+  transact((d) =>
+    withAudit(
+      { ...d, accounts: d.accounts.map((a) => (a.id === accountId ? { ...a, role } : a)) },
+      actor.id,
+      'account.role_changed',
+      { type: 'account', id: accountId },
+      `${target.name}: ${target.role} → ${role}`,
+    ),
+  )
 }
 
 export type { Department, EmploymentType, Holiday, LeaveType, LifecycleTemplate, Location, RequestType, Team, WorkSchedule }

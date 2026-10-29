@@ -88,7 +88,12 @@ describe('service requests', () => {
   })
 
   it('applies approved record updates to the employee record', async () => {
-    const r = await createRequest(account(EMPLOYEE), { typeId: 'rt_update', subject: 'New phone', description: '', proposedChanges: { phone: '+351 91 000 1111' } })
+    const r = await createRequest(account(EMPLOYEE), {
+      typeId: 'rt_update',
+      subject: 'New phone',
+      description: '',
+      proposedChanges: { phone: '+351 91 000 1111' },
+    })
     expect(r.status).toBe('pending_approval')
     expect(() => decideRequest(account(EMPLOYEE), r.id, 'approved', '')).toThrow(/not an approver/)
     decideRequest(account(HR), r.id, 'approved', '')
@@ -108,10 +113,28 @@ describe('leave', () => {
     const year = new Date().getFullYear()
     const before = leaveBalance(store.db, 'emp_008', 'lt_annual', year)!
     const start = addDays(today(), 21)
-    const l = requestLeave(account(EMPLOYEE), { employeeId: 'emp_008', leaveTypeId: 'lt_annual', startDate: start, endDate: addDays(start, 6), halfDayStart: false, halfDayEnd: false, reason: 'Trip' })
+    const l = requestLeave(account(EMPLOYEE), {
+      employeeId: 'emp_008',
+      leaveTypeId: 'lt_annual',
+      startDate: start,
+      endDate: addDays(start, 6),
+      halfDayStart: false,
+      halfDayEnd: false,
+      reason: 'Trip',
+    })
     const pending = leaveBalance(store.db, 'emp_008', 'lt_annual', new Date(start).getFullYear())!
     if (addDays(start, 6).slice(0, 4) === String(year)) expect(pending.pending).toBe(before.pending + l.days)
-    expect(() => requestLeave(account(EMPLOYEE), { employeeId: 'emp_008', leaveTypeId: 'lt_annual', startDate: start, endDate: start, halfDayStart: false, halfDayEnd: false, reason: '' })).toThrow(/overlap/)
+    expect(() =>
+      requestLeave(account(EMPLOYEE), {
+        employeeId: 'emp_008',
+        leaveTypeId: 'lt_annual',
+        startDate: start,
+        endDate: start,
+        halfDayStart: false,
+        halfDayEnd: false,
+        reason: '',
+      }),
+    ).toThrow(/overlap/)
     expect(buildInbox(store.db, account(MANAGER)).some((i) => i.key === `leave:${l.id}`)).toBe(true)
     decideLeave(account(MANAGER), l.id, 'approved', '')
     expect(store.db.leaveRequests.find((x) => x.id === l.id)?.status).toBe('approved')
@@ -120,11 +143,31 @@ describe('leave', () => {
 
   it('refuses requests beyond the available balance', () => {
     const next = new Date().getFullYear() + 1
-    expect(() => requestLeave(account(EMPLOYEE), { employeeId: 'emp_008', leaveTypeId: 'lt_annual', startDate: `${next}-02-01`, endDate: `${next}-04-30`, halfDayStart: false, halfDayEnd: false, reason: '' })).toThrow(/Not enough/)
+    expect(() =>
+      requestLeave(account(EMPLOYEE), {
+        employeeId: 'emp_008',
+        leaveTypeId: 'lt_annual',
+        startDate: `${next}-02-01`,
+        endDate: `${next}-04-30`,
+        halfDayStart: false,
+        halfDayEnd: false,
+        reason: '',
+      }),
+    ).toThrow(/Not enough/)
   })
 
   it('rejects malformed dates', () => {
-    expect(() => requestLeave(account(EMPLOYEE), { employeeId: 'emp_008', leaveTypeId: 'lt_annual', startDate: '-02-01', endDate: '2026-02-31', halfDayStart: false, halfDayEnd: false, reason: '' })).toThrow(/valid/)
+    expect(() =>
+      requestLeave(account(EMPLOYEE), {
+        employeeId: 'emp_008',
+        leaveTypeId: 'lt_annual',
+        startDate: '-02-01',
+        endDate: '2026-02-31',
+        halfDayStart: false,
+        halfDayEnd: false,
+        reason: '',
+      }),
+    ).toThrow(/valid/)
   })
 
   it('only allows employees to cancel approved leave before it starts', () => {
@@ -136,7 +179,17 @@ describe('leave', () => {
   })
 
   it('employees cannot request leave for others', () => {
-    expect(() => requestLeave(account(EMPLOYEE), { employeeId: 'emp_009', leaveTypeId: 'lt_annual', startDate: addDays(today(), 5), endDate: addDays(today(), 5), halfDayStart: false, halfDayEnd: false, reason: '' })).toThrow(/yourself/)
+    expect(() =>
+      requestLeave(account(EMPLOYEE), {
+        employeeId: 'emp_009',
+        leaveTypeId: 'lt_annual',
+        startDate: addDays(today(), 5),
+        endDate: addDays(today(), 5),
+        halfDayStart: false,
+        halfDayEnd: false,
+        reason: '',
+      }),
+    ).toThrow(/yourself/)
   })
 })
 
@@ -164,7 +217,18 @@ describe('policies', () => {
   it('keeps the published version in force while a new draft is edited, then requires re-acknowledgment', () => {
     const p = store.db.policies.find((x) => x.id === 'pol_leave')!
     const v = p.versions[p.versions.length - 1]!
-    savePolicyDraft(account(HR_ADMIN), p.id, { title: p.title, category: p.category, tags: p.tags, summary: p.summary, body: `${v.body}\n\n## Peak periods\nLeave may be limited in July and August.`, effectiveDate: addDays(today(), 10), changeNote: 'Peak periods', requiresAcknowledgment: true, audienceDepartmentIds: null, reviewBy: null })
+    savePolicyDraft(account(HR_ADMIN), p.id, {
+      title: p.title,
+      category: p.category,
+      tags: p.tags,
+      summary: p.summary,
+      body: `${v.body}\n\n## Peak periods\nLeave may be limited in July and August.`,
+      effectiveDate: addDays(today(), 10),
+      changeNote: 'Peak periods',
+      requiresAcknowledgment: true,
+      audienceDepartmentIds: null,
+      reviewBy: null,
+    })
     expect(store.db.policies.find((x) => x.id === p.id)?.publishedVersion).toBe(2)
     acknowledgePolicy(account(EMPLOYEE), p.id)
     publishPolicy(account(HR_ADMIN), p.id)
@@ -183,7 +247,13 @@ describe('policies', () => {
 describe('automation', () => {
   it('previews without changing data and executes once per record', () => {
     const rule = store.db.rules.find((r) => r.id === 'rule_dept_change')!
-    const event = { type: 'employee.department_changed' as const, entity: { type: 'employee' as const, id: 'emp_008' }, employeeId: 'emp_008', actorId: null, data: { department: 'Housekeeping' } }
+    const event = {
+      type: 'employee.department_changed' as const,
+      entity: { type: 'employee' as const, id: 'emp_008' },
+      employeeId: 'emp_008',
+      actorId: null,
+      data: { department: 'Housekeeping' },
+    }
     const tasksBefore = store.db.tasks.length
     const preview = previewRule(rule, event)
     expect(preview.matches).toBe(true)
@@ -195,15 +265,41 @@ describe('automation', () => {
   })
 
   it('records email actions as skipped when no provider is configured', () => {
-    const rule = saveRule(account(HR_ADMIN), { name: 'Email test', description: '', trigger: 'leave.submitted', conditions: [], actions: [{ type: 'send_email', to: 'manager', subject: 'Leave', body: '{employee} requested leave' }], enabled: true, maxAttempts: 1 })
-    requestLeave(account(EMPLOYEE), { employeeId: 'emp_008', leaveTypeId: 'lt_sick', startDate: addDays(today(), 3), endDate: addDays(today(), 5), halfDayStart: false, halfDayEnd: false, reason: '' })
+    const rule = saveRule(account(HR_ADMIN), {
+      name: 'Email test',
+      description: '',
+      trigger: 'leave.submitted',
+      conditions: [],
+      actions: [{ type: 'send_email', to: 'manager', subject: 'Leave', body: '{employee} requested leave' }],
+      enabled: true,
+      maxAttempts: 1,
+    })
+    requestLeave(account(EMPLOYEE), {
+      employeeId: 'emp_008',
+      leaveTypeId: 'lt_sick',
+      startDate: addDays(today(), 3),
+      endDate: addDays(today(), 5),
+      halfDayStart: false,
+      halfDayEnd: false,
+      reason: '',
+    })
     const run = store.db.runs.find((r) => r.ruleId === rule.id)!
     expect(run.results[0]?.outcome).toBe('skipped')
     expect(run.status).toBe('succeeded')
   })
 
   it('only automation managers can save rules', () => {
-    expect(() => saveRule(account(HR), { name: 'x', description: '', trigger: 'schedule.daily', conditions: [], actions: [{ type: 'notify', to: 'hr_queue', title: 't', message: 'm' }], enabled: true, maxAttempts: 1 })).toThrow(/automation managers/)
+    expect(() =>
+      saveRule(account(HR), {
+        name: 'x',
+        description: '',
+        trigger: 'schedule.daily',
+        conditions: [],
+        actions: [{ type: 'notify', to: 'hr_queue', title: 't', message: 'm' }],
+        enabled: true,
+        maxAttempts: 1,
+      }),
+    ).toThrow(/automation managers/)
   })
 
   it('scheduled checks escalate overdue requests once', () => {

@@ -12,7 +12,12 @@ export const TRIGGERS: Array<{ value: TriggerType; label: string; description: s
   { value: 'request.decided', label: 'Request approved or rejected', description: 'The approval chain of a request finishes.' },
   { value: 'leave.submitted', label: 'Leave requested', description: 'A leave request is submitted.' },
   { value: 'leave.decided', label: 'Leave approved or declined', description: 'A leave request is approved, declined or sent back.' },
-  { value: 'task.overdue', label: 'Work becomes overdue', description: 'A request passes its service target or a checklist task passes its due date.', scheduled: true },
+  {
+    value: 'task.overdue',
+    label: 'Work becomes overdue',
+    description: 'A request passes its service target or a checklist task passes its due date.',
+    scheduled: true,
+  },
   { value: 'document.expiring', label: 'Document approaching expiry', description: 'An employee document expires within 30 days.', scheduled: true },
   { value: 'onboarding.started', label: 'Onboarding begins', description: 'An onboarding checklist is started.' },
   { value: 'schedule.daily', label: 'Daily schedule', description: 'Runs once per day per rule.', scheduled: true },
@@ -66,7 +71,10 @@ export function conditionHolds(c: RuleCondition, ctx: EventContext): boolean {
     case 'not_equals':
       return a !== e
     case 'in':
-      return e.split(',').map((s) => s.trim()).includes(a)
+      return e
+        .split(',')
+        .map((s) => s.trim())
+        .includes(a)
     case 'contains':
       return a.includes(e)
     case 'gte':
@@ -80,7 +88,10 @@ export function ruleMatches(rule: Pick<WorkflowRule, 'trigger' | 'conditions'>, 
   return rule.trigger === trigger && rule.conditions.every((c) => conditionHolds(c, ctx))
 }
 
-export function validateRule(rule: Pick<WorkflowRule, 'name' | 'trigger' | 'conditions' | 'actions' | 'maxAttempts'>, db: Pick<Database, 'requestTypes' | 'lifecycleTemplates' | 'accounts'>): string[] {
+export function validateRule(
+  rule: Pick<WorkflowRule, 'name' | 'trigger' | 'conditions' | 'actions' | 'maxAttempts'>,
+  db: Pick<Database, 'requestTypes' | 'lifecycleTemplates' | 'accounts'>,
+): string[] {
   const errors: string[] = []
   if (!rule.name.trim()) errors.push('Give the rule a name.')
   if (!TRIGGERS.some((t) => t.value === rule.trigger)) errors.push('Choose a trigger.')
@@ -94,13 +105,19 @@ export function validateRule(rule: Pick<WorkflowRule, 'name' | 'trigger' | 'cond
   if (!rule.actions.length) errors.push('Add at least one action.')
   rule.actions.forEach((a, i) => {
     const n = `Action ${i + 1}`
-    if (a.type === 'create_task' && (!a.title.trim() || !(a.dueInDays >= 0 && a.dueInDays <= 90))) errors.push(`${n}: enter a title and a due date within 90 days.`)
+    if (a.type === 'create_task' && (!a.title.trim() || !(a.dueInDays >= 0 && a.dueInDays <= 90)))
+      errors.push(`${n}: enter a title and a due date within 90 days.`)
     if ((a.type === 'notify' || a.type === 'send_email') && !(a.type === 'notify' ? a.message : a.body).trim()) errors.push(`${n}: enter a message.`)
-    if (a.type === 'request_approval' && !db.requestTypes.some((t) => t.id === a.requestTypeId && t.approvalChain.length)) errors.push(`${n}: choose a request type that has an approval chain.`)
-    if (a.type === 'start_lifecycle' && a.templateId && !db.lifecycleTemplates.some((t) => t.id === a.templateId && t.kind === a.kind)) errors.push(`${n}: choose a ${a.kind} template.`)
-    if (a.type === 'update_employee' && a.field === 'status' && !['active', 'on_leave'].includes(a.value)) errors.push(`${n}: automation may only set status to active or on leave.`)
-    if ('to' in a && a.to.startsWith('account:') && !db.accounts.some((x) => `account:${x.id}` === a.to)) errors.push(`${n}: the selected user no longer exists.`)
-    if ('assignTo' in a && a.assignTo.startsWith('account:') && !db.accounts.some((x) => `account:${x.id}` === a.assignTo)) errors.push(`${n}: the selected user no longer exists.`)
+    if (a.type === 'request_approval' && !db.requestTypes.some((t) => t.id === a.requestTypeId && t.approvalChain.length))
+      errors.push(`${n}: choose a request type that has an approval chain.`)
+    if (a.type === 'start_lifecycle' && a.templateId && !db.lifecycleTemplates.some((t) => t.id === a.templateId && t.kind === a.kind))
+      errors.push(`${n}: choose a ${a.kind} template.`)
+    if (a.type === 'update_employee' && a.field === 'status' && !['active', 'on_leave'].includes(a.value))
+      errors.push(`${n}: automation may only set status to active or on leave.`)
+    if ('to' in a && a.to.startsWith('account:') && !db.accounts.some((x) => `account:${x.id}` === a.to))
+      errors.push(`${n}: the selected user no longer exists.`)
+    if ('assignTo' in a && a.assignTo.startsWith('account:') && !db.accounts.some((x) => `account:${x.id}` === a.assignTo))
+      errors.push(`${n}: the selected user no longer exists.`)
   })
   if (!(rule.maxAttempts >= 1 && rule.maxAttempts <= 5)) errors.push('Retries: allow between 1 and 5 attempts.')
   return errors

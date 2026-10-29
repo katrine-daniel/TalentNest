@@ -14,11 +14,15 @@ const weekdays = { workingDays: [1, 2, 3, 4, 5] }
 describe('leave day counting', () => {
   it('counts schedule working days and skips holidays', () => {
     // 2026-06-01 is a Monday; Wednesday 06-03 is a holiday.
-    expect(countLeaveDays({ startDate: '2026-06-01', endDate: '2026-06-07', halfDayStart: false, halfDayEnd: false }, weekdays, new Set(['2026-06-03']))).toBe(4)
+    expect(countLeaveDays({ startDate: '2026-06-01', endDate: '2026-06-07', halfDayStart: false, halfDayEnd: false }, weekdays, new Set(['2026-06-03']))).toBe(
+      4,
+    )
   })
 
   it('uses the employee’s own working days (shift pattern Tue–Sat)', () => {
-    expect(countLeaveDays({ startDate: '2026-06-01', endDate: '2026-06-07', halfDayStart: false, halfDayEnd: false }, { workingDays: [2, 3, 4, 5, 6] }, new Set())).toBe(5)
+    expect(
+      countLeaveDays({ startDate: '2026-06-01', endDate: '2026-06-07', halfDayStart: false, halfDayEnd: false }, { workingDays: [2, 3, 4, 5, 6] }, new Set()),
+    ).toBe(5)
   })
 
   it('subtracts half days, never below zero', () => {
@@ -109,7 +113,10 @@ describe('automation rules', () => {
 
   it('rejects incomplete rules and conditions that do not fit the trigger', () => {
     const db = createSeed()
-    const errors = validateRule({ name: '', trigger: 'employee.created', conditions: [{ field: 'days', operator: 'gte', value: 'x' }], actions: [], maxAttempts: 9 }, db)
+    const errors = validateRule(
+      { name: '', trigger: 'employee.created', conditions: [{ field: 'days', operator: 'gte', value: 'x' }], actions: [], maxAttempts: 9 },
+      db,
+    )
     expect(errors.join(' ')).toMatch(/name/)
     expect(errors.join(' ')).toMatch(/not available for this trigger/)
     expect(errors.join(' ')).toMatch(/at least one action/)
@@ -146,7 +153,13 @@ describe('permissions', () => {
 
 describe('CSV', () => {
   it('round-trips quotes, commas and newlines and neutralizes formulas', () => {
-    const csv = toCSV(['a', 'b'], [['x, "y"', 'line\nbreak'], ['=SUM(A1)', '2']])
+    const csv = toCSV(
+      ['a', 'b'],
+      [
+        ['x, "y"', 'line\nbreak'],
+        ['=SUM(A1)', '2'],
+      ],
+    )
     expect(parseCSV(csv)).toEqual([
       ['a', 'b'],
       ['x, "y"', 'line\nbreak'],
