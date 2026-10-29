@@ -58,7 +58,7 @@ export default function PeoplePage() {
             ? name(db.locations, e.locationId)
             : e.joinDate
     return filtered.sort((a, b) => key(a).localeCompare(key(b)) * (sort.dir === 'asc' ? 1 : -1))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [db, query, dept, loc, status, sort])
   useEffect(() => setPage(1), [query, dept, loc, status])
 

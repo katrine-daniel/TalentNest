@@ -24,11 +24,20 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # Never publish a build that fails the checks.
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
       - name: Build
         run: npm run build
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
-      # Single-page app: serve index.html for deep links like /TalentNest/candidates
+          # Optional repository variables (Settings > Variables). Unset = demo workspace.
+          # The anon key is public by design; never put service-role or AI keys here.
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_ASSISTANT_URL: ${{ vars.VITE_ASSISTANT_URL }}
+      # Single-page app: serve index.html for deep links like /TalentNest/people
       - run: cp dist/index.html dist/404.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

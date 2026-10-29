@@ -29,9 +29,14 @@ Deno.serve(async (req) => {
     const { data: emp } = await admin.from('employees').select('id').eq('org_id', orgId).eq('id', employeeId).maybeSingle()
     if (!emp) return json({ error: 'Employee record not found in this organization' }, 400)
   }
-  const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { full_name: fullName }, redirectTo: Deno.env.get('SITE_URL') ?? undefined })
+  const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
+    data: { full_name: fullName },
+    redirectTo: Deno.env.get('SITE_URL') ?? undefined,
+  })
   if (error || !invited.user) return json({ error: 'Could not send the invitation' }, 502)
-  const { error: memberError } = await admin.from('memberships').upsert({ org_id: orgId, user_id: invited.user.id, role, status: 'active', employee_id: employeeId }, { onConflict: 'org_id,user_id' })
+  const { error: memberError } = await admin
+    .from('memberships')
+    .upsert({ org_id: orgId, user_id: invited.user.id, role, status: 'active', employee_id: employeeId }, { onConflict: 'org_id,user_id' })
   if (memberError) return json({ error: 'Invitation sent, but the membership could not be created' }, 500)
   return json({ userId: invited.user.id })
 })

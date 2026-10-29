@@ -39,7 +39,13 @@ interface PolicyRow {
   data: { title: string; publishedVersion: number | null; versions: Array<{ version: number; body: string; effectiveDate: string }> }
 }
 
-const tokens = (s: string) => new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2))
+const tokens = (s: string) =>
+  new Set(
+    s
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((t) => t.length > 2),
+  )
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
@@ -72,11 +78,20 @@ Deno.serve(async (req) => {
     size += p.v.body.length
   }
   if (!context.length) {
-    return json({ text: 'There are no published policies available to you, so I can’t answer from company policy. Please ask HR.', citations: [], suggestions: [], actions: [{ label: 'Ask HR', href: '/requests/new', requiresConfirmation: true }] })
+    return json({
+      text: 'There are no published policies available to you, so I can’t answer from company policy. Please ask HR.',
+      citations: [],
+      suggestions: [],
+      actions: [{ label: 'Ask HR', href: '/requests/new', requiresConfirmation: true }],
+    })
   }
 
-  const history = Array.isArray(body?.history) ? body.history.slice(-6).filter((m: { role?: string; text?: string }) => (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string') : []
-  const policiesXml = context.map((p) => `<policy id="${p.id}" title="${p.title.replace(/"/g, "'")}" version="${p.v.version}" effective="${p.v.effectiveDate}">\n${p.v.body}\n</policy>`).join('\n')
+  const history = Array.isArray(body?.history)
+    ? body.history.slice(-6).filter((m: { role?: string; text?: string }) => (m.role === 'user' || m.role === 'assistant') && typeof m.text === 'string')
+    : []
+  const policiesXml = context
+    .map((p) => `<policy id="${p.id}" title="${p.title.replace(/"/g, "'")}" version="${p.v.version}" effective="${p.v.effectiveDate}">\n${p.v.body}\n</policy>`)
+    .join('\n')
 
   try {
     const response = await anthropic.beta.messages.create({
@@ -101,7 +116,12 @@ Deno.serve(async (req) => {
       .filter((c) => byId.has(c.policyId))
       .map((c) => {
         const p = byId.get(c.policyId)!
-        return { kind: 'policy', label: `${p.title} — ${c.section}`.slice(0, 160), detail: `v${p.v.version} · effective ${p.v.effectiveDate}`, href: `/policies/${p.id}` }
+        return {
+          kind: 'policy',
+          label: `${p.title} — ${c.section}`.slice(0, 160),
+          detail: `v${p.v.version} · effective ${p.v.effectiveDate}`,
+          href: `/policies/${p.id}`,
+        }
       })
     return json({
       text: parsed.data.answer,

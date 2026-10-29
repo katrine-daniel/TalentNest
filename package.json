@@ -1,7 +1,7 @@
 {
   "name": "peopleos",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "PeopleOS - the intelligent workspace for people operations (React, TypeScript, Supabase-ready)",
   "scripts": {
@@ -17,8 +17,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:db": "node tests/db/rls.check.mjs",
+    "screenshots": "playwright test screenshots --project desktop",
     "audit:deps": "npm audit --omit=dev --audit-level=high",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run test && npm run test:db && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
