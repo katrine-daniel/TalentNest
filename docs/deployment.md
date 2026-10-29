@@ -6,7 +6,7 @@
 
 1. `npm ci`, then lint, type-check and unit tests — a failing check stops the deploy.
 2. `npm run build` with `VITE_BASE_PATH=/<repository>/` so assets and routes work under `https://<user>.github.io/<repository>/`.
-3. Copies `dist/index.html` to `dist/404.html` so deep links (e.g. `/TalentNest/people`) load the app.
+3. Copies `dist/index.html` to `dist/404.html` so deep links (e.g. `/TalentNest/people`) load the app. GitHub Pages returns these deep-link documents with HTTP status 404 (the page works, but crawlers and some monitors see a 404); a host with rewrite rules avoids this.
 4. Publishes `dist/` with `actions/deploy-pages`.
 
 Repository settings: **Settings → Pages → Source: GitHub Actions**.

@@ -71,6 +71,7 @@ All features below work in the demo. Items marked † additionally need the Supa
 - **No country-specific rules:** payroll, tax and employment law are not built in. Leave types, holidays and approval rules must be configured for each country you employ people in.
 - **SLA clock:** business hours are Mon–Fri 09:00–17:00 local time; holidays are not excluded.
 - **Leave day counts** are computed in the browser; the database guards who may change a request and its status, not the arithmetic.
+- **GitHub Pages deep links** load the app through `404.html`, so they are served with HTTP status 404.
 - **Dependency advisories** — see [SECURITY.md](SECURITY.md#known-dependency-advisories).
 
 ## Technology
